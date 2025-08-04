@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-// --- Initial Data Store ---
-// In a real application, this would likely come from an API.
 const initialData = {
     platforms: [
         { id: 'Platform 1', isOccupied: true, trainDetails: { trainNo: '12841', name: 'Coromandel Express' }, isUnderMaintenance: false, type: 'Platform', length: 24, isTerminating: false },
@@ -22,9 +20,6 @@ const initialData = {
     departedTrains: []
 };
 
-// --- Helper Functions & Components ---
-
-// Custom hook to get and format the current time
 const useCurrentTime = () => {
     const [time, setTime] = useState(new Date());
 
@@ -40,7 +35,6 @@ const useCurrentTime = () => {
     });
 };
 
-// Generic Modal Component
 const Modal = ({ children, isOpen, onClose, title }) => {
     if (!isOpen) return null;
 
@@ -56,8 +50,6 @@ const Modal = ({ children, isOpen, onClose, title }) => {
         </div>
     );
 };
-
-// --- Main Application Components ---
 
 const Header = () => {
     const currentTime = useCurrentTime();
@@ -88,15 +80,15 @@ const ControlButtons = ({ onOpenModal }) => (
 );
 
 const PlatformCard = ({ platform }) => {
-    let statusClass = 'border-green-500'; // track-available
+    let statusClass = 'border-green-500';
     let statusText = 'Available';
     let trainInfo = null;
 
     if (platform.isUnderMaintenance) {
-        statusClass = 'border-yellow-500'; // track-maintenance
+        statusClass = 'border-yellow-500'; 
         statusText = 'Under Maintenance';
     } else if (platform.isOccupied) {
-        statusClass = 'border-red-500'; // track-occupied
+        statusClass = 'border-red-500'; 
         statusText = 'Occupied';
         trainInfo = <p className="text-sm text-gray-600 truncate font-medium">{platform.trainDetails.trainNo} - {platform.trainDetails.name}</p>;
     }
@@ -133,7 +125,6 @@ const PlatformGrid = ({ platforms }) => (
 );
 
 
-// --- Modal Components ---
 
 const ArrivingModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignPlatform }) => {
     const [selectedTrain, setSelectedTrain] = useState('');
@@ -154,7 +145,7 @@ const ArrivingModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignPla
     
     const handleTrainSelect = (e) => {
         setSelectedTrain(e.target.value);
-        setSelectedPlatform(''); // Reset platform selection when train changes
+        setSelectedPlatform('');
     };
 
     return (
@@ -308,7 +299,6 @@ const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onRemoveTrain,
 };
 
 
-// --- Main App Component ---
 export default function App() {
     // State Management
     const [platforms, setPlatforms] = useState(initialData.platforms);
