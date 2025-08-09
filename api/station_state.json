@@ -1,0 +1,299 @@
+{
+  "platforms": [
+    {
+      "id": "Platform 1",
+      "yard": "UP",
+      "type": "Platform",
+      "isOccupied": true,
+      "trainDetails": {
+        "trainNo": "T456",
+        "name": "Express Train"
+      },
+      "isUnderMaintenance": false,
+      "length": 20,
+      "isTerminating": false
+    },
+    {
+      "id": "Platform 2",
+      "yard": "UP",
+      "type": "Platform",
+      "isOccupied": true,
+      "trainDetails": {
+        "trainNo": "T111",
+        "name": "Superfast Train"
+      },
+      "isUnderMaintenance": false,
+      "length": 20,
+      "isTerminating": false
+    },
+    {
+      "id": "Platform 3",
+      "yard": "UP",
+      "type": "Platform",
+      "isOccupied": true,
+      "trainDetails": {
+        "trainNo": "T456",
+        "name": "Express Train"
+      },
+      "isUnderMaintenance": false,
+      "length": 25,
+      "isTerminating": false
+    },
+    {
+      "id": "Platform 4",
+      "yard": "UP",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 25,
+      "isTerminating": false
+    },
+    {
+      "id": "Platform 5",
+      "yard": "DOWN",
+      "type": "Platform",
+      "isOccupied": true,
+      "trainDetails": {
+        "trainNo": "T987",
+        "name": "Passenger Train"
+      },
+      "isUnderMaintenance": false,
+      "length": 25,
+      "isTerminating": false
+    },
+    {
+      "id": "Platform 6",
+      "yard": "DOWN",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 25,
+      "isTerminating": false
+    },
+    {
+      "id": "Platform 7",
+      "yard": "DOWN",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 25,
+      "isTerminating": false
+    },
+    {
+      "id": "Platform 8",
+      "yard": "DOWN",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 25,
+      "isTerminating": false
+    },
+    {
+      "id": "Platform 1A",
+      "yard": "UP",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 15,
+      "isTerminating": true
+    },
+    {
+      "id": "Platform 2A",
+      "yard": "UP",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 15,
+      "isTerminating": true
+    },
+    {
+      "id": "Platform 3A",
+      "yard": "UP",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 15,
+      "isTerminating": true
+    },
+    {
+      "id": "Platform 4A",
+      "yard": "UP",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 15,
+      "isTerminating": true
+    },
+    {
+      "id": "Track 1",
+      "yard": "UP",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": true,
+      "length": 30,
+      "isTerminating": false
+    },
+    {
+      "id": "Track 2",
+      "yard": "UP",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 30,
+      "isTerminating": false
+    },
+    {
+      "id": "Track 3",
+      "yard": "UP",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 30,
+      "isTerminating": false
+    },
+    {
+      "id": "Track 4",
+      "yard": "UP",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 30,
+      "isTerminating": false
+    },
+    {
+      "id": "Track 5",
+      "yard": "DOWN",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 30,
+      "isTerminating": false
+    },
+    {
+      "id": "Track 6",
+      "yard": "DOWN",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 30,
+      "isTerminating": false
+    },
+    {
+      "id": "Track 7",
+      "yard": "DOWN",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 30,
+      "isTerminating": false
+    },
+    {
+      "id": "Track 8",
+      "yard": "DOWN",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 30,
+      "isTerminating": false
+    },
+    {
+      "id": "Track 9",
+      "yard": "DOWN",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 30,
+      "isTerminating": false
+    },
+    {
+      "id": "Track 10",
+      "yard": "DOWN",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 30,
+      "isTerminating": false
+    },
+    {
+      "id": "Track 11",
+      "yard": "DOWN",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 30,
+      "isTerminating": false
+    },
+    {
+      "id": "Track 12",
+      "yard": "DOWN",
+      "type": "Freight Track",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "length": 30,
+      "isTerminating": false
+    }
+  ],
+  "arrivingTrains": [
+    {
+      "trainNo": "F789",
+      "name": "Freight Train",
+      "origin": "Chennai",
+      "scheduled_arrival": "08:10"
+    },
+    {
+      "trainNo": "F444",
+      "name": "Freight Train",
+      "origin": "Visakhapatnam",
+      "scheduled_arrival": "08:35"
+    },
+    {
+      "trainNo": "T555",
+      "name": "Superfast Train",
+      "origin": "Chennai",
+      "scheduled_arrival": "08:40"
+    },
+    {
+      "trainNo": "T666",
+      "name": "Passenger Train",
+      "origin": "KGP",
+      "scheduled_arrival": "08:45"
+    }
+  ],
+  "departedTrains": [
+    {
+      "trainNo": "T4325",
+      "name": "Express Train",
+      "departureTime": "02:08"
+    },
+    {
+      "trainNo": "T333",
+      "name": "Express Train",
+      "departureTime": "01:41"
+    },
+    {
+      "trainNo": "T123",
+      "name": "Superfast Train",
+      "departureTime": "23:20"
+    }
+  ]
+}
