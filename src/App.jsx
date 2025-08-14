@@ -1,8 +1,69 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
-//HELPER HOOKS 
+// --- LOGIN COMPONENT ---
+
+const LoginPage = ({ onLogin }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        // Static credentials check
+        if (username === 'stationmaster' && password === 'kgpcontrol123') {
+            setError('');
+            onLogin();
+        } else {
+            setError('Invalid username or password.');
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
+                <div className="text-center">
+                    <h1 className="text-3xl font-bold text-gray-800">Station Control Login</h1>
+                    <p className="text-gray-500">Kharagpur Division</p>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Username</label>
+                        <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Password</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            required
+                        />
+                    </div>
+                    {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+                    <div>
+                        <button
+                            type="submit"
+                            className="w-full px-4 py-2 font-bold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            Login
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+
+// --- HELPER HOOKS & COMPONENTS ---
 
 const useCurrentTime = () => {
     const [time, setTime] = useState(new Date());
@@ -35,7 +96,7 @@ const Modal = ({ children, isOpen, onClose, title }) => {
 };
 
 
-// LAYOUT COMPONENTS
+// --- LAYOUT COMPONENTS (Based on your Figma design) ---
 
 const Header = () => {
     const currentTime = useCurrentTime();
@@ -165,8 +226,11 @@ const RailwayLayout = ({ platforms, onOpenModal, onUnassignPlatform }) => {
                     <button onClick={() => onOpenModal('maintenance')} className="flex-1 px-4 py-3 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 transition-colors border-r border-gray-200 font-semibold">
                         Maintenance
                     </button>
-                    <button onClick={() => onOpenModal('misc')} className="flex-1 px-4 py-3 bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors font-semibold">
+                    <button onClick={() => onOpenModal('misc')} className="flex-1 px-4 py-3 bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors border-r border-gray-200 font-semibold">
                         Miscellaneous
+                    </button>
+                    <button onClick={() => onOpenModal('logs')} className="flex-1 px-4 py-3 bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors font-semibold">
+                        View Logs
                     </button>
                 </nav>
             </div>
@@ -211,7 +275,7 @@ const RailwayLayout = ({ platforms, onOpenModal, onUnassignPlatform }) => {
 }
 
 
-//MODAL COMPONENTS
+// --- MODAL COMPONENTS ---
 
 const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignPlatform }) => {
     const [selectedTrain, setSelectedTrain] = useState(null);
@@ -223,8 +287,6 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
     const [isEditingTime, setIsEditingTime] = useState(false);
     const [delayNote, setDelayNote] = useState('');
     const [freightNeedsPlatform, setFreightNeedsPlatform] = useState(null);
-    const [needsMultiplePlatforms, setNeedsMultiplePlatforms] = useState(null);
-    const [selectedPlatforms, setSelectedPlatforms] = useState([]);
 
     const resetState = () => {
         setSelectedTrain(null);
@@ -236,8 +298,6 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
         setIsEditingTime(false);
         setDelayNote('');
         setFreightNeedsPlatform(null);
-        setNeedsMultiplePlatforms(null);
-        setSelectedPlatforms([]);
     };
 
     useEffect(() => {
@@ -250,7 +310,6 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
         const train = arrivingTrains.find(t => t.trainNo === trainNo);
         setSelectedTrain(train);
         setFreightNeedsPlatform(null); 
-        setNeedsMultiplePlatforms(null);
     };
     
     const handleLogAndSuggest = async (timeToUse = null) => {
@@ -258,10 +317,6 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
         
         if (selectedTrain.name.includes('Freight') && freightNeedsPlatform === null) {
             setError('Please specify if the freight train needs a platform.');
-            return;
-        }
-        if (!selectedTrain.name.includes('Freight') && needsMultiplePlatforms === null) {
-            setError('Please specify if the train needs multiple platforms.');
             return;
         }
 
@@ -278,8 +333,7 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
                     trainNo: selectedTrain.trainNo, 
                     actualArrival: arrivalTimeToLog, 
                     platforms: platforms,
-                    freightNeedsPlatform: freightNeedsPlatform,
-                    needsMultiplePlatforms: needsMultiplePlatforms
+                    freightNeedsPlatform: freightNeedsPlatform
                 }),
             });
             if (!response.ok) { const errData = await response.json(); throw new Error(errData.error || 'Failed to fetch suggestions.'); }
@@ -312,14 +366,6 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
         onClose();
     };
 
-    const handlePlatformSelection = (platformId) => {
-        setSelectedPlatforms(prev => 
-            prev.includes(platformId) 
-                ? prev.filter(id => id !== platformId) 
-                : [...prev, platformId]
-        );
-    };
-
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Arriving Trains and Platform Suggestions">
             {view === 'selection' && (
@@ -338,16 +384,6 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
                             <div className="flex gap-4">
                                 <button onClick={() => setFreightNeedsPlatform(true)} className={`flex-1 py-2 rounded-md ${freightNeedsPlatform === true ? 'bg-blue-600 text-white' : 'bg-white'}`}>Yes</button>
                                 <button onClick={() => setFreightNeedsPlatform(false)} className={`flex-1 py-2 rounded-md ${freightNeedsPlatform === false ? 'bg-blue-600 text-white' : 'bg-white'}`}>No (Track only)</button>
-                            </div>
-                        </div>
-                    )}
-
-                    {selectedTrain && !selectedTrain.name.includes('Freight') && (
-                        <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-md">
-                            <p className="font-semibold text-indigo-800 mb-2">Does this train require multiple platforms?</p>
-                            <div className="flex gap-4">
-                                <button onClick={() => setNeedsMultiplePlatforms(true)} className={`flex-1 py-2 rounded-md ${needsMultiplePlatforms === true ? 'bg-indigo-600 text-white' : 'bg-white'}`}>Yes</button>
-                                <button onClick={() => setNeedsMultiplePlatforms(false)} className={`flex-1 py-2 rounded-md ${needsMultiplePlatforms === false ? 'bg-indigo-600 text-white' : 'bg-white'}`}>No</button>
                             </div>
                         </div>
                     )}
@@ -384,46 +420,24 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
                     
                     {suggestions.length > 0 ? (
                         <div className="mt-4">
-                            <h4 className="text-lg font-semibold mb-2">2. Choose Platform(s) (sorted by best match):</h4>
+                            <h4 className="text-lg font-semibold mb-2">2. Choose a Platform (sorted by best match):</h4>
                             <div className="space-y-3">
                                 {suggestions.map((suggestion, index) => {
-                                    const { platformId, score, reasons } = suggestion;
-                                    const isSelected = selectedPlatforms.includes(platformId);
+                                    const { platformId, platformIds, score, reasons } = suggestion;
                                     return (
-                                        <div 
-                                            key={index} 
-                                            className={`p-3 rounded-md border flex items-center justify-between ${score > 50 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'} ${isSelected ? 'ring-2 ring-indigo-500' : ''}`}
-                                        >
-                                            <div className="flex-1">
+                                        <div key={index} className={`p-3 rounded-md border ${score > 50 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                                            <div className="flex justify-between items-center">
                                                 <p className="font-bold text-lg">{platformId}</p>
-                                                <div className="text-sm mt-1 text-gray-600">
-                                                    <span className="font-semibold">Score: {score.toFixed(0)}</span>
-                                                    {reasons && reasons.length > 0 && ( <p className="text-xs italic text-gray-500 mt-1">Notes: {reasons.join(', ')}</p> )}
-                                                </div>
+                                                <button onClick={() => handleAssign(platformIds || platformId)} className="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 font-semibold">Assign</button>
                                             </div>
-                                            {needsMultiplePlatforms ? (
-                                                <input 
-                                                    type="checkbox"
-                                                    checked={isSelected}
-                                                    onChange={() => handlePlatformSelection(platformId)}
-                                                    className="form-checkbox h-6 w-6 text-indigo-600 transition duration-150 ease-in-out"
-                                                />
-                                            ) : (
-                                                <button onClick={() => handleAssign(platformId)} className="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 font-semibold">Assign</button>
-                                            )}
+                                            <div className="text-sm mt-2 text-gray-600">
+                                                <span className="font-semibold">Score: {score.toFixed(0)}</span>
+                                                {reasons && reasons.length > 0 && ( <p className="text-xs italic text-gray-500 mt-1">Notes: {reasons.join(', ')}</p> )}
+                                            </div>
                                         </div>
                                     );
                                 })}
                             </div>
-                             {needsMultiplePlatforms && (
-                                <button 
-                                    onClick={() => handleAssign(selectedPlatforms)} 
-                                    disabled={selectedPlatforms.length === 0}
-                                    className="w-full mt-4 bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition disabled:bg-gray-400"
-                                >
-                                    Assign Selected ({selectedPlatforms.length})
-                                </button>
-                            )}
                         </div>
                         ) : !isLoading && (
                         <div className="text-center p-4 bg-red-50 border-red-200 border rounded-md">
@@ -491,19 +505,26 @@ const MaintenanceModal = ({ isOpen, onClose, platforms, onToggleMaintenance }) =
 
 const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onDeleteTrain }) => {
     const initialFormState = {
-        trainNumber: '', train_type: 'Express', length: 20, direction: 'UP',
-        source: '', destination: '', scheduled_arrival: '', scheduled_departure: '', priority: 2,
+        trainNumber: '',
+        train_type: 'Express',
+        size: 'short', 
+        direction: 'UP',
+        source: '',
+        destination: '',
+        scheduled_arrival: '',
+        scheduled_departure: '',
+        priority: 2,
     };
     const [newTrain, setNewTrain] = useState(initialFormState);
 
     const handleInputChange = (e) => {
-        const { name, value, type } = e.target;
-        setNewTrain(prev => ({ ...prev, [name]: type === 'number' ? parseInt(value, 10) : value }));
+        const { name, value } = e.target;
+        setNewTrain(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!newTrain.trainNumber || !newTrain.source || !newTrain.destination || !newTrain.scheduled_arrival || !newTrain.scheduled_departure) {
+        if (!newTrain.trainNumber || !newTrain.source || !newTrain.destination || !newTrain.scheduled_departure) {
             toast.error("Please fill all required fields for the new train.");
             return;
         }
@@ -538,17 +559,20 @@ const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onDeleteTrain 
                             </select>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <div><label className="text-xs">Length (coaches)</label><input type="number" name="length" value={newTrain.length} onChange={handleInputChange} className="w-full p-2 border rounded-md" /></div>
-                            <div><label className="text-xs">Priority (1-4)</label><input type="number" name="priority" value={newTrain.priority} min="1" max="4" onChange={handleInputChange} className="w-full p-2 border rounded-md" /></div>
+                             <select name="size" value={newTrain.size} onChange={handleInputChange} className="w-full p-2 border rounded-md">
+                                <option value="short">Short</option>
+                                <option value="long">Long</option>
+                            </select>
+                            <div><label className="text-xs">Priority (1-4)</label><input type="number" name="priority" value={newTrain.priority} min="1" max="4" onChange={e => setNewTrain({...newTrain, priority: parseInt(e.target.value)})} className="w-full p-2 border rounded-md" /></div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <div><label className="text-xs">Scheduled Arrival</label><input type="time" name="scheduled_arrival" value={newTrain.scheduled_arrival} onChange={handleInputChange} className="w-full p-2 border rounded-md" required /></div>
+                            <div><label className="text-xs">Scheduled Arrival</label><input type="time" name="scheduled_arrival" value={newTrain.scheduled_arrival} onChange={handleInputChange} className="w-full p-2 border rounded-md" /></div>
                             <div><label className="text-xs">Scheduled Departure</label><input type="time" name="scheduled_departure" value={newTrain.scheduled_departure} onChange={handleInputChange} className="w-full p-2 border rounded-md" required /></div>
                         </div>
                         <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition">Add Train</button>
                     </form>
                 </div>
-
+                {/* Delete Train List */}
                 <div className="space-y-4">
                     <h4 className="text-lg font-semibold border-b pb-2">Delete Arriving Train</h4>
                     <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
@@ -573,14 +597,50 @@ const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onDeleteTrain 
     );
 };
 
+const LogModal = ({ isOpen, onClose, logs }) => {
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="Operational Logs">
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                {logs.length > 0 ? (
+                    logs.map((log, index) => (
+                        <div key={index} className="p-3 bg-gray-50 rounded-md border-l-4 border-gray-300">
+                            <p className="text-sm text-gray-800">{log.action}</p>
+                            <p className="text-xs text-gray-500 mt-1">{log.timestamp}</p>
+                        </div>
+                    ))
+                ) : (
+                    <p className="text-center text-gray-500 p-4">No log entries found.</p>
+                )}
+            </div>
+        </Modal>
+    );
+};
 
-
-export default function App() {
+// --- MAIN APPLICATION WRAPPER ---
+const MainApp = () => {
     const [platforms, setPlatforms] = useState([]);
     const [arrivingTrains, setArrivingTrains] = useState([]);
     const [departedTrains, setDepartedTrains] = useState([]); 
     const [activeModal, setActiveModal] = useState(null);
     const [error, setError] = useState(null);
+    const [logs, setLogs] = useState([]);
+
+    const fetchLogs = useCallback(async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/logs');
+            if (!response.ok) throw new Error('Failed to fetch logs');
+            const data = await response.json();
+            setLogs(data);
+        } catch (err) {
+            toast.error(err.message);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (activeModal === 'logs') {
+            fetchLogs();
+        }
+    }, [activeModal, fetchLogs]);
 
     // Effect for fetching initial data
     useEffect(() => {
@@ -616,6 +676,9 @@ export default function App() {
             setArrivingTrains(newState.arrivingTrains || []);
             setDepartedTrains(newState.departedTrains || []);
             toast.info("Station data updated.", { autoClose: 2000, position: "bottom-right" });
+            if (activeModal === 'logs') {
+                fetchLogs();
+            }
         });
         
         eventSource.addEventListener('departure_alert', (event) => {
@@ -636,7 +699,7 @@ export default function App() {
             console.log("Closing SSE connection.");
             eventSource.close();
         };
-    }, []); 
+    }, [activeModal, fetchLogs]); 
 
     // Generic API call handler
     const handleApiCall = async (endpoint, body, successMsg) => {
@@ -659,6 +722,7 @@ export default function App() {
         }
     };
 
+    // --- Action Handlers ---
     const handleAssignPlatform = useCallback((trainNo, platformIds) => {
         handleApiCall('assign-platform', { trainNo, platformIds }, `Assigning train ${trainNo}...`);
     }, []);
@@ -714,6 +778,22 @@ export default function App() {
                 onAddTrain={handleAddTrain}
                 onDeleteTrain={handleDeleteTrain}
             />
+            <LogModal isOpen={activeModal === 'logs'} onClose={() => setActiveModal(null)} logs={logs} />
         </div>
     );
+}
+
+
+export default function App() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    const handleLogin = () => {
+        setIsAuthenticated(true);
+    };
+
+    if (!isAuthenticated) {
+        return <LoginPage onLogin={handleLogin} />;
+    }
+
+    return <MainApp />;
 }

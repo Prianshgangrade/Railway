@@ -4,40 +4,61 @@
       "id": "Platform 1",
       "yard": "UP",
       "type": "Platform",
-      "isOccupied": true,
-      "trainDetails": {
-        "trainNo": "T456",
-        "name": "Express Train"
-      },
+      "isOccupied": false,
+      "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 20,
+      "size": "long",
       "isTerminating": false
+    },
+    {
+      "id": "Platform 1A",
+      "yard": "DOWN",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "size": "short",
+      "isTerminating": true
     },
     {
       "id": "Platform 2",
       "yard": "UP",
       "type": "Platform",
-      "isOccupied": true,
-      "trainDetails": {
-        "trainNo": "T111",
-        "name": "Superfast Train"
-      },
+      "isOccupied": false,
+      "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 20,
+      "size": "long",
       "isTerminating": false
+    },
+    {
+      "id": "Platform 2A",
+      "yard": "DOWN",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "size": "short",
+      "isTerminating": true
     },
     {
       "id": "Platform 3",
       "yard": "UP",
       "type": "Platform",
-      "isOccupied": true,
-      "trainDetails": {
-        "trainNo": "T456",
-        "name": "Express Train"
-      },
+      "isOccupied": false,
+      "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 25,
+      "size": "long",
       "isTerminating": false
+    },
+    {
+      "id": "Platform 3A",
+      "yard": "UP",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "size": "short",
+      "isTerminating": true
     },
     {
       "id": "Platform 4",
@@ -46,20 +67,27 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 25,
+      "size": "long",
       "isTerminating": false
+    },
+    {
+      "id": "Platform 4A",
+      "yard": "UP",
+      "type": "Platform",
+      "isOccupied": false,
+      "trainDetails": null,
+      "isUnderMaintenance": false,
+      "size": "short",
+      "isTerminating": true
     },
     {
       "id": "Platform 5",
       "yard": "DOWN",
       "type": "Platform",
-      "isOccupied": true,
-      "trainDetails": {
-        "trainNo": "T987",
-        "name": "Passenger Train"
-      },
+      "isOccupied": false,
+      "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 25,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -69,7 +97,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 25,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -79,7 +107,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 25,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -89,48 +117,8 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 25,
+      "size": "long",
       "isTerminating": false
-    },
-    {
-      "id": "Platform 1A",
-      "yard": "UP",
-      "type": "Platform",
-      "isOccupied": false,
-      "trainDetails": null,
-      "isUnderMaintenance": false,
-      "length": 15,
-      "isTerminating": true
-    },
-    {
-      "id": "Platform 2A",
-      "yard": "UP",
-      "type": "Platform",
-      "isOccupied": false,
-      "trainDetails": null,
-      "isUnderMaintenance": false,
-      "length": 15,
-      "isTerminating": true
-    },
-    {
-      "id": "Platform 3A",
-      "yard": "UP",
-      "type": "Platform",
-      "isOccupied": false,
-      "trainDetails": null,
-      "isUnderMaintenance": false,
-      "length": 15,
-      "isTerminating": true
-    },
-    {
-      "id": "Platform 4A",
-      "yard": "UP",
-      "type": "Platform",
-      "isOccupied": false,
-      "trainDetails": null,
-      "isUnderMaintenance": false,
-      "length": 15,
-      "isTerminating": true
     },
     {
       "id": "Track 1",
@@ -138,8 +126,8 @@
       "type": "Freight Track",
       "isOccupied": false,
       "trainDetails": null,
-      "isUnderMaintenance": true,
-      "length": 30,
+      "isUnderMaintenance": false,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -149,7 +137,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 30,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -159,7 +147,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 30,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -169,7 +157,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 30,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -179,7 +167,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 30,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -189,7 +177,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 30,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -199,7 +187,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 30,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -209,7 +197,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 30,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -219,7 +207,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 30,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -229,7 +217,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 30,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -239,7 +227,7 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 30,
+      "size": "long",
       "isTerminating": false
     },
     {
@@ -249,51 +237,130 @@
       "isOccupied": false,
       "trainDetails": null,
       "isUnderMaintenance": false,
-      "length": 30,
+      "size": "long",
       "isTerminating": false
     }
   ],
   "arrivingTrains": [
     {
-      "trainNo": "F789",
-      "name": "Freight Train",
-      "origin": "Chennai",
-      "scheduled_arrival": "08:10"
-    },
-    {
-      "trainNo": "F444",
-      "name": "Freight Train",
-      "origin": "Visakhapatnam",
-      "scheduled_arrival": "08:35"
-    },
-    {
-      "trainNo": "T555",
+      "trainNo": "12837",
       "name": "Superfast Train",
-      "origin": "Chennai",
-      "scheduled_arrival": "08:40"
+      "origin": "HWH",
+      "scheduled_arrival": "05:43"
     },
     {
-      "trainNo": "T666",
-      "name": "Passenger Train",
-      "origin": "KGP",
-      "scheduled_arrival": "08:45"
-    }
-  ],
-  "departedTrains": [
-    {
-      "trainNo": "T4325",
-      "name": "Express Train",
-      "departureTime": "02:08"
+      "trainNo": "38808",
+      "name": "Local Train",
+      "origin": "MDN",
+      "scheduled_arrival": "06:47"
     },
     {
-      "trainNo": "T333",
-      "name": "Express Train",
-      "departureTime": "01:41"
+      "trainNo": "68016",
+      "name": "Local Train",
+      "origin": "TATA",
+      "scheduled_arrival": "07:25"
     },
     {
-      "trainNo": "T123",
+      "trainNo": "12842",
       "name": "Superfast Train",
-      "departureTime": "23:20"
+      "origin": "MAS",
+      "scheduled_arrival": "07:35"
+    },
+    {
+      "trainNo": "F9001",
+      "name": "Freight Train",
+      "origin": "BKSC",
+      "scheduled_arrival": "08:15"
+    },
+    {
+      "trainNo": "12814",
+      "name": "Superfast Train",
+      "origin": "TATA",
+      "scheduled_arrival": "08:18"
+    },
+    {
+      "trainNo": "12860",
+      "name": "Superfast Train",
+      "origin": "GHY",
+      "scheduled_arrival": "10:52"
+    },
+    {
+      "trainNo": "12821",
+      "name": "Express Train",
+      "origin": "SHM",
+      "scheduled_arrival": "11:00"
+    },
+    {
+      "trainNo": "F9002",
+      "name": "Freight Train",
+      "origin": "PRDP",
+      "scheduled_arrival": "11:30"
+    },
+    {
+      "trainNo": "12245",
+      "name": "Superfast Train",
+      "origin": "HWH",
+      "scheduled_arrival": "12:15"
+    },
+    {
+      "trainNo": "T8989",
+      "name": "Express Train",
+      "origin": "hwh",
+      "scheduled_arrival": "12:30"
+    },
+    {
+      "trainNo": "38813",
+      "name": "Local Train",
+      "origin": "HWH",
+      "scheduled_arrival": "13:20"
+    },
+    {
+      "trainNo": "12130",
+      "name": "Superfast Train",
+      "origin": "PUNE",
+      "scheduled_arrival": "13:50"
+    },
+    {
+      "trainNo": "18048",
+      "name": "Express Train",
+      "origin": "VSG",
+      "scheduled_arrival": "14:10"
+    },
+    {
+      "trainNo": "38821",
+      "name": "Local Train",
+      "origin": "HWH",
+      "scheduled_arrival": "15:42"
+    },
+    {
+      "trainNo": "12841",
+      "name": "Superfast Train",
+      "origin": "SHM",
+      "scheduled_arrival": "16:40"
+    },
+    {
+      "trainNo": "F9003",
+      "name": "Freight Train",
+      "origin": "ADRA",
+      "scheduled_arrival": "18:00"
+    },
+    {
+      "trainNo": "22604",
+      "name": "Superfast Train",
+      "origin": "VM",
+      "scheduled_arrival": "19:30"
+    },
+    {
+      "trainNo": "F9004",
+      "name": "Freight Train",
+      "origin": "TATA",
+      "scheduled_arrival": "20:10"
+    },
+    {
+      "trainNo": "12863",
+      "name": "Superfast Train",
+      "origin": "HWH",
+      "scheduled_arrival": "23:50"
     }
   ]
 }

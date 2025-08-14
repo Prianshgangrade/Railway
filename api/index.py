@@ -12,15 +12,38 @@ CORS(app)
 app.config["REDIS_URL"] = "redis://localhost:6379"
 app.register_blueprint(sse, url_prefix='/stream')
 
+# --- File Paths ---
 API_DIR = os.path.dirname(__file__)
 STATE_FILE = os.path.join(API_DIR, 'station_state.json')
 PLATFORMS_MASTER_FILE = os.path.join(API_DIR, 'platforms.json')
 TRAINS_MASTER_FILE = os.path.join(API_DIR, 'trains.json')
+LOG_FILE = os.path.join(API_DIR, 'operations_log.txt') # Changed to .txt
 
-# Global State for Timers
+# --- Global State for Timers ---
 active_timers = {}
 timers_lock = threading.Lock()
 state_lock = threading.Lock()
+log_lock = threading.Lock()
+
+def log_action(action_string):
+    """Thread-safely logs an action to the operations_log.txt file."""
+    with log_lock:
+        try:
+            with open(LOG_FILE, 'r') as f:
+                logs = f.readlines()
+        except FileNotFoundError:
+            logs = []
+        
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        log_entry = f"{timestamp} | {action_string}\n"
+        
+        logs.insert(0, log_entry)
+        
+        # Keep the log file from growing indefinitely
+        logs = logs[:500] 
+
+        with open(LOG_FILE, 'w') as f:
+            f.writelines(logs)
 
 def initialize_station_state():
     with state_lock:
@@ -39,7 +62,7 @@ def initialize_station_state():
                     "isOccupied": False,
                     "trainDetails": None,
                     "isUnderMaintenance": False,
-                    "length": row['length'],
+                    "size": row.get('size', 'short'),
                     "isTerminating": bool(row.get('is_terminating', False))
                 } for row in platforms_data]
 
@@ -48,16 +71,16 @@ def initialize_station_state():
                     "name": f"{row['train_type']} Train",
                     "origin": row['source'],
                     "scheduled_arrival": row['scheduled_arrival']
-                } for row in trains_data]
+                } for row in trains_data if row.get('scheduled_arrival') is not None]
 
                 initial_state = {
                     "platforms": initial_platforms,
-                    "arrivingTrains": sorted(initial_arriving_trains, key=lambda x: x['scheduled_arrival']),
-                    "departedTrains": []
+                    "arrivingTrains": sorted(initial_arriving_trains, key=lambda x: x['scheduled_arrival'])
                 }
                 
                 with open(STATE_FILE, 'w') as f:
                     json.dump(initial_state, f, indent=2)
+                log_action("System initialized: Station state created from master files.")
                 print("State file initialized successfully.")
 
             except (FileNotFoundError, json.JSONDecodeError) as e:
@@ -109,25 +132,16 @@ class Train:
     def __init__(self, train_data):
         self.train_id = train_data.get('trainNumber')
         self.train_type = train_data.get('train_type')
-        self.length = int(train_data.get('length', self._get_default_length()))
+        self.size = train_data.get('size', 'short')
         self.direction = train_data.get('direction')
         self.destination = train_data.get('destination')
-        self.priority = int(train_data.get('priority', self._get_default_priority()))
+        self.priority = int(train_data.get('priority', 1))
         self.platform_assigned = train_data.get('platform_assigned')
         self.scheduled_arrival = train_data.get('scheduled_arrival')
         self.scheduled_departure = train_data.get('scheduled_departure')
 
-    def _get_default_priority(self):
-        return {'Superfast': 3, 'Express': 2}.get(self.train_type, 1)
-
-    def _get_default_length(self):
-        return {'Superfast': 20, 'Express': 24, 'Freight': 28, 'Local': 10, 'Passenger': 18}.get(self.train_type, 15)
-
     def is_freight(self):
         return self.train_type == 'Freight'
-
-    def is_long_train(self):
-        return self.length > 22 
 
     def is_terminating(self):
         return self.destination == 'KGP'
@@ -138,7 +152,7 @@ class Train:
 class Platform:
     def __init__(self, platform_data):
         self.platform_id = platform_data.get('platform_id')
-        self.length = int(platform_data.get('length'))
+        self.size = platform_data.get('size', 'short')
         self.direction = platform_data.get('direction')
         self.is_freight = bool(platform_data.get('is_freight'))
         self.is_terminating = bool(platform_data.get('is_terminating'))
@@ -148,10 +162,11 @@ class ScoreCalculator:
     def calculate_score(train, platform, delay=0):
         score = 100
         reasons = []
-        if train.length > platform.length:
-            if not (train.is_long_train() and platform.platform_id in ['1', '2', '3', '4']):
-                score -= 500
-                reasons.append(f"Train too long")
+
+        if train.size == 'long' and platform.size == 'short':
+            score -= 500
+            reasons.append(f"Long train cannot fit on short platform")
+        
         if train.direction != platform.direction:
             score -= 200
             reasons.append(f"Direction mismatch")
@@ -189,11 +204,28 @@ def load_master_data():
         print(f"Error loading master JSON data: {e}")
         return None, None
 
-#API Endpoints
+# --- API Endpoints ---
 @app.route("/api/station-data")
 def get_station_data():
     state = read_state()
     return jsonify(state)
+
+@app.route("/api/logs")
+def get_logs():
+    """Endpoint to fetch and parse the operational logs from the text file."""
+    with log_lock:
+        try:
+            with open(LOG_FILE, 'r') as f:
+                lines = f.readlines()
+            
+            logs_json = []
+            for line in lines:
+                parts = line.strip().split(' | ', 1)
+                if len(parts) == 2:
+                    logs_json.append({"timestamp": parts[0], "action": parts[1]})
+            return jsonify(logs_json)
+        except FileNotFoundError:
+            return jsonify([])
 
 @app.route("/api/platform-suggestions", methods=['POST'])
 def get_platform_suggestions():
@@ -202,7 +234,6 @@ def get_platform_suggestions():
     frontend_platforms = request_data.get('platforms')
     actual_arrival = request_data.get('actualArrival')
     freight_needs_platform = request_data.get('freightNeedsPlatform')
-    needs_multiple_platforms = request_data.get('needsMultiplePlatforms')
 
     platforms_master, trains_master = load_master_data()
     if platforms_master is None or trains_master is None:
@@ -217,18 +248,18 @@ def get_platform_suggestions():
 
     available_platforms = [p for p in frontend_platforms if not p.get('isOccupied') and not p.get('isUnderMaintenance')]
     
-    # Filter based on train type
     if train.is_freight():
-        if freight_needs_platform == False:
+        if freight_needs_platform == True:
+            available_platforms = [p for p in available_platforms if p['type'] == 'Platform']
+        elif freight_needs_platform == False:
             available_platforms = [p for p in available_platforms if p['type'] == 'Freight Track']
-    else: # If it's NOT a freight train, only show platforms
+    else: 
         available_platforms = [p for p in available_platforms if p['type'] == 'Platform']
-
 
     suggestions = []
     
-    # Multi suggestions only if requested
-    if needs_multiple_platforms:
+    platforms_for_single_suggestions = []
+    if train.size == 'long':
         platform_map = {p['id']: p for p in available_platforms}
         if "Platform 1" in platform_map and "Platform 3" in platform_map:
             p1_master = next((p for p in platforms_master if p['platform_id'] == '1' and not p['is_freight']), None)
@@ -242,8 +273,14 @@ def get_platform_suggestions():
                 score, reasons = ScoreCalculator.calculate_score(train, Platform(p2_master), delay)
                 suggestions.append({"platformId": "Platform 2 & 4", "platformIds": ["Platform 2", "Platform 4"], "score": score + 50, "reasons": reasons + ["Combined platform"]})
 
-    # single platform suggestions
-    for p_data in available_platforms:
+        allowed_long_train_platforms = ['Platform 5', 'Platform 6', 'Platform 7', 'Platform 8']
+        for p in available_platforms:
+            if p['id'] in allowed_long_train_platforms or p['type'] == 'Freight Track':
+                platforms_for_single_suggestions.append(p)
+    else: 
+        platforms_for_single_suggestions = available_platforms
+
+    for p_data in platforms_for_single_suggestions:
         platform_numeric_id = str(p_data['id']).replace("Platform ", "").replace("Track ", "")
         is_freight_lookup = p_data['type'] == 'Freight Track'
         
@@ -301,8 +338,8 @@ def assign_platform():
             platform_to_assign['trainDetails'] = { "trainNo": train_to_assign['trainNo'], "name": train_to_assign['name'] }
         else:
             print(f"Warning: Platform {platform_id} not found during multi-assign.")
-
-    state['arrivingTrains'] = [t for t in state['arrivingTrains'] if t['trainNo'] != train_no]
+    
+    log_action(f"ASSIGNED: Train {train_no} assigned to {', '.join(platform_ids)}.")
     write_state(state)
 
     _, trains_master = load_master_data()
@@ -348,25 +385,10 @@ def unassign_platform():
     train_details = platform_to_clear['trainDetails']
     train_no_to_readd = train_details['trainNo']
     
-    _, trains_master = load_master_data()
-    if trains_master is None:
-         return jsonify({"error": "Server master data file (trains.json) not found."}), 500
-
-    original_train_data = next((t for t in trains_master if str(t.get('trainNumber')) == str(train_no_to_readd)), None)
-    if not original_train_data:
-        return jsonify({"error": f"Could not find original data for train {train_no_to_readd}."}), 500
-
     platform_to_clear['isOccupied'] = False
     platform_to_clear['trainDetails'] = None
 
-    state['arrivingTrains'].append({
-        "trainNo": str(original_train_data['trainNumber']),
-        "name": f"{original_train_data['train_type']} Train",
-        "origin": original_train_data['source'],
-        "scheduled_arrival": original_train_data['scheduled_arrival']
-    })
-    state['arrivingTrains'].sort(key=lambda x: x['scheduled_arrival'])
-
+    log_action(f"UNASSIGNED: Train {train_no_to_readd} unassigned from {platform_id}.")
     write_state(state)
     return jsonify({"message": f"Train {train_no_to_readd} unassigned from {platform_id}."})
 
@@ -383,12 +405,10 @@ def depart_train():
         return jsonify({"error": "Platform not found or is not occupied."}), 404
 
     departed_train = platform_to_free['trainDetails']
-    departed_train['departureTime'] = datetime.now().strftime('%H:%M')
+    departure_time = datetime.now().strftime('%H:%M')
 
     platform_to_free['isOccupied'] = False
     platform_to_free['trainDetails'] = None
-    state['departedTrains'].insert(0, departed_train) 
-    state['departedTrains'] = state['departedTrains'][:20] 
 
     with timers_lock:
         if platform_id in active_timers:
@@ -396,6 +416,7 @@ def depart_train():
             del active_timers[platform_id]
             print(f"Cancelled departure timer for {platform_id} due to manual departure.")
 
+    log_action(f"DEPARTED: Train {departed_train['trainNo']} departed from {platform_id} at {departure_time}.")
     write_state(state)
     return jsonify({"message": f"Train {departed_train['trainNo']} departed from {platform_id}."})
 
@@ -415,6 +436,8 @@ def toggle_maintenance():
 
     platform_to_toggle['isUnderMaintenance'] = not platform_to_toggle['isUnderMaintenance']
     
+    status = "ON" if platform_to_toggle['isUnderMaintenance'] else "OFF"
+    log_action(f"MAINTENANCE: Maintenance for {platform_id} set to {status}.")
     write_state(state)
     return jsonify({"message": f"Maintenance status toggled for {platform_id}."})
 
@@ -422,7 +445,7 @@ def toggle_maintenance():
 def add_train():
     new_train_data = request.get_json()
     
-    required_keys = ['trainNumber', 'train_type', 'length', 'direction', 'source', 'destination', 'scheduled_arrival', 'scheduled_departure', 'priority']
+    required_keys = ['trainNumber', 'train_type', 'size', 'direction', 'source', 'destination', 'scheduled_departure', 'priority']
     if not all(k in new_train_data for k in required_keys):
         return jsonify({"error": "Missing required train data."}), 400
 
@@ -433,20 +456,25 @@ def add_train():
     if str(new_train_data['trainNumber']) in [str(t.get('trainNumber')) for t in trains_master]:
         return jsonify({"error": f"Train number {new_train_data['trainNumber']} already exists."}), 409
 
+    if 'scheduled_arrival' in new_train_data and new_train_data['scheduled_arrival'] == '':
+        new_train_data['scheduled_arrival'] = None
+
     trains_master.append(new_train_data)
     
     with open(TRAINS_MASTER_FILE, 'w') as f:
         json.dump(trains_master, f, indent=2)
 
     state = read_state()
-    state['arrivingTrains'].append({
-        "trainNo": str(new_train_data['trainNumber']),
-        "name": f"{new_train_data['train_type']} Train",
-        "origin": new_train_data.get('source', 'N/A'),
-        "scheduled_arrival": new_train_data.get('scheduled_arrival', 'N/A')
-    })
-    state['arrivingTrains'].sort(key=lambda x: x['scheduled_arrival'])
+    if new_train_data.get('scheduled_arrival') is not None:
+        state['arrivingTrains'].append({
+            "trainNo": str(new_train_data['trainNumber']),
+            "name": f"{new_train_data['train_type']} Train",
+            "origin": new_train_data.get('source', 'N/A'),
+            "scheduled_arrival": new_train_data.get('scheduled_arrival', 'N/A')
+        })
+        state['arrivingTrains'].sort(key=lambda x: x['scheduled_arrival'])
     
+    log_action(f"TRAIN ADDED: New train {new_train_data['trainNumber']} added to the master schedule.")
     write_state(state)
 
     return jsonify({"message": f"Train {new_train_data['trainNumber']} added successfully."})
@@ -475,6 +503,7 @@ def delete_train():
     state = read_state()
     state['arrivingTrains'] = [t for t in state['arrivingTrains'] if str(t['trainNo']) != str(train_no_to_delete)]
     
+    log_action(f"TRAIN DELETED: Train {train_no_to_delete} removed from the master schedule.")
     write_state(state)
 
     return jsonify({"message": f"Train {train_no_to_delete} deleted successfully."})
