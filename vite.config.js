@@ -11,6 +11,9 @@ export default defineConfig({
   server: {
     // This `watch` object is where `ignored` should be.
     // This fixes the "browser reloading" issue.
+    host: "0.0.0.0",  
+    port: 5173,
+    allowedHosts: ["*"],
     watch: {
       ignored: ['**/api/**'],
     },

@@ -1,0 +1,115 @@
+  {
+    "platform_tracks": [
+      {
+        "id": "P1",
+        "direction": "DOWN",
+        "is_terminating_only": false
+      },
+      {
+        "id": "P2",
+        "direction": "DOWN",
+        "is_terminating_only": false
+      },
+      {
+        "id": "P3",
+        "direction": "DOWN",
+        "is_terminating_only": false
+      },
+      {
+        "id": "P4",
+        "direction": "DOWN",
+        "is_terminating_only": false
+      },
+      {
+        "id": "P1A",
+        "direction": "DOWN",
+        "is_terminating_only": true
+      },
+      {
+        "id": "P2A",
+        "direction": "DOWN",
+        "is_terminating_only": true
+      },
+      {
+        "id": "P3A",
+        "direction": "UP",
+        "is_terminating_only": true
+      },
+      {
+        "id": "P4A",
+        "direction": "UP",
+        "is_terminating_only": true
+      },
+      {
+        "id": "P5",
+        "direction": "UP",
+        "is_terminating_only": false
+      },
+      {
+        "id": "P6",
+        "direction": "UP",
+        "is_terminating_only": false
+      },
+      {
+        "id": "P7",
+        "direction": "UP",
+        "is_terminating_only": false
+      },
+      {
+        "id": "P8",
+        "direction": "UP",
+        "is_terminating_only": false
+      }
+    ],
+    "non_platform_tracks": [
+      {
+        "id": "T1",
+        "direction": "DOWN"
+      },
+      {
+        "id": "T2",
+        "direction": "DOWN"
+      },
+      {
+        "id": "T3",
+        "direction": "DOWN"
+      },
+      {
+        "id": "T4",
+        "direction": "DOWN"
+      },
+      {
+        "id": "T5",
+        "direction": "DOWN"
+      },
+      {
+        "id": "T6",
+        "direction": "DOWN"
+      },
+      {
+        "id": "T7",
+        "direction": "UP"
+      },
+      {
+        "id": "T8",
+        "direction": "UP"
+      },
+      {
+        "id": "T9",
+        "direction": "UP"
+      },
+      {
+        "id": "T10",
+        "direction": "UP"
+      },
+      {
+        "id": "T11",
+        "direction": "UP"
+      },
+      {
+        "id": "T12",
+        "direction": "UP"
+      }
+    ]
+  }
+

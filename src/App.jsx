@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 
 // --- LOGIN COMPONENT ---
-
 const LoginPage = ({ onLogin }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -10,7 +9,6 @@ const LoginPage = ({ onLogin }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Static credentials check
         if (username === 'stationmaster' && password === 'kgpcontrol123') {
             setError('');
             onLogin();
@@ -64,7 +62,6 @@ const LoginPage = ({ onLogin }) => {
 
 
 // --- HELPER HOOKS & COMPONENTS ---
-
 const useCurrentTime = () => {
     const [time, setTime] = useState(new Date());
     useEffect(() => {
@@ -96,8 +93,7 @@ const Modal = ({ children, isOpen, onClose, title }) => {
 };
 
 
-// --- LAYOUT COMPONENTS (Based on your Figma design) ---
-
+// --- LAYOUT COMPONENTS ---
 const Header = () => {
     const currentTime = useCurrentTime();
     return (
@@ -119,7 +115,7 @@ const Track = ({ number, trackData, onUnassignPlatform }) => {
         );
     }
 
-    const { isUnderMaintenance, isOccupied, trainDetails } = trackData;
+    const { isUnderMaintenance, isOccupied, trainDetails, actualArrival } = trackData;
     
     const cardStyle = isUnderMaintenance 
         ? 'bg-yellow-100 border-yellow-500' 
@@ -141,18 +137,25 @@ const Track = ({ number, trackData, onUnassignPlatform }) => {
                 <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusBgColor}`}>{statusText}</span>
             </div>
             {isOccupied && trainDetails ? (
-                <div className="flex justify-between items-center mt-1">
-                    <div className={`text-sm ${isOccupied ? 'text-green-100' : 'text-gray-700'}`}>
-                        <p className="font-medium truncate">{trainDetails.trainNo} - {trainDetails.name}</p>
+                <div>
+                    <div className="flex justify-between items-center mt-1">
+                        <div className={`text-sm ${isOccupied ? 'text-green-100' : 'text-gray-700'}`}>
+                            <p className="font-medium truncate">{trainDetails.trainNo} - {trainDetails.name}</p>
+                        </div>
+                        <button 
+                            onClick={() => onUnassignPlatform(trackData.id, trainDetails)}
+                            className="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600 transition-all"
+                        >
+                            Unassign
+                        </button>
                     </div>
-                    <button 
-                        onClick={() => onUnassignPlatform(trackData.id)}
-                        className="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600 transition-all"
-                    >
-                        Unassign
-                    </button>
+                    {actualArrival && (
+                         <p className={`text-xs mt-1 font-semibold ${isOccupied ? 'text-green-200' : 'text-gray-600'}`}>
+                            Actual Arrival: {actualArrival}
+                         </p>
+                    )}
                 </div>
-            ) : <div className="h-5"></div>}
+            ) : <div className="h-10"></div>}
         </div>
     );
 };
@@ -167,7 +170,7 @@ const Platform = ({ name, platformData, onUnassignPlatform }) => {
         );
     }
 
-    const { isUnderMaintenance, isOccupied, trainDetails, isTerminating } = platformData;
+    const { isUnderMaintenance, isOccupied, trainDetails, isTerminating, actualArrival } = platformData;
 
     const cardStyle = isUnderMaintenance 
         ? 'bg-yellow-100 border-yellow-500' 
@@ -189,18 +192,25 @@ const Platform = ({ name, platformData, onUnassignPlatform }) => {
                 <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusBgColor}`}>{statusText}</span>
             </div>
             {isOccupied && trainDetails ? (
-                <div className="flex justify-between items-center mt-1">
-                    <div className={`text-sm ${isOccupied ? 'text-green-100' : 'text-gray-700'}`}>
-                        <p className="font-medium truncate">{trainDetails.trainNo} - {trainDetails.name}</p>
+                <div>
+                    <div className="flex justify-between items-center mt-1">
+                        <div className={`text-sm ${isOccupied ? 'text-green-100' : 'text-gray-700'}`}>
+                            <p className="font-medium truncate">{trainDetails.trainNo} - {trainDetails.name}</p>
+                        </div>
+                        <button 
+                            onClick={() => onUnassignPlatform(platformData.id, trainDetails)}
+                            className="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600 transition-all"
+                        >
+                            Unassign
+                        </button>
                     </div>
-                    <button 
-                        onClick={() => onUnassignPlatform(platformData.id)}
-                        className="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600 transition-all"
-                    >
-                        Unassign
-                    </button>
+                     {actualArrival && (
+                         <p className={`text-xs mt-1 font-semibold ${isOccupied ? 'text-green-200' : 'text-gray-600'}`}>
+                            Actual Arrival: {actualArrival}
+                         </p>
+                    )}
                 </div>
-            ) : <div className="h-5"></div>}
+            ) : <div className="h-10"></div>}
             <div className={`text-xs mt-2 flex justify-end ${isOccupied ? 'text-purple-200' : 'text-purple-700'}`}>
                 {isTerminating && <span className="font-semibold">Terminating</span>}
             </div>
@@ -235,10 +245,10 @@ const RailwayLayout = ({ platforms, onOpenModal, onUnassignPlatform }) => {
                 </nav>
             </div>
 
-            <Track number={1} trackData={platformMap.get("Track 1")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number={2} trackData={platformMap.get("Track 2")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number={3} trackData={platformMap.get("Track 3")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number={4} trackData={platformMap.get("Track 4")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="1" trackData={platformMap.get("Track 1")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="2" trackData={platformMap.get("Track 2")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="3" trackData={platformMap.get("Track 3")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="4" trackData={platformMap.get("Track 4")} onUnassignPlatform={onUnassignPlatform} />
 
             <div className="grid grid-cols-2 gap-3">
                 <Platform name="Platform 1" platformData={platformMap.get("Platform 1")} onUnassignPlatform={onUnassignPlatform} />
@@ -262,49 +272,89 @@ const RailwayLayout = ({ platforms, onOpenModal, onUnassignPlatform }) => {
             <Platform name="Platform 7" platformData={platformMap.get("Platform 7")} onUnassignPlatform={onUnassignPlatform} />
             <Platform name="Platform 8" platformData={platformMap.get("Platform 8")} onUnassignPlatform={onUnassignPlatform} />
 
-            <Track number={5} trackData={platformMap.get("Track 5")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number={6} trackData={platformMap.get("Track 6")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number={7} trackData={platformMap.get("Track 7")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number={8} trackData={platformMap.get("Track 8")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number={9} trackData={platformMap.get("Track 9")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number={10} trackData={platformMap.get("Track 10")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number={11} trackData={platformMap.get("Track 11")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number={12} trackData={platformMap.get("Track 12")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="5" trackData={platformMap.get("Track 5")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="6" trackData={platformMap.get("Track 6")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="7" trackData={platformMap.get("Track 7")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="8" trackData={platformMap.get("Track 8")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="9" trackData={platformMap.get("Track 9")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="10" trackData={platformMap.get("Track 10")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="11" trackData={platformMap.get("Track 11")} onUnassignPlatform={onUnassignPlatform} />
+            <Track number="12" trackData={platformMap.get("Track 12")} onUnassignPlatform={onUnassignPlatform} />
         </div>
     );
 }
 
 
 // --- MODAL COMPONENTS ---
-
-const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignPlatform }) => {
+const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignPlatform, trainToReassign }) => {
     const [selectedTrain, setSelectedTrain] = useState(null);
-    const [actualArrival, setActualArrival] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [view, setView] = useState('selection');
-    const [isEditingTime, setIsEditingTime] = useState(false);
-    const [delayNote, setDelayNote] = useState('');
     const [freightNeedsPlatform, setFreightNeedsPlatform] = useState(null);
+    const [loggedArrivalTime, setLoggedArrivalTime] = useState('');
 
-    const resetState = () => {
+    const resetState = useCallback(() => {
         setSelectedTrain(null);
-        setActualArrival('');
         setSuggestions([]);
         setError('');
         setIsLoading(false);
         setView('selection');
-        setIsEditingTime(false);
-        setDelayNote('');
         setFreightNeedsPlatform(null);
-    };
+        setLoggedArrivalTime('');
+    }, []);
+
+    const fetchSuggestionsForTrain = useCallback(async (train, needsPlatform) => {
+        setIsLoading(true);
+        setError('');
+        const arrivalTimeToLog = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        setLoggedArrivalTime(arrivalTimeToLog);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/platform-suggestions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    trainNo: train.trainNo,
+                    platforms: platforms,
+                    freightNeedsPlatform: needsPlatform
+                }),
+            });
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || 'Failed to fetch suggestions.');
+            }
+            const data = await response.json();
+            setSuggestions(data.suggestions || []);
+            setView('suggestion');
+        } catch (err) {
+            setError(err.message);
+            setSuggestions([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [platforms]);
+
 
     useEffect(() => {
         if (isOpen) {
-            resetState();
+            if (trainToReassign) {
+                const train = arrivingTrains.find(t => t.trainNo === trainToReassign.trainNo);
+                if (train) {
+                    setSelectedTrain(train);
+                    const isFreight = train.name.includes('Freight') || train.name.includes('Goods');
+                    if (!isFreight) {
+                        fetchSuggestionsForTrain(train, true);
+                    }
+                }
+            } else {
+                resetState();
+            }
+        } else {
+           resetState();
         }
-    }, [isOpen]);
+    }, [isOpen, trainToReassign, arrivingTrains, resetState, fetchSuggestionsForTrain]);
 
     const handleTrainSelection = (trainNo) => {
         const train = arrivingTrains.find(t => t.trainNo === trainNo);
@@ -312,57 +362,21 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
         setFreightNeedsPlatform(null); 
     };
     
-    const handleLogAndSuggest = async (timeToUse = null) => {
-        if (!selectedTrain) { setError('Please select a train first.'); return; }
-        
-        if (selectedTrain.name.includes('Freight') && freightNeedsPlatform === null) {
+    const handleGetSuggestions = () => {
+        if (!selectedTrain) { 
+            setError('Please select a train first.'); 
+            return; 
+        }
+        if ((selectedTrain.name.includes('Freight') || selectedTrain.name.includes('Goods')) && freightNeedsPlatform === null) {
             setError('Please specify if the freight train needs a platform.');
             return;
         }
-
-        setError(''); 
-        setIsLoading(true);
-        const arrivalTimeToLog = timeToUse || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-        setActualArrival(arrivalTimeToLog);
-
-        try {
-            const response = await fetch('http://localhost:5000/api/platform-suggestions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    trainNo: selectedTrain.trainNo, 
-                    actualArrival: arrivalTimeToLog, 
-                    platforms: platforms,
-                    freightNeedsPlatform: freightNeedsPlatform
-                }),
-            });
-            if (!response.ok) { const errData = await response.json(); throw new Error(errData.error || 'Failed to fetch suggestions.'); }
-            
-            const data = await response.json();
-            
-            if (data.delay && data.delay > 0) {
-                const hours = Math.floor(data.delay / 60);
-                const minutes = Math.round(data.delay % 60);
-                let note = `Train is delayed by `;
-                if (hours > 0) note += `${hours} hour(s) `;
-                if (minutes > 0) note += `${minutes} minute(s)`;
-                setDelayNote(note.trim() + '.');
-            } else if (data.delay !== undefined) {
-                setDelayNote('Train appears to be on time or early.');
-            } else {
-                setDelayNote('');
-            }
-
-            setSuggestions(data.suggestions || []);
-            setView('suggestion');
-            setIsEditingTime(false);
-        } catch (err) { setError(err.message);
-        } finally { setIsLoading(false); }
+        fetchSuggestionsForTrain(selectedTrain, freightNeedsPlatform);
     };
     
     const handleAssign = (platformIds) => {
         const idsToAssign = Array.isArray(platformIds) ? platformIds : [platformIds];
-        onAssignPlatform(selectedTrain.trainNo, idsToAssign);
+        onAssignPlatform(selectedTrain.trainNo, idsToAssign, loggedArrivalTime);
         onClose();
     };
 
@@ -372,13 +386,13 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
                 <div className="space-y-4">
                     <div>
                         <label htmlFor="suggest-train-list" className="block text-sm font-medium text-gray-700 mb-2">1. Select Arriving Train:</label>
-                        <select id="suggest-train-list" value={selectedTrain?.trainNo || ''} onChange={e => handleTrainSelection(e.target.value)} className="w-full p-2 border rounded-md">
+                        <select id="suggest-train-list" value={selectedTrain?.trainNo || ''} onChange={e => handleTrainSelection(e.target.value)} className="w-full p-2 border rounded-md" disabled={!!trainToReassign}>
                             <option value="" disabled>Select a train...</option>
                             {arrivingTrains.map(train => <option key={train.trainNo} value={train.trainNo}>{train.trainNo} - {train.name}</option>)}
                         </select>
                     </div>
 
-                    {selectedTrain && selectedTrain.name.includes('Freight') && (
+                    {selectedTrain && (selectedTrain.name.includes('Freight') || selectedTrain.name.includes('Goods')) && (
                         <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                             <p className="font-semibold text-blue-800 mb-2">Does this freight train need a platform?</p>
                             <div className="flex gap-4">
@@ -388,7 +402,7 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
                         </div>
                     )}
 
-                    <button onClick={() => handleLogAndSuggest()} disabled={!selectedTrain || isLoading} className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400">
+                    <button onClick={handleGetSuggestions} disabled={!selectedTrain || isLoading} className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400">
                         {isLoading ? 'Loading...' : 'Get Platform Suggestions'}
                     </button>
                     {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
@@ -399,20 +413,7 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
                 <div className="space-y-4">
                     <div className="p-3 bg-gray-100 rounded-md border">
                         <p className="font-semibold">{selectedTrain?.trainNo} - {selectedTrain?.name}</p>
-                        {!isEditingTime ? (
-                            <div className="flex items-center gap-4 mt-1">
-                                <p className="text-sm">Arrival Logged at: <strong>{actualArrival}</strong></p>
-                                <button onClick={() => setIsEditingTime(true)} className="text-sm font-medium text-blue-600 hover:underline">Edit</button>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-2 mt-2">
-                                <label className="text-sm font-medium">Edit Time:</label>
-                                <input type="time" value={actualArrival} onChange={e => setActualArrival(e.target.value)} className="p-1 border rounded-md text-sm" />
-                                <button onClick={() => handleLogAndSuggest(actualArrival)} disabled={isLoading} className="bg-blue-500 text-white px-3 py-1 text-sm rounded-md hover:bg-blue-600">Update</button>
-                                <button onClick={() => setIsEditingTime(false)} className="bg-gray-300 px-3 py-1 text-sm rounded-md hover:bg-gray-400">Cancel</button>
-                            </div>
-                        )}
-                        {delayNote && ( <p className={`text-sm mt-2 font-semibold ${delayNote.includes('delayed') ? 'text-orange-600' : 'text-green-600'}`}>{delayNote}</p> )}
+                        <p className="text-sm font-bold text-blue-700">Actual Arrival Time: {loggedArrivalTime}</p>
                     </div>
 
                     {isLoading && <div className="text-center text-gray-500">Recalculating...</div>}
@@ -423,16 +424,15 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
                             <h4 className="text-lg font-semibold mb-2">2. Choose a Platform (sorted by best match):</h4>
                             <div className="space-y-3">
                                 {suggestions.map((suggestion, index) => {
-                                    const { platformId, platformIds, score, reasons } = suggestion;
+                                    const { platformId, platformIds, score } = suggestion;
                                     return (
-                                        <div key={index} className={`p-3 rounded-md border ${score > 50 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                                        <div key={index} className={`p-3 rounded-md border ${score >= 80 ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
                                             <div className="flex justify-between items-center">
                                                 <p className="font-bold text-lg">{platformId}</p>
                                                 <button onClick={() => handleAssign(platformIds || platformId)} className="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 font-semibold">Assign</button>
                                             </div>
                                             <div className="text-sm mt-2 text-gray-600">
-                                                <span className="font-semibold">Score: {score.toFixed(0)}</span>
-                                                {reasons && reasons.length > 0 && ( <p className="text-xs italic text-gray-500 mt-1">Notes: {reasons.join(', ')}</p> )}
+                                                <span className="font-semibold">Score: {score}</span>
                                             </div>
                                         </div>
                                     );
@@ -441,8 +441,8 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
                         </div>
                         ) : !isLoading && (
                         <div className="text-center p-4 bg-red-50 border-red-200 border rounded-md">
-                            <p className="font-semibold text-red-800">No Suitable Platforms/Tracks</p>
-                            <p className="text-sm text-red-700">Could not find any available spots based on the criteria.</p>
+                            <p className="font-semibold text-red-800">No Suitable Platforms/Tracks Found</p>
+                            <p className="text-sm text-red-700">All suitable options may be occupied or under maintenance.</p>
                         </div>
                     )}
                 </div>
@@ -467,7 +467,7 @@ const DepartingModal = ({ isOpen, onClose, platforms, onDepartTrain }) => {
                         </div>
                     ))
                 ) : (
-                    <p className="text-gray-500 text-center p-4">No trains are currently ready for departure.</p>
+                    <p className="text-gray-500 text-center p-4">No trains are currently berthed on platforms.</p>
                 )}
             </div>
             <button onClick={onClose} className="mt-6 w-full bg-gray-300 text-gray-800 py-2 rounded-md hover:bg-gray-400 transition">
@@ -505,17 +505,12 @@ const MaintenanceModal = ({ isOpen, onClose, platforms, onToggleMaintenance }) =
 
 const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onDeleteTrain }) => {
     const initialFormState = {
-        trainNumber: '',
-        train_type: 'Express',
-        size: 'short', 
-        direction: 'UP',
-        source: '',
-        destination: '',
-        scheduled_arrival: '',
-        scheduled_departure: '',
-        priority: 2,
+        trainNumber: '', train_type: 'Express', size: 'short', 
+        direction: 'UP', source: '', destination: '',
+        scheduled_arrival: '', scheduled_departure: '',
     };
     const [newTrain, setNewTrain] = useState(initialFormState);
+    const [trainToDelete, setTrainToDelete] = useState(null);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -533,13 +528,29 @@ const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onDeleteTrain 
     };
     
     const handleDeleteClick = (trainNo) => {
-        if (window.confirm(`Are you sure you want to delete train ${trainNo}? This action cannot be undone.`)) {
-            onDeleteTrain(trainNo);
-        }
+        setTrainToDelete(trainNo);
     };
+
+    const confirmDelete = () => {
+        onDeleteTrain(trainToDelete);
+        setTrainToDelete(null);
+    }
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Miscellaneous Operations">
+            {trainToDelete && (
+                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-xl text-center">
+                        <h4 className="text-lg font-bold mb-4">Confirm Deletion</h4>
+                        <p>Are you sure you want to delete train {trainToDelete}?</p>
+                        <p className="text-sm text-gray-600">This action cannot be undone.</p>
+                        <div className="mt-6 flex justify-center gap-4">
+                            <button onClick={() => setTrainToDelete(null)} className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">Cancel</button>
+                            <button onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Add Train Form */}
                 <div className="space-y-4">
@@ -552,7 +563,7 @@ const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onDeleteTrain 
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             <select name="train_type" value={newTrain.train_type} onChange={handleInputChange} className="w-full p-2 border rounded-md">
-                                <option>Express</option><option>Superfast</option><option>Passenger</option><option>Local</option><option>Freight</option>
+                                <option>Express</option><option>Superfast</option><option>Passenger</option><option>Local</option><option>Freight</option><option>Goods</option>
                             </select>
                             <select name="direction" value={newTrain.direction} onChange={handleInputChange} className="w-full p-2 border rounded-md">
                                 <option>UP</option><option>DOWN</option>
@@ -563,7 +574,6 @@ const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onDeleteTrain 
                                 <option value="short">Short</option>
                                 <option value="long">Long</option>
                             </select>
-                            <div><label className="text-xs">Priority (1-4)</label><input type="number" name="priority" value={newTrain.priority} min="1" max="4" onChange={e => setNewTrain({...newTrain, priority: parseInt(e.target.value)})} className="w-full p-2 border rounded-md" /></div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             <div><label className="text-xs">Scheduled Arrival</label><input type="time" name="scheduled_arrival" value={newTrain.scheduled_arrival} onChange={handleInputChange} className="w-full p-2 border rounded-md" /></div>
@@ -616,14 +626,60 @@ const LogModal = ({ isOpen, onClose, logs }) => {
     );
 };
 
+// --- NEW COMPONENT FOR RE-ASSIGNMENT CONFIRMATION ---
+const ReassignPromptModal = ({ reassignPrompt, onCancel, onConfirmUnassign, onConfirmReassign }) => {
+    if (!reassignPrompt.isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm w-full">
+                <h4 className="text-lg font-bold mb-2">Unassign Train</h4>
+                <p className="mb-1">
+                    You are about to unassign train 
+                    <span className="font-bold mx-1">{reassignPrompt.trainDetails.trainNo}</span>
+                    from 
+                    <span className="font-bold mx-1">{reassignPrompt.platformId}</span>.
+                </p>
+                <p className="text-gray-600 mb-6">Do you want to find a new platform for this train immediately?</p>
+                <div className="flex justify-center gap-4">
+                    <button onClick={onConfirmUnassign} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        No, Just Unassign
+                    </button>
+                    <button onClick={onConfirmReassign} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Yes, Re-assign
+                    </button>
+                </div>
+                 <button onClick={onCancel} className="mt-4 text-sm text-gray-500 hover:underline">Cancel</button>
+            </div>
+        </div>
+    );
+};
+
+
 // --- MAIN APPLICATION WRAPPER ---
 const MainApp = () => {
     const [platforms, setPlatforms] = useState([]);
     const [arrivingTrains, setArrivingTrains] = useState([]);
-    const [departedTrains, setDepartedTrains] = useState([]); 
     const [activeModal, setActiveModal] = useState(null);
     const [error, setError] = useState(null);
     const [logs, setLogs] = useState([]);
+    const [reassignPrompt, setReassignPrompt] = useState({ isOpen: false, platformId: null, trainDetails: null });
+    const [trainForImmediateSuggestion, setTrainForImmediateSuggestion] = useState(null);
+
+    const fetchStationData = useCallback(async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/station-data');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            setPlatforms(data.platforms || []);
+            setArrivingTrains(data.arrivingTrains || []);
+        } catch (err) {
+            console.error("Error fetching station data:", err);
+            setError(err.message);
+            toast.error(`Failed to load station data: ${err.message}`);
+        }
+    }, []);
 
     const fetchLogs = useCallback(async () => {
         try {
@@ -642,45 +698,15 @@ const MainApp = () => {
         }
     }, [activeModal, fetchLogs]);
 
-    // Effect for fetching initial data
     useEffect(() => {
-        const apiUrl = 'http://localhost:5000/api/station-data';
-        fetch(apiUrl)
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                return res.json();
-            })
-            .then(data => {
-                if (data.error) throw new Error(data.error);
-                setPlatforms(data.platforms || []);
-                setArrivingTrains(data.arrivingTrains || []);
-                setDepartedTrains(data.departedTrains || []);
-            })
-            .catch(err => {
-                console.error("Error fetching initial station data:", err);
-                setError(err.message);
-                toast.error(`Failed to load station data: ${err.message}`);
-            });
-    }, []);
+        fetchStationData();
+    }, [fetchStationData]);
 
-    // Effect for Server-Sent Events (SSE)
     useEffect(() => {
         const sseUrl = 'http://localhost:5000/stream';
         console.log("Connecting to SSE stream at:", sseUrl);
         const eventSource = new EventSource(sseUrl);
 
-        eventSource.addEventListener('state_update', (event) => {
-            const newState = JSON.parse(event.data);
-            console.log("Received state update:", newState);
-            setPlatforms(newState.platforms || []);
-            setArrivingTrains(newState.arrivingTrains || []);
-            setDepartedTrains(newState.departedTrains || []);
-            toast.info("Station data updated.", { autoClose: 2000, position: "bottom-right" });
-            if (activeModal === 'logs') {
-                fetchLogs();
-            }
-        });
-        
         eventSource.addEventListener('departure_alert', (event) => {
             const data = JSON.parse(event.data);
             console.log("Received departure alert:", data);
@@ -692,16 +718,14 @@ const MainApp = () => {
 
         eventSource.onerror = (err) => {
             console.error("SSE Connection Error:", err);
-            toast.error("Connection to server lost. Attempting to reconnect...");
         };
 
         return () => {
             console.log("Closing SSE connection.");
             eventSource.close();
         };
-    }, [activeModal, fetchLogs]); 
+    }, []);
 
-    // Generic API call handler
     const handleApiCall = async (endpoint, body, successMsg) => {
         try {
             const response = await fetch(`http://localhost:5000/api/${endpoint}`, {
@@ -714,6 +738,7 @@ const MainApp = () => {
                 throw new Error(data.error || 'An unknown error occurred.');
             }
             toast.success(data.message || successMsg);
+            await fetchStationData(); // Refetch data on success
             return true;
         } catch (err) {
             console.error(`Error calling ${endpoint}:`, err);
@@ -723,37 +748,57 @@ const MainApp = () => {
     };
 
     // --- Action Handlers ---
-    const handleAssignPlatform = useCallback((trainNo, platformIds) => {
-        handleApiCall('assign-platform', { trainNo, platformIds }, `Assigning train ${trainNo}...`);
-    }, []);
+    const handleAssignPlatform = useCallback((trainNo, platformIds, actualArrival) => {
+        handleApiCall('assign-platform', { trainNo, platformIds, actualArrival }, `Assigning train ${trainNo}...`);
+    }, [fetchStationData]);
 
     const handleUnassignPlatform = useCallback((platformId) => {
-        handleApiCall('unassign-platform', { platformId }, `Unassigning train from ${platformId}...`);
-    }, []);
+        return handleApiCall('unassign-platform', { platformId }, `Unassigning train from ${platformId}...`);
+    }, [fetchStationData]);
+
+    const promptForReassignment = (platformId, trainDetails) => {
+        setReassignPrompt({ isOpen: true, platformId, trainDetails });
+    };
+
+    const handleConfirmReassign = async () => {
+        const { platformId, trainDetails } = reassignPrompt;
+        const success = await handleUnassignPlatform(platformId);
+        if (success) {
+            setTrainForImmediateSuggestion(trainDetails);
+            setActiveModal('suggestions');
+        }
+        setReassignPrompt({ isOpen: false, platformId: null, trainDetails: null });
+    };
+
+    const handleConfirmUnassign = () => {
+        handleUnassignPlatform(reassignPrompt.platformId);
+        setReassignPrompt({ isOpen: false, platformId: null, trainDetails: null });
+    };
 
     const handleDepartTrain = useCallback((platformId) => {
         handleApiCall('depart-train', { platformId }, `Departing train from ${platformId}...`);
-    }, []);
+    }, [fetchStationData]);
 
     const handleToggleMaintenance = useCallback((platformId) => {
         handleApiCall('toggle-maintenance', { platformId }, `Updating maintenance for ${platformId}...`);
-    }, []);
+    }, [fetchStationData]);
 
-    const handleAddTrain = useCallback(async (trainData) => {
-        const success = await handleApiCall('add-train', trainData, `Adding train ${trainData.trainNumber}...`);
-    }, []);
+    const handleAddTrain = useCallback((trainData) => {
+        handleApiCall('add-train', trainData, `Adding train ${trainData.trainNumber}...`);
+    }, [fetchStationData]);
 
     const handleDeleteTrain = useCallback((trainNo) => {
         handleApiCall('delete-train', { trainNo }, `Deleting train ${trainNo}...`);
-    }, []);
+    }, [fetchStationData]);
     
     if (error) {
         return (
             <div className="h-screen flex items-center justify-center bg-red-50">
                 <div className="text-center p-8 bg-white rounded-lg shadow-xl">
-                    <h2 className="text-2xl font-bold text-red-600 mb-4">Application Error</h2>
-                    <p className="text-gray-700">Could not load initial station data from the server.</p>
-                    <p className="text-sm text-gray-500 mt-2">Details: {error}</p>
+                    <h2 className="text-2xl font-bold text-red-600 mb-4">Connection Error</h2>
+                    <p className="text-gray-700">Could not connect to the station server.</p>
+                    <p className="text-sm text-gray-500 mt-2">Please ensure the backend is running and accessible.</p>
+                    <p className="text-xs text-gray-400 mt-1">Details: {error}</p>
                 </div>
             </div>
         );
@@ -764,11 +809,21 @@ const MainApp = () => {
             <ToastContainer />
             <div className="container mx-auto p-4 md:p-8">
                 <Header />
-                <RailwayLayout platforms={platforms} onOpenModal={setActiveModal} onUnassignPlatform={handleUnassignPlatform} />
+                <RailwayLayout platforms={platforms} onOpenModal={setActiveModal} onUnassignPlatform={promptForReassignment} />
             </div>
             
             {/* --- Modals --- */}
-            <SuggestionModal isOpen={activeModal === 'suggestions'} onClose={() => setActiveModal(null)} arrivingTrains={arrivingTrains} platforms={platforms} onAssignPlatform={handleAssignPlatform} />
+            <SuggestionModal 
+                isOpen={activeModal === 'suggestions'} 
+                onClose={() => {
+                    setActiveModal(null);
+                    setTrainForImmediateSuggestion(null); // Clear the reassign trigger
+                }} 
+                arrivingTrains={arrivingTrains} 
+                platforms={platforms} 
+                onAssignPlatform={handleAssignPlatform}
+                trainToReassign={trainForImmediateSuggestion}
+            />
             <DepartingModal isOpen={activeModal === 'departing'} onClose={() => setActiveModal(null)} platforms={platforms} onDepartTrain={handleDepartTrain} />
             <MaintenanceModal isOpen={activeModal === 'maintenance'} onClose={() => setActiveModal(null)} platforms={platforms} onToggleMaintenance={handleToggleMaintenance} />
             <MiscModal 
@@ -779,13 +834,30 @@ const MainApp = () => {
                 onDeleteTrain={handleDeleteTrain}
             />
             <LogModal isOpen={activeModal === 'logs'} onClose={() => setActiveModal(null)} logs={logs} />
+
+            <ReassignPromptModal
+                reassignPrompt={reassignPrompt}
+                onCancel={() => setReassignPrompt({ isOpen: false, platformId: null, trainDetails: null })}
+                onConfirmUnassign={handleConfirmUnassign}
+                onConfirmReassign={handleConfirmReassign}
+            />
         </div>
     );
 }
 
-
 export default function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        const link = document.createElement('link');
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/react-toastify/9.1.3/ReactToastify.min.css';
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+
+        return () => {
+            document.head.removeChild(link);
+        };
+    }, []);
 
     const handleLogin = () => {
         setIsAuthenticated(true);
@@ -797,3 +869,4 @@ export default function App() {
 
     return <MainApp />;
 }
+

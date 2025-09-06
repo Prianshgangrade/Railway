@@ -1,3 +1,113 @@
+2025-09-06 20:30:15 | UNASSIGNED: Train 12834 unassigned from Platform 1.
+2025-09-06 20:30:11 | ARRIVED & ASSIGNED: Train 12834 arrived at 20:30 and assigned to Platform 1.
+2025-09-06 20:30:04 | UNASSIGNED: Train 12834 unassigned from Platform 1.
+2025-09-06 20:23:41 | ARRIVED & ASSIGNED: Train 12834 arrived at 20:23 and assigned to Platform 1.
+2025-09-06 20:23:31 | ARRIVED & ASSIGNED: Train 12863 arrived at 20:23 and assigned to Platform 4.
+2025-09-06 15:43:07 | UNASSIGNED: Train 12834 unassigned from Platform 1.
+2025-09-06 15:43:07 | UNASSIGNED: Train 12863 unassigned from Platform 4.
+2025-09-06 15:42:00 | ARRIVED & ASSIGNED: Train 12863 arrived at 15:41 and assigned to Platform 4.
+2025-09-06 15:41:52 | UNASSIGNED: Train 12863 unassigned from Platform 4.
+2025-09-06 15:38:06 | ARRIVED & ASSIGNED: Train 12834 arrived at 15:38 and assigned to Platform 1.
+2025-09-06 15:37:17 | ARRIVED & ASSIGNED: Train 12863 arrived at 15:37 and assigned to Platform 4.
+2025-09-06 15:36:55 | System initialized: Station state created from master files.
+2025-09-06 15:30:35 | UNASSIGNED: Train 12837 unassigned from Platform 2.
+2025-09-06 15:30:29 | ARRIVED & ASSIGNED: Train 12863 arrived at 15:30 and assigned to Platform 7.
+2025-09-06 15:20:21 | ARRIVED & ASSIGNED: Train 12834 arrived at 15:20 and assigned to Platform 3.
+2025-09-06 14:20:49 | ASSIGNED: Train 12837 assigned to Platform 2.
+2025-09-06 14:18:15 | UNASSIGNED: Train 12834 unassigned from Platform 4.
+2025-09-04 12:53:46 | UNASSIGNED: Train 12837 unassigned from Platform 1.
+2025-09-04 12:53:24 | ASSIGNED: Train 12837 assigned to Platform 1.
+2025-09-04 12:50:52 | ASSIGNED: Train 12834 assigned to Platform 4.
+2025-09-04 12:26:04 | UNASSIGNED: Train 12837 unassigned from Platform 5.
+2025-09-04 12:26:03 | UNASSIGNED: Train 12834 unassigned from Platform 2.
+2025-09-04 12:23:36 | ASSIGNED: Train 12834 assigned to Platform 2.
+2025-09-04 12:23:13 | UNASSIGNED: Train 12837 unassigned from Platform 1.
+2025-09-04 12:23:09 | UNASSIGNED: Train 12834 unassigned from Platform 2.
+2025-09-04 00:39:32 | ASSIGNED: Train 12837 assigned to Platform 1.
+2025-09-03 23:42:58 | ASSIGNED: Train 12834 assigned to Platform 2.
+2025-09-03 23:42:45 | UNASSIGNED: Train 12837 unassigned from Platform 1.
+2025-09-03 23:13:42 | ASSIGNED: Train 12837 assigned to Platform 1.
+2025-09-03 23:13:35 | UNASSIGNED: Train 12837 unassigned from Platform 1.
+2025-09-03 23:11:57 | ASSIGNED: Train 12837 assigned to Platform 1.
+2025-09-03 23:11:47 | UNASSIGNED: Train 12837 unassigned from Platform 2.
+2025-09-03 23:11:28 | UNASSIGNED: Train 12837 unassigned from Platform 3.
+2025-09-03 23:11:27 | UNASSIGNED: Train 12834 unassigned from Platform 1.
+2025-09-03 23:05:33 | ASSIGNED: Train 12834 assigned to Platform 1.
+2025-09-03 23:05:18 | UNASSIGNED: Train 12834 unassigned from Platform 4.
+2025-09-03 23:05:12 | ASSIGNED: Train 12837 assigned to Platform 3.
+2025-09-03 23:00:55 | ASSIGNED: Train 12834 assigned to Platform 4.
+2025-09-03 23:00:42 | UNASSIGNED: Train 12834 unassigned from Platform 3.
+2025-09-03 23:00:38 | ASSIGNED: Train 12834 assigned to Platform 3.
+2025-09-03 23:00:20 | ASSIGNED: Train 12837 assigned to Platform 2.
+2025-09-03 22:38:22 | UNASSIGNED: Train 12837 unassigned from Platform 2.
+2025-09-03 22:38:21 | UNASSIGNED: Train 12834 unassigned from Platform 4.
+2025-09-03 22:38:18 | ASSIGNED: Train 12834 assigned to Platform 4.
+2025-09-03 22:38:12 | ASSIGNED: Train 12837 assigned to Platform 2.
+2025-09-03 21:54:05 | UNASSIGNED: Train 15644 unassigned from Platform 1.
+2025-09-03 21:54:04 | UNASSIGNED: Train 12834 unassigned from Platform 3.
+2025-09-03 21:53:58 | ASSIGNED: Train 12834 assigned to Platform 3.
+2025-09-03 21:53:35 | ASSIGNED: Train 15644 assigned to Platform 1.
+2025-09-03 21:46:57 | UNASSIGNED: Train 12837 unassigned from Platform 4.
+2025-09-03 21:46:38 | ASSIGNED: Train 12837 assigned to Platform 4.
+2025-09-03 01:21:38 | ASSIGNED: Train 12837 assigned to Platform 5.
+2025-09-03 01:21:30 | UNASSIGNED: Train 12837 unassigned from Platform 6.
+2025-09-03 01:15:55 | ASSIGNED: Train 12837 assigned to Platform 6.
+2025-09-03 01:14:51 | System initialized: Station state created from master files.
+2025-09-03 01:12:21 | DEPARTED: Train 12837 departed from Platform 6 at 01:12.
+2025-09-03 01:12:18 | ASSIGNED: Train 12837 assigned to Platform 6.
+2025-09-03 01:12:12 | UNASSIGNED: Train 12837 unassigned from Platform 6.
+2025-09-03 01:12:08 | ASSIGNED: Train 12837 assigned to Platform 6.
+2025-09-03 00:16:47 | UNASSIGNED: Train 12101 unassigned from Platform 4.
+2025-09-03 00:16:03 | ASSIGNED: Train 12101 assigned to Platform 4.
+2025-09-02 23:54:03 | TRAIN DELETED: Train A2345 removed from the master schedule.
+2025-09-02 23:51:59 | TRAIN ADDED: New train A2345 added to the master schedule.
+2025-09-02 23:49:32 | UNASSIGNED: Train 12837 unassigned from Platform 6.
+2025-09-02 23:42:42 | ASSIGNED: Train 12837 assigned to Platform 6.
+2025-09-02 01:15:16 | MAINTENANCE: Maintenance for Platform 1 set to OFF.
+2025-09-02 01:15:13 | MAINTENANCE: Maintenance for Platform 1 set to ON.
+2025-09-02 01:13:49 | DEPARTED: Train 38725 departed from Platform 4A at 01:13.
+2025-09-02 01:13:47 | ASSIGNED: Train 38725 assigned to Platform 4A.
+2025-09-02 01:13:31 | DEPARTED: Train 18047 departed from Platform 6 at 01:13.
+2025-09-02 01:13:29 | DEPARTED: Train 03430 departed from Platform 5 at 01:13.
+2025-09-02 01:13:21 | ASSIGNED: Train 18047 assigned to Platform 6.
+2025-09-02 01:12:25 | ASSIGNED: Train 03430 assigned to Platform 5.
+2025-09-02 01:12:07 | System initialized: Station state created from master files.
+2025-09-02 00:56:21 | System initialized: Station state created from master files.
+2025-08-28 09:54:27 | DEPARTED: Train F9004 departed from Track 1 at 09:54.
+2025-08-28 09:54:24 | ASSIGNED: Train F9004 assigned to Track 1.
+2025-08-28 09:53:58 | UNASSIGNED: Train 38813 unassigned from Platform 2A.
+2025-08-28 09:53:57 | UNASSIGNED: Train 38821 unassigned from Platform 1A.
+2025-08-28 09:53:48 | ASSIGNED: Train 38821 assigned to Platform 1A.
+2025-08-28 09:53:41 | ASSIGNED: Train 38813 assigned to Platform 2A.
+2025-08-28 09:53:29 | UNASSIGNED: Train 12841 unassigned from Platform 6.
+2025-08-28 09:53:28 | UNASSIGNED: Train 12841 unassigned from Platform 5.
+2025-08-28 09:53:20 | ASSIGNED: Train 12841 assigned to Platform 6.
+2025-08-28 09:53:09 | ASSIGNED: Train 12841 assigned to Platform 5.
+2025-08-28 09:53:02 | UNASSIGNED: Train 12841 unassigned from Platform 8.
+2025-08-28 09:53:01 | UNASSIGNED: Train 12841 unassigned from Platform 7.
+2025-08-28 09:53:00 | UNASSIGNED: Train 38821 unassigned from Platform 6.
+2025-08-28 09:52:58 | UNASSIGNED: Train 12841 unassigned from Platform 5.
+2025-08-28 09:52:57 | UNASSIGNED: Train 12860 unassigned from Platform 4.
+2025-08-28 09:52:57 | UNASSIGNED: Train 12860 unassigned from Platform 2.
+2025-08-28 09:52:55 | UNASSIGNED: Train 38813 unassigned from Platform 2A.
+2025-08-28 09:52:53 | UNASSIGNED: Train 18048 unassigned from Platform 3.
+2025-08-28 09:52:52 | UNASSIGNED: Train 38821 unassigned from Platform 1A.
+2025-08-28 09:52:51 | UNASSIGNED: Train 18048 unassigned from Platform 1.
+2025-08-28 09:33:31 | WAITING: Train 12130 added to waiting list.
+2025-08-28 09:32:51 | WAITING: Train 22604 added to waiting list.
+2025-08-28 09:32:17 | WAITING: Train 18048 added to waiting list.
+2025-08-27 23:49:52 | ASSIGNED: Train 12841 assigned to Platform 8.
+2025-08-27 23:49:48 | ASSIGNED: Train 12841 assigned to Platform 7.
+2025-08-27 23:49:44 | ASSIGNED: Train 38821 assigned to Platform 6.
+2025-08-27 23:49:32 | ASSIGNED: Train 12860 assigned to Platform 2, Platform 4.
+2025-08-27 23:49:27 | ASSIGNED: Train 12841 assigned to Platform 5.
+2025-08-27 23:49:23 | ASSIGNED: Train 18048 assigned to Platform 1, Platform 3.
+2025-08-27 23:48:06 | ASSIGNED: Train 38813 assigned to Platform 2A.
+2025-08-27 23:48:02 | ASSIGNED: Train 38821 assigned to Platform 1A.
+2025-08-18 13:14:20 | DEPARTED: Train 12245 departed from Platform 5 at 13:14.
+2025-08-18 12:47:54 | ASSIGNED: Train 12245 assigned to Platform 5.
+2025-08-18 12:47:10 | DEPARTED: Train 12245 departed from Platform 5 at 12:47.
+2025-08-18 12:47:07 | ASSIGNED: Train 12245 assigned to Platform 5.
 2025-08-15 02:11:57 | MAINTENANCE: Maintenance for Platform 1 set to OFF.
 2025-08-15 02:11:52 | MAINTENANCE: Maintenance for Platform 1 set to ON.
 2025-08-15 02:11:42 | UNASSIGNED: Train 12245 unassigned from Platform 5.

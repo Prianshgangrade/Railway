@@ -1,29 +1,37 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
-from flask_sse import sse
 import os
 import json
 from datetime import datetime, timedelta
 import threading
 import shutil
+import time
+import queue
+
+# --- Import the scoring algorithm module ---
+from scoring_algorithm import ScoringTrain, get_available_track_sets, calculate_platform_scores, LOWEST, HIGHEST, BORDER_STN_PRIO
 
 app = Flask(__name__)
 CORS(app)
-app.config["REDIS_URL"] = "redis://localhost:6379"
-app.register_blueprint(sse, url_prefix='/stream')
 
 # --- File Paths ---
 API_DIR = os.path.dirname(__file__)
 STATE_FILE = os.path.join(API_DIR, 'station_state.json')
-PLATFORMS_MASTER_FILE = os.path.join(API_DIR, 'platforms.json')
-TRAINS_MASTER_FILE = os.path.join(API_DIR, 'trains.json')
-LOG_FILE = os.path.join(API_DIR, 'operations_log.txt') # Changed to .txt
+PLATFORMS_MASTER_FILE = os.path.join(API_DIR, 'platform_data.json')
+TRAINS_MASTER_FILE = os.path.join(API_DIR, 'train_data.json')
+LOG_FILE = os.path.join(API_DIR, 'operations_log.txt')
 
-# --- Global State for Timers ---
+# --- In-memory state for real-time events ---
+sse_broadcaster = queue.Queue()
 active_timers = {}
-timers_lock = threading.Lock()
+
+# --- Thread-safe Locks ---
 state_lock = threading.Lock()
 log_lock = threading.Lock()
+timers_lock = threading.Lock()
+
+
+# --- Utility Functions ---
 
 def log_action(action_string):
     """Thread-safely logs an action to the operations_log.txt file."""
@@ -36,16 +44,27 @@ def log_action(action_string):
         
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         log_entry = f"{timestamp} | {action_string}\n"
-        
         logs.insert(0, log_entry)
-        
-        # Keep the log file from growing indefinitely
         logs = logs[:500] 
 
         with open(LOG_FILE, 'w') as f:
             f.writelines(logs)
 
+def time_difference_seconds(time_str1, time_str2):
+    """Calculate difference between two HH:MM time strings in seconds."""
+    try:
+        t1 = datetime.strptime(time_str1, '%H:%M')
+        t2 = datetime.strptime(time_str2, '%H:%M')
+        if t2 < t1: # Handles overnight case
+            t2 += timedelta(days=1)
+        return (t2 - t1).total_seconds()
+    except (ValueError, TypeError):
+        return 0 # Return 0 if times are invalid
+
+# --- State Management ---
+
 def initialize_station_state():
+    """Initializes the station state from master files if it doesn't exist."""
     with state_lock:
         if not os.path.exists(STATE_FILE):
             print("State file not found. Initializing from master data...")
@@ -55,27 +74,30 @@ def initialize_station_state():
                 with open(TRAINS_MASTER_FILE, 'r') as f:
                     trains_data = json.load(f)
 
-                initial_platforms = [{
-                    "id": f"Platform {row['platform_id']}" if not row.get('is_freight') else f"Track {row['platform_id']}",
-                    "yard": row['direction'],
-                    "type": "Freight Track" if row.get('is_freight') else "Platform",
-                    "isOccupied": False,
-                    "trainDetails": None,
-                    "isUnderMaintenance": False,
-                    "size": row.get('size', 'short'),
-                    "isTerminating": bool(row.get('is_terminating', False))
-                } for row in platforms_data]
+                initial_platforms = []
+                all_platform_definitions = platforms_data.get('platform_tracks', []) + platforms_data.get('non_platform_tracks', [])
+                
+                for p_data in all_platform_definitions:
+                    is_platform = 'P' in p_data.get('id', '')
+                    item_id = p_data['id'].replace('P', '').replace('T', '')
+                    
+                    initial_platforms.append({
+                        "id": f"Platform {item_id}" if is_platform else f"Track {item_id}",
+                        "isOccupied": False, 
+                        "trainDetails": None, 
+                        "isUnderMaintenance": False,
+                        "actualArrival": None # Add field for arrival time
+                    })
 
                 initial_arriving_trains = [{
-                    "trainNo": str(row['trainNumber']),
-                    "name": f"{row['train_type']} Train",
-                    "origin": row['source'],
-                    "scheduled_arrival": row['scheduled_arrival']
-                } for row in trains_data if row.get('scheduled_arrival') is not None]
-
+                    "trainNo": str(row['TRAIN NO']),
+                    "name": row['TRAIN NAME'],
+                    "scheduled_arrival": row['ARRIVAL AT KGP']
+                } for row in trains_data if row.get('ARRIVAL AT KGP')]
+                
                 initial_state = {
                     "platforms": initial_platforms,
-                    "arrivingTrains": sorted(initial_arriving_trains, key=lambda x: x['scheduled_arrival'])
+                    "arrivingTrains": sorted(initial_arriving_trains, key=lambda x: x['scheduled_arrival'] or '99:99')
                 }
                 
                 with open(STATE_FILE, 'w') as f:
@@ -88,6 +110,7 @@ def initialize_station_state():
                 exit(1)
 
 def read_state():
+    """Reads the current station state from the JSON file."""
     with state_lock:
         try:
             with open(STATE_FILE, 'r') as f:
@@ -98,131 +121,51 @@ def read_state():
                 return json.load(f)
 
 def write_state(new_state):
+    """Atomically writes the new state to the JSON file."""
     with state_lock:
         temp_file = STATE_FILE + '.tmp'
         with open(temp_file, 'w') as f:
             json.dump(new_state, f, indent=2)
-        shutil.move(temp_file, STATE_FILE) 
-    broadcast_state_update() 
+        shutil.move(temp_file, STATE_FILE)
 
-def broadcast_state_update():
-    state = read_state()
-    with app.app_context():
-        sse.publish(json.dumps(state), type='state_update')
-    print("Broadcasted state update to all clients.")
+# --- Real-time Event Pushing ---
 
-class TimeUtils:
-    @staticmethod
-    def parse_time(time_str):
-        if not time_str or not isinstance(time_str, str): return None
-        try:
-            return datetime.strptime(time_str, '%H:%M')
-        except (ValueError, TypeError):
-            return None
+def push_departure_alert(train_number, train_name, platform_id):
+    """Pushes a departure alert event to the SSE stream."""
+    event_data = {
+        'train_number': train_number,
+        'train_name': train_name,
+        'platform_id': platform_id
+    }
+    sse_broadcaster.put(f"event: departure_alert\ndata: {json.dumps(event_data)}\n\n")
+    print(f"Pushed departure alert for {train_number} on {platform_id}")
 
-    @staticmethod
-    def time_difference_minutes(time1, time2):
-        t1 = TimeUtils.parse_time(time1)
-        t2 = TimeUtils.parse_time(time2)
-        if t1 is None or t2 is None: return 0
-        if t2 < t1: t2 += timedelta(days=1)
-        return (t2 - t1).total_seconds() / 60
-
-class Train:
-    def __init__(self, train_data):
-        self.train_id = train_data.get('trainNumber')
-        self.train_type = train_data.get('train_type')
-        self.size = train_data.get('size', 'short')
-        self.direction = train_data.get('direction')
-        self.destination = train_data.get('destination')
-        self.priority = int(train_data.get('priority', 1))
-        self.platform_assigned = train_data.get('platform_assigned')
-        self.scheduled_arrival = train_data.get('scheduled_arrival')
-        self.scheduled_departure = train_data.get('scheduled_departure')
-
-    def is_freight(self):
-        return self.train_type == 'Freight'
-
-    def is_terminating(self):
-        return self.destination == 'KGP'
-
-    def is_memu(self):
-        return 'MEMU' in str(self.train_type)
-
-class Platform:
-    def __init__(self, platform_data):
-        self.platform_id = platform_data.get('platform_id')
-        self.size = platform_data.get('size', 'short')
-        self.direction = platform_data.get('direction')
-        self.is_freight = bool(platform_data.get('is_freight'))
-        self.is_terminating = bool(platform_data.get('is_terminating'))
-
-class ScoreCalculator:
-    @staticmethod
-    def calculate_score(train, platform, delay=0):
-        score = 100
-        reasons = []
-
-        if train.size == 'long' and platform.size == 'short':
-            score -= 500
-            reasons.append(f"Long train cannot fit on short platform")
-        
-        if train.direction != platform.direction:
-            score -= 200
-            reasons.append(f"Direction mismatch")
-        if train.is_freight() and not platform.is_freight:
-            score -= 500
-            reasons.append("Freight on passenger platform")
-        if not train.is_freight() and platform.is_freight:
-            score -= 500
-            reasons.append("Passenger on freight track")
-        if (train.is_terminating() or train.is_memu()) and not platform.is_terminating:
-            score -= 150
-            reasons.append("Terminating on non-terminating platform")
-        score += train.priority * 10
-        if train.platform_assigned and str(platform.platform_id) == str(train.platform_assigned):
-            score += 75
-            reasons.append("Historical preference")
-        if delay > 120:
-            penalty = min(100, delay / 3)
-            score -= penalty
-            reasons.append(f"High delay (-{int(penalty)})")
-        elif delay > 0:
-            penalty = min(50, delay / 4)
-            score -= penalty
-            reasons.append(f"Delay (-{int(penalty)})")
-        return score, reasons
-
-def load_master_data():
-    try:
-        with open(PLATFORMS_MASTER_FILE, 'r') as f:
-            platforms_data = json.load(f)
-        with open(TRAINS_MASTER_FILE, 'r') as f:
-            trains_data = json.load(f)
-        return platforms_data, trains_data
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        print(f"Error loading master JSON data: {e}")
-        return None, None
+@app.route("/stream")
+def stream():
+    def event_generator():
+        messages = []
+        while True:
+            try:
+                msg = sse_broadcaster.get(timeout=20)
+                messages.append(msg)
+                yield msg
+            except queue.Empty:
+                yield ": heartbeat\n\n"
+    return Response(event_generator(), mimetype="text/event-stream")
 
 # --- API Endpoints ---
+
 @app.route("/api/station-data")
 def get_station_data():
-    state = read_state()
-    return jsonify(state)
+    return jsonify(read_state())
 
 @app.route("/api/logs")
 def get_logs():
-    """Endpoint to fetch and parse the operational logs from the text file."""
     with log_lock:
         try:
             with open(LOG_FILE, 'r') as f:
                 lines = f.readlines()
-            
-            logs_json = []
-            for line in lines:
-                parts = line.strip().split(' | ', 1)
-                if len(parts) == 2:
-                    logs_json.append({"timestamp": parts[0], "action": parts[1]})
+            logs_json = [{"timestamp": parts[0], "action": parts[1]} for line in lines if len(parts := line.strip().split(' | ', 1)) == 2]
             return jsonify(logs_json)
         except FileNotFoundError:
             return jsonify([])
@@ -232,210 +175,164 @@ def get_platform_suggestions():
     request_data = request.get_json()
     train_no = request_data.get('trainNo')
     frontend_platforms = request_data.get('platforms')
-    actual_arrival = request_data.get('actualArrival')
     freight_needs_platform = request_data.get('freightNeedsPlatform')
 
-    platforms_master, trains_master = load_master_data()
-    if platforms_master is None or trains_master is None:
-        return jsonify({"error": "Server master data files (JSON) not found or are invalid."}), 500
-
-    train_data_list = [t for t in trains_master if str(t.get('trainNumber')) == str(train_no)]
-    if not train_data_list:
-        return jsonify({"error": f"Train {train_no} not found."}), 404
+    with open(TRAINS_MASTER_FILE, 'r') as f:
+        trains_master = json.load(f)
     
-    train = Train(train_data_list[0])
-    delay = TimeUtils.time_difference_minutes(train.scheduled_arrival, actual_arrival)
+    train_data = next((t for t in trains_master if str(t.get('TRAIN NO')) == str(train_no)), None)
+    if not train_data:
+        return jsonify({"error": f"Train {train_no} not found in master schedule."}), 404
 
-    available_platforms = [p for p in frontend_platforms if not p.get('isOccupied') and not p.get('isUnderMaintenance')]
+    is_freight = 'Goods' in train_data.get('TRAIN NAME', '') or 'Freight' in train_data.get('TRAIN NAME', '')
     
-    if train.is_freight():
-        if freight_needs_platform == True:
-            available_platforms = [p for p in available_platforms if p['type'] == 'Platform']
-        elif freight_needs_platform == False:
-            available_platforms = [p for p in available_platforms if p['type'] == 'Freight Track']
-    else: 
-        available_platforms = [p for p in available_platforms if p['type'] == 'Platform']
+    incoming_train = ScoringTrain(
+        train_id=train_data.get('TRAIN NO'),
+        train_name=train_data.get('TRAIN NAME'),
+        train_type='Freight' if is_freight else 'Passenger',
+        is_terminating=train_data.get('ISTERMINATING', False),
+        length=train_data.get('LENGTH', 'Long').lower(),
+        needs_platform=freight_needs_platform if is_freight else True,
+        direction=train_data.get('DIRECTION'),
+        historical_platform=str(train_data.get('PLATFORM NO', '')).split(',')[0].strip()
+    )
 
+    available_tracks = get_available_track_sets(frontend_platforms)
+    ranked_scores_list = calculate_platform_scores(incoming_train, available_tracks)
+    
     suggestions = []
-    
-    platforms_for_single_suggestions = []
-    if train.size == 'long':
-        platform_map = {p['id']: p for p in available_platforms}
-        if "Platform 1" in platform_map and "Platform 3" in platform_map:
-            p1_master = next((p for p in platforms_master if p['platform_id'] == '1' and not p['is_freight']), None)
-            if p1_master:
-                score, reasons = ScoreCalculator.calculate_score(train, Platform(p1_master), delay)
-                suggestions.append({"platformId": "Platform 1 & 3", "platformIds": ["Platform 1", "Platform 3"], "score": score + 50, "reasons": reasons + ["Combined platform"]})
-        
-        if "Platform 2" in platform_map and "Platform 4" in platform_map:
-            p2_master = next((p for p in platforms_master if p['platform_id'] == '2' and not p['is_freight']), None)
-            if p2_master:
-                score, reasons = ScoreCalculator.calculate_score(train, Platform(p2_master), delay)
-                suggestions.append({"platformId": "Platform 2 & 4", "platformIds": ["Platform 2", "Platform 4"], "score": score + 50, "reasons": reasons + ["Combined platform"]})
+    processed_tracks = set()
+    ranked_scores_map = dict(ranked_scores_list)
 
-        allowed_long_train_platforms = ['Platform 5', 'Platform 6', 'Platform 7', 'Platform 8']
-        for p in available_platforms:
-            if p['id'] in allowed_long_train_platforms or p['type'] == 'Freight Track':
-                platforms_for_single_suggestions.append(p)
-    else: 
-        platforms_for_single_suggestions = available_platforms
-
-    for p_data in platforms_for_single_suggestions:
-        platform_numeric_id = str(p_data['id']).replace("Platform ", "").replace("Track ", "")
-        is_freight_lookup = p_data['type'] == 'Freight Track'
-        
-        platform_master_list = [p for p in platforms_master if str(p.get('platform_id')) == platform_numeric_id and bool(p.get('is_freight')) == is_freight_lookup]
-
-        if platform_master_list:
-            platform = Platform(platform_master_list[0])
-            score, reasons = ScoreCalculator.calculate_score(train, platform, delay)
-            
+    if incoming_train.type == 'Passenger' and incoming_train.direction == 'DOWN' and not incoming_train.is_terminating and incoming_train.length == 'long':
+        if ranked_scores_map.get('P2') == HIGHEST and ranked_scores_map.get('P4') == HIGHEST:
             suggestions.append({
-                "platformId": p_data['id'],
+                "platformId": "Platform 2 & 4", "score": HIGHEST,
+                "platformIds": ["Platform 2", "Platform 4"]
+            })
+            processed_tracks.update(['P2', 'P4'])
+        
+        if ranked_scores_map.get('P1') == BORDER_STN_PRIO and ranked_scores_map.get('P3') == BORDER_STN_PRIO:
+            suggestions.append({
+                "platformId": "Platform 1 & 3", "score": BORDER_STN_PRIO,
+                "platformIds": ["Platform 1", "Platform 3"]
+            })
+            processed_tracks.update(['P1', 'P3'])
+
+    for track_id, score in ranked_scores_list:
+        if score > LOWEST and track_id not in processed_tracks:
+            display_id = f"Platform {track_id.replace('P','')}" if track_id.startswith('P') else f"Track {track_id.replace('T','')}"
+            suggestions.append({
+                "platformId": display_id,
                 "score": score,
-                "reasons": reasons
+                "platformIds": [display_id]
             })
     
-    sorted_suggestions = sorted(suggestions, key=lambda x: x['score'], reverse=True)
-    
-    return jsonify({
-        "suggestions": sorted_suggestions,
-        "delay": delay if delay > 0 else 0
-    })
+    suggestions.sort(key=lambda x: x['score'], reverse=True)
+    return jsonify({"suggestions": suggestions})
 
-def push_departure_alert(train_id, train_type, platform_id):
-    print(f"TIMER EXPIRED: Pushing departure alert for Train {train_id} from {platform_id}")
-    with app.app_context():
-        sse.publish(json.dumps({
-            'train_number': train_id,
-            'train_name': f"{train_type} Train",
-            'platform_id': platform_id,
-        }), type='departure_alert')
-    
-    with timers_lock:
-        if platform_id in active_timers:
-            del active_timers[platform_id]
 
 @app.route("/api/assign-platform", methods=['POST'])
 def assign_platform():
     data = request.get_json()
     train_no = data.get('trainNo')
-    platform_ids = data.get('platformIds') 
+    platform_ids_raw = data.get('platformIds') 
+    actual_arrival = data.get('actualArrival')
 
-    if not isinstance(platform_ids, list):
-        return jsonify({"error": "platformIds must be a list."}), 400
+    platform_ids = [platform_ids_raw] if isinstance(platform_ids_raw, str) else platform_ids_raw
 
     state = read_state()
-    
     train_to_assign = next((t for t in state['arrivingTrains'] if t['trainNo'] == train_no), None)
     if not train_to_assign:
-        return jsonify({"error": "Train not found in current state."}), 404
+        return jsonify({"error": "Train not found in arriving trains list."}), 404
+
+    with open(TRAINS_MASTER_FILE, 'r') as f:
+        trains_master = json.load(f)
+    train_data = next((t for t in trains_master if str(t.get('TRAIN NO')) == str(train_no)), None)
+    
+    # CORRECTED: Calculate timer duration based on SCHEDULED arrival and departure.
+    stoppage_seconds = time_difference_seconds(train_data.get('ARRIVAL AT KGP'), train_data.get('DEPARTURE FROM KGP'))
 
     for platform_id in platform_ids:
-        platform_to_assign = next((p for p in state['platforms'] if p['id'] == platform_id), None)
-        if platform_to_assign:
-            platform_to_assign['isOccupied'] = True
-            platform_to_assign['trainDetails'] = { "trainNo": train_to_assign['trainNo'], "name": train_to_assign['name'] }
-        else:
-            print(f"Warning: Platform {platform_id} not found during multi-assign.")
-    
-    log_action(f"ASSIGNED: Train {train_no} assigned to {', '.join(platform_ids)}.")
-    write_state(state)
-
-    _, trains_master = load_master_data()
-    train_master_list = [t for t in trains_master if str(t.get('trainNumber')) == str(train_no)]
-    if train_master_list:
-        train = Train(train_master_list[0])
-        stoppage_minutes = TimeUtils.time_difference_minutes(train.scheduled_arrival, train.scheduled_departure)
-        stoppage_seconds = stoppage_minutes * 60
-        
-        if stoppage_seconds > 0:
-            for platform_id in platform_ids:
-                print(f"Train {train.train_id} assigned. Scheduling departure alert for {platform_id} in {stoppage_seconds:.0f} seconds.")
-                timer = threading.Timer(stoppage_seconds, push_departure_alert, args=[train.train_id, train.train_type, platform_id])
-                
+        platform_to_update = next((p for p in state['platforms'] if p['id'] == platform_id), None)
+        if platform_to_update:
+            platform_to_update['isOccupied'] = True
+            platform_to_update['trainDetails'] = { "trainNo": train_to_assign['trainNo'], "name": train_to_assign['name'] }
+            platform_to_update['actualArrival'] = actual_arrival
+            
+            if stoppage_seconds > 0:
+                timer = threading.Timer(stoppage_seconds, push_departure_alert, args=[train_no, train_data.get('TRAIN NAME'), platform_id])
                 with timers_lock:
-                    if platform_id in active_timers:
-                        active_timers[platform_id].cancel()
                     active_timers[platform_id] = timer
                 timer.start()
+                print(f"Departure timer set for {platform_id} in {stoppage_seconds} seconds (based on scheduled halt time).")
 
-    return jsonify({"message": f"Train {train_no} assigned successfully. State updated."})
+    log_action(f"ARRIVED & ASSIGNED: Train {train_no} arrived at {actual_arrival} and assigned to {', '.join(platform_ids)}.")
+    write_state(state)
+    return jsonify({"message": f"Train {train_no} assigned to {', '.join(platform_ids)}."})
+
 
 @app.route("/api/unassign-platform", methods=['POST'])
 def unassign_platform():
-    data = request.get_json()
-    platform_id = data.get('platformId')
-
-    if not platform_id:
-        return jsonify({"error": "Platform ID is required."}), 400
-
-    with timers_lock:
-        if platform_id in active_timers:
-            active_timers[platform_id].cancel()
-            del active_timers[platform_id]
-            print(f"Cancelled departure timer for {platform_id}.")
-
+    platform_id = request.json.get('platformId')
     state = read_state()
     platform_to_clear = next((p for p in state['platforms'] if p['id'] == platform_id), None)
 
     if not platform_to_clear or not platform_to_clear['isOccupied']:
         return jsonify({"error": "Platform not found or is not occupied."}), 404
 
+    with timers_lock:
+        if platform_id in active_timers:
+            active_timers[platform_id].cancel()
+            del active_timers[platform_id]
+            print(f"Cancelled timer for {platform_id} due to unassignment.")
+
     train_details = platform_to_clear['trainDetails']
-    train_no_to_readd = train_details['trainNo']
-    
     platform_to_clear['isOccupied'] = False
     platform_to_clear['trainDetails'] = None
+    platform_to_clear['actualArrival'] = None
 
-    log_action(f"UNASSIGNED: Train {train_no_to_readd} unassigned from {platform_id}.")
+    log_action(f"UNASSIGNED: Train {train_details['trainNo']} unassigned from {platform_id}.")
     write_state(state)
-    return jsonify({"message": f"Train {train_no_to_readd} unassigned from {platform_id}."})
-
+    return jsonify({"message": f"Train {train_details['trainNo']} unassigned from {platform_id}."})
 
 @app.route("/api/depart-train", methods=['POST'])
 def depart_train():
-    data = request.get_json()
-    platform_id = data.get('platformId')
-
+    platform_id = request.json.get('platformId')
     state = read_state()
     platform_to_free = next((p for p in state['platforms'] if p['id'] == platform_id), None)
 
     if not platform_to_free or not platform_to_free['isOccupied']:
         return jsonify({"error": "Platform not found or is not occupied."}), 404
 
-    departed_train = platform_to_free['trainDetails']
-    departure_time = datetime.now().strftime('%H:%M')
-
-    platform_to_free['isOccupied'] = False
-    platform_to_free['trainDetails'] = None
-
     with timers_lock:
         if platform_id in active_timers:
             active_timers[platform_id].cancel()
             del active_timers[platform_id]
-            print(f"Cancelled departure timer for {platform_id} due to manual departure.")
+            print(f"Cancelled timer for {platform_id} due to manual departure.")
 
+    departed_train = platform_to_free['trainDetails']
+    platform_to_free['isOccupied'] = False
+    platform_to_free['trainDetails'] = None
+    platform_to_free['actualArrival'] = None
+    
+    departure_time = datetime.now().strftime('%H:%M')
     log_action(f"DEPARTED: Train {departed_train['trainNo']} departed from {platform_id} at {departure_time}.")
     write_state(state)
     return jsonify({"message": f"Train {departed_train['trainNo']} departed from {platform_id}."})
 
+# Other endpoints (add, delete, maintenance, etc.) remain the same...
+
 @app.route("/api/toggle-maintenance", methods=['POST'])
 def toggle_maintenance():
-    data = request.get_json()
-    platform_id = data.get('platformId')
-
+    platform_id = request.json.get('platformId')
     state = read_state()
     platform_to_toggle = next((p for p in state['platforms'] if p['id'] == platform_id), None)
 
-    if not platform_to_toggle:
-        return jsonify({"error": "Platform not found."}), 404
-    
-    if platform_to_toggle['isOccupied']:
-        return jsonify({"error": "Cannot change maintenance on an occupied platform."}), 400
+    if not platform_to_toggle: return jsonify({"error": "Platform not found."}), 404
+    if platform_to_toggle['isOccupied']: return jsonify({"error": "Cannot change maintenance on an occupied platform."}), 400
 
     platform_to_toggle['isUnderMaintenance'] = not platform_to_toggle['isUnderMaintenance']
-    
     status = "ON" if platform_to_toggle['isUnderMaintenance'] else "OFF"
     log_action(f"MAINTENANCE: Maintenance for {platform_id} set to {status}.")
     write_state(state)
@@ -443,71 +340,73 @@ def toggle_maintenance():
 
 @app.route("/api/add-train", methods=['POST'])
 def add_train():
-    new_train_data = request.get_json()
+    new_train_data_frontend = request.get_json()
+    with open(TRAINS_MASTER_FILE, 'r') as f:
+        trains_master = json.load(f)
     
-    required_keys = ['trainNumber', 'train_type', 'size', 'direction', 'source', 'destination', 'scheduled_departure', 'priority']
-    if not all(k in new_train_data for k in required_keys):
-        return jsonify({"error": "Missing required train data."}), 400
+    new_train_data_master = {
+        "TRAIN NO": new_train_data_frontend.get("trainNumber"),
+        "TRAIN NAME": f"{new_train_data_frontend.get('train_type')} Train",
+        "TYPE": new_train_data_frontend.get("train_type"),
+        "ZONE": "NA",
+        "DIRECTION": new_train_data_frontend.get("direction"),
+        "ISTERMINATING": new_train_data_frontend.get("destination") == "KGP",
+        "PLATFORM NO": "",
+        "DAYS": "Daily",
+        "LENGTH": new_train_data_frontend.get("size"),
+        "ORIGIN FROM STATION": new_train_data_frontend.get("source"),
+        "DEPARTURE FROM ORIGIN": "",
+        "TERMINAL": "KGP" if new_train_data_frontend.get("scheduled_arrival") else "",
+        "ARRIVAL AT KGP": new_train_data_frontend.get("scheduled_arrival"),
+        "DEPARTURE FROM KGP": new_train_data_frontend.get("scheduled_departure"),
+        "DESTINATION": new_train_data_frontend.get("destination"),
+        "ARRIVAL AT DESTINATION": ""
+    }
 
-    _, trains_master = load_master_data()
-    if trains_master is None:
-        return jsonify({"error": "Server master data file (trains.json) not found."}), 500
-    
-    if str(new_train_data['trainNumber']) in [str(t.get('trainNumber')) for t in trains_master]:
-        return jsonify({"error": f"Train number {new_train_data['trainNumber']} already exists."}), 409
+    if str(new_train_data_master['TRAIN NO']) in [str(t.get('TRAIN NO')) for t in trains_master]:
+        return jsonify({"error": f"Train number {new_train_data_master['TRAIN NO']} already exists."}), 409
 
-    if 'scheduled_arrival' in new_train_data and new_train_data['scheduled_arrival'] == '':
-        new_train_data['scheduled_arrival'] = None
-
-    trains_master.append(new_train_data)
-    
+    trains_master.append(new_train_data_master)
     with open(TRAINS_MASTER_FILE, 'w') as f:
-        json.dump(trains_master, f, indent=2)
+        json.dump(trains_master, f, indent=4)
 
     state = read_state()
-    if new_train_data.get('scheduled_arrival') is not None:
+    if new_train_data_master.get('ARRIVAL AT KGP'):
         state['arrivingTrains'].append({
-            "trainNo": str(new_train_data['trainNumber']),
-            "name": f"{new_train_data['train_type']} Train",
-            "origin": new_train_data.get('source', 'N/A'),
-            "scheduled_arrival": new_train_data.get('scheduled_arrival', 'N/A')
+            "trainNo": str(new_train_data_master['TRAIN NO']),
+            "name": new_train_data_master['TRAIN NAME'],
+            "scheduled_arrival": new_train_data_master.get('ARRIVAL AT KGP')
         })
-        state['arrivingTrains'].sort(key=lambda x: x['scheduled_arrival'])
+        state['arrivingTrains'].sort(key=lambda x: x.get('scheduled_arrival') or '99:99')
     
-    log_action(f"TRAIN ADDED: New train {new_train_data['trainNumber']} added to the master schedule.")
+    log_action(f"TRAIN ADDED: New train {new_train_data_master['TRAIN NO']} added to the master schedule.")
     write_state(state)
-
-    return jsonify({"message": f"Train {new_train_data['trainNumber']} added successfully."})
+    return jsonify({"message": f"Train {new_train_data_master['TRAIN NO']} added successfully."})
 
 @app.route("/api/delete-train", methods=['POST'])
 def delete_train():
-    data = request.get_json()
-    train_no_to_delete = data.get('trainNo')
-
-    if not train_no_to_delete:
-        return jsonify({"error": "Train number is required."}), 400
-
-    _, trains_master = load_master_data()
-    if trains_master is None:
-        return jsonify({"error": "Server master data file (trains.json) not found."}), 500
+    train_no_to_delete = request.json.get('trainNo')
+    with open(TRAINS_MASTER_FILE, 'r') as f:
+        trains_master = json.load(f)
     
     initial_count = len(trains_master)
-    trains_master = [t for t in trains_master if str(t.get('trainNumber')) != str(train_no_to_delete)]
+    trains_master = [t for t in trains_master if str(t.get('TRAIN NO')) != str(train_no_to_delete)]
     
     if len(trains_master) == initial_count:
         return jsonify({"error": f"Train {train_no_to_delete} not found in master list."}), 404
 
     with open(TRAINS_MASTER_FILE, 'w') as f:
-        json.dump(trains_master, f, indent=2)
+        json.dump(trains_master, f, indent=4)
 
     state = read_state()
     state['arrivingTrains'] = [t for t in state['arrivingTrains'] if str(t['trainNo']) != str(train_no_to_delete)]
     
     log_action(f"TRAIN DELETED: Train {train_no_to_delete} removed from the master schedule.")
     write_state(state)
-
     return jsonify({"message": f"Train {train_no_to_delete} deleted successfully."})
+
 
 if __name__ == "__main__":
     initialize_station_state() 
     app.run(port=5000, debug=True, threaded=True)
+
