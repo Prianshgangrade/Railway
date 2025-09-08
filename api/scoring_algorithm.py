@@ -8,11 +8,15 @@ BORDER_STN_PRIO = 60
 NON_TERMINAL_DOWN = 50
 NON_TERMINAL_UP = 50 
 DIRECTION_MATCH = 20
+THROUGH = 40
 
 # --- Helper Class for Scoring ---
 class ScoringTrain:
     """A simplified Train object specifically for the scoring algorithm."""
-    def __init__(self, train_id, train_name, train_type, is_terminating, length, needs_platform, direction, historical_platform=None):
+    def __init__(self, train_id, train_name, train_type, is_terminating, length, needs_platform, direction,zone, historical_platform=None,days=None,
+                 origin=None, departure_origin=None,
+                 terminal=None, arrival_kgp=None, departure_kgp=None,
+                 destination=None, arrival_destination=None):
         self.id = train_id
         self.name = train_name
         self.type = train_type
@@ -21,6 +25,16 @@ class ScoringTrain:
         self.needs_platform = needs_platform
         self.direction = direction
         self.historical_platform = historical_platform
+        self.zone=zone
+        self.days = days
+        self.origin = origin
+        self.departure_origin = departure_origin
+        self.terminal = terminal
+        self.arrival_kgp = arrival_kgp
+        self.departure_kgp = departure_kgp
+        self.destination = destination
+        self.arrival_destination = arrival_destination
+        
 
 # --- Predefined Track Sets (Corrected Layout) ---
 DOWN_NonPlatform_tracks = {'T7', 'T8', 'T9', 'T10', 'T11', 'T12'}
@@ -92,12 +106,12 @@ def calculate_platform_scores(incoming_train, available_tracks):
             scores[hist_platform_id] = HISTORICAL_PREF
 
         if incoming_train.direction == 'UP':
-            # scores.update(dict.fromkeys(available_tracks['UP_All_Platform'], MIN_POSSIBLE))
                 
             if incoming_train.is_terminating:   
                 scores.update(dict.fromkeys(available_tracks['UP_Terminating'], HIGHEST))
             else: # Non-terminating
                 scores.update(dict.fromkeys(available_tracks['UP_NonTerminating'], NON_TERMINAL_UP))
+                scores.update(dict.fromkeys(available_tracks['DOWN_NonTerminating'], THROUGH))
                 if incoming_train.length.lower() == 'short':
                     scores.update(dict.fromkeys(available_tracks['UP_middle'], HIGHEST))
                     scores.update(dict.fromkeys(available_tracks['UP_border'], BORDER_STN_PRIO))
@@ -117,13 +131,13 @@ def calculate_platform_scores(incoming_train, available_tracks):
                         if 'P3' in available_tracks['UP_border']: scores['P3'] = LOWEST
         
         elif incoming_train.direction == 'DOWN':
-            # scores.update(dict.fromkeys(available_tracks['DOWN_All_Platform'], MIN_POSSIBLE))
 
             if incoming_train.is_terminating:
                 scores.update(dict.fromkeys(available_tracks['DOWN_Terminating'], HIGHEST))
             else: # Non-terminating
                 scores.update(dict.fromkeys(available_tracks['DOWN_middle'], HIGHEST))
                 scores.update(dict.fromkeys(available_tracks['DOWN_border'], BORDER_STN_PRIO))
+                scores.update(dict.fromkeys(available_tracks['UP_NonTerminating'], THROUGH))
 
     ranked_scores = sorted(scores.items(), key=lambda item: item[1], reverse=True)
     return ranked_scores

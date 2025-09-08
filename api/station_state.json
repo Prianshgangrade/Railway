@@ -23,13 +23,10 @@
     },
     {
       "id": "Platform 4",
-      "isOccupied": true,
-      "trainDetails": {
-        "trainNo": "12863",
-        "name": "Howrah - SMVT Bengaluru SF Express (PT)"
-      },
+      "isOccupied": false,
+      "trainDetails": null,
       "isUnderMaintenance": false,
-      "actualArrival": "20:23"
+      "actualArrival": null
     },
     {
       "id": "Platform 1A",
@@ -176,1482 +173,1953 @@
     {
       "trainNo": "12837",
       "name": "Howrah - Puri Superfast Express (PT)",
-      "scheduled_arrival": "00:13"
+      "scheduled_arrival": "00:13",
+      "scheduled_departure": "00:18"
     },
     {
       "trainNo": "13433",
       "name": "SMVT Bengaluru - Malda Town Amrit Bharat Express (PT)",
-      "scheduled_arrival": "00:15"
+      "scheduled_arrival": "00:15",
+      "scheduled_departure": "00:20"
     },
     {
       "trainNo": "18005",
       "name": "Samaleswari Express (PT)",
-      "scheduled_arrival": "00:15"
+      "scheduled_arrival": "00:15",
+      "scheduled_departure": "00:20"
     },
     {
       "trainNo": "12863",
       "name": "Howrah - SMVT Bengaluru SF Express (PT)",
-      "scheduled_arrival": "00:30"
+      "scheduled_arrival": "00:30",
+      "scheduled_departure": "00:35"
     },
     {
       "trainNo": "18022",
       "name": "Khurda Road - Kharagpur Express*",
-      "scheduled_arrival": "00:30"
+      "scheduled_arrival": "00:30",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "38727",
       "name": "Howrah - Kharagpur Local*",
-      "scheduled_arrival": "00:30"
+      "scheduled_arrival": "00:30",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "18049",
       "name": "Shalimar - Badampahar Weekly Express",
-      "scheduled_arrival": "00:35"
+      "scheduled_arrival": "00:35",
+      "scheduled_departure": "00:40"
     },
     {
       "trainNo": "12834",
       "name": "Howrah - Ahmedabad SF Express (PT)",
-      "scheduled_arrival": "00:45"
+      "scheduled_arrival": "00:45",
+      "scheduled_departure": "00:50"
     },
     {
       "trainNo": "12254",
       "name": "Anga Express (PT)",
-      "scheduled_arrival": "00:55"
+      "scheduled_arrival": "00:55",
+      "scheduled_departure": "01:03"
     },
     {
       "trainNo": "15644",
       "name": "Kamakhya - Puri Express (via Howrah) (PT)",
-      "scheduled_arrival": "00:55"
+      "scheduled_arrival": "00:55",
+      "scheduled_departure": "01:00"
     },
     {
       "trainNo": "12867",
       "name": "Howrah - Puducherry SF Express (PT)",
-      "scheduled_arrival": "00:58"
+      "scheduled_arrival": "00:58",
+      "scheduled_departure": "01:03"
     },
     {
       "trainNo": "15228",
       "name": "Muzaffarpur - SMVT Bengaluru Express (PT)",
-      "scheduled_arrival": "00:58"
+      "scheduled_arrival": "00:58",
+      "scheduled_departure": "01:20"
     },
     {
       "trainNo": "18047",
       "name": "Shalimar - Vasco-da-Gama Amaravati Express (PT)",
-      "scheduled_arrival": "00:58"
+      "scheduled_arrival": "00:58",
+      "scheduled_departure": "01:03"
     },
     {
       "trainNo": "22202",
       "name": "Puri - Sealdah Duronto Express",
-      "scheduled_arrival": "01:00"
+      "scheduled_arrival": "01:00",
+      "scheduled_departure": "01:05"
     },
     {
       "trainNo": "03430",
       "name": "Malda Town - Charlapalli Special Fare Puja Special",
-      "scheduled_arrival": "01:15"
+      "scheduled_arrival": "01:15",
+      "scheduled_departure": "01:25"
     },
     {
       "trainNo": "12839",
       "name": "Howrah - M.G.R Chennai Central Mail (PT)",
-      "scheduled_arrival": "01:23"
+      "scheduled_arrival": "01:23",
+      "scheduled_departure": "01:28"
     },
     {
       "trainNo": "12101",
       "name": "Jnaneswari Express (PT)",
-      "scheduled_arrival": "01:27"
+      "scheduled_arrival": "01:27",
+      "scheduled_departure": "01:32"
     },
     {
       "trainNo": "12905",
       "name": "Porbandar - Shalimar SF Express (PT)",
-      "scheduled_arrival": "01:27"
+      "scheduled_arrival": "01:27",
+      "scheduled_departure": "01:32"
     },
     {
       "trainNo": "22905",
       "name": "Okha - Shalimar Weekly SF Express",
-      "scheduled_arrival": "01:27"
+      "scheduled_arrival": "01:27",
+      "scheduled_departure": "01:32"
     },
     {
       "trainNo": "12660",
       "name": "Gurudev SF Express (PT)",
-      "scheduled_arrival": "01:35"
+      "scheduled_arrival": "01:35",
+      "scheduled_departure": "01:40"
     },
     {
       "trainNo": "22642",
       "name": "Shalimar - Thiruvananthapuram Central SF Express (PT)",
-      "scheduled_arrival": "01:35"
+      "scheduled_arrival": "01:35",
+      "scheduled_departure": "01:40"
     },
     {
       "trainNo": "18011",
       "name": "Howrah - Chakradharpur Express",
-      "scheduled_arrival": "01:40"
+      "scheduled_arrival": "01:40",
+      "scheduled_departure": "01:45"
     },
     {
       "trainNo": "18013",
       "name": "Howrah - Bokaro Steel City Express",
-      "scheduled_arrival": "01:40"
+      "scheduled_arrival": "01:40",
+      "scheduled_departure": "01:45"
     },
     {
       "trainNo": "12129",
       "name": "Azad Hind Express (PT)",
-      "scheduled_arrival": "02:05"
+      "scheduled_arrival": "02:05",
+      "scheduled_departure": "02:10"
     },
     {
       "trainNo": "18012",
       "name": "Chakradharpur - Howrah Express",
-      "scheduled_arrival": "02:20"
+      "scheduled_arrival": "02:20",
+      "scheduled_departure": "02:25"
     },
     {
       "trainNo": "18014",
       "name": "Bokaro Steel City - Howrah Express",
-      "scheduled_arrival": "02:20"
+      "scheduled_arrival": "02:20",
+      "scheduled_departure": "02:25"
     },
     {
       "trainNo": "18050",
       "name": "Badampahar - Shalimar Weekly Express",
-      "scheduled_arrival": "02:30"
+      "scheduled_arrival": "02:30",
+      "scheduled_departure": "02:35"
     },
     {
       "trainNo": "12838",
       "name": "Puri - Howrah Superfast Express (PT)",
-      "scheduled_arrival": "02:37"
+      "scheduled_arrival": "02:37",
+      "scheduled_departure": "02:42"
     },
     {
       "trainNo": "12508",
       "name": "Aronai Express (PT)",
-      "scheduled_arrival": "02:38"
+      "scheduled_arrival": "02:38",
+      "scheduled_departure": "02:48"
     },
     {
       "trainNo": "12510",
       "name": "Guwahati - SMVT Bengaluru SF Express (PT)",
-      "scheduled_arrival": "02:38"
+      "scheduled_arrival": "02:38",
+      "scheduled_departure": "02:48"
     },
     {
       "trainNo": "12514",
       "name": "Silchar - Charlapalli Weekly SF Express (PT)",
-      "scheduled_arrival": "02:38"
+      "scheduled_arrival": "02:38",
+      "scheduled_departure": "02:48"
     },
     {
       "trainNo": "12516",
       "name": "Silchar - Coimbatore SF Express (PT)",
-      "scheduled_arrival": "02:38"
+      "scheduled_arrival": "02:38",
+      "scheduled_departure": "02:48"
     },
     {
       "trainNo": "22502",
       "name": "New Tinsukia - SMVT Bengaluru SF Express (PT)",
-      "scheduled_arrival": "02:38"
+      "scheduled_arrival": "02:38",
+      "scheduled_departure": "02:48"
     },
     {
       "trainNo": "13417",
       "name": "Digha - Malda Town Express",
-      "scheduled_arrival": "02:45"
+      "scheduled_arrival": "02:45",
+      "scheduled_departure": "02:50"
     },
     {
       "trainNo": "06560",
       "name": "Narangi - SMVT Bengaluru Special Fare Festival Special",
-      "scheduled_arrival": "02:55"
+      "scheduled_arrival": "02:55",
+      "scheduled_departure": "03:05"
+    },
+    {
+      "trainNo": "38702",
+      "name": "Kharagpur - Howrah Local*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "03:05"
     },
     {
       "trainNo": "18006",
       "name": "Samaleswari Express",
-      "scheduled_arrival": "03:10"
+      "scheduled_arrival": "03:10",
+      "scheduled_departure": "03:15"
     },
     {
       "trainNo": "12774",
       "name": "Secunderabad - Shalimar AC SF Express (PT)",
-      "scheduled_arrival": "03:22"
+      "scheduled_arrival": "03:22",
+      "scheduled_departure": "03:27"
     },
     {
       "trainNo": "22850",
       "name": "Secunderabad - Shalimar Weekly SF Express",
-      "scheduled_arrival": "03:22"
+      "scheduled_arrival": "03:22",
+      "scheduled_departure": "03:27"
     },
     {
       "trainNo": "22854",
       "name": "Visakhapatnam - Shalimar SF Express",
-      "scheduled_arrival": "03:22"
+      "scheduled_arrival": "03:22",
+      "scheduled_departure": "03:27"
     },
     {
       "trainNo": "22874",
       "name": "Visakhapatnam - Digha SF Express",
-      "scheduled_arrival": "03:22"
+      "scheduled_arrival": "03:22",
+      "scheduled_departure": "03:27"
     },
     {
       "trainNo": "22890",
       "name": "Samudra Kanya Express",
-      "scheduled_arrival": "03:22"
+      "scheduled_arrival": "03:22",
+      "scheduled_departure": "03:27"
+    },
+    {
+      "trainNo": "38704",
+      "name": "Kharagpur - Howrah Local*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "03:40"
     },
     {
       "trainNo": "12809",
       "name": "Mumbai CSMT - Howrah Mail (Via Nagpur) (PT)",
-      "scheduled_arrival": "03:50"
+      "scheduled_arrival": "03:50",
+      "scheduled_departure": "03:55"
     },
     {
       "trainNo": "22504",
       "name": "Dibrugarh - Kanniyakumari Vivek SF Express (PT)",
-      "scheduled_arrival": "03:58"
+      "scheduled_arrival": "03:58",
+      "scheduled_departure": "04:08"
+    },
+    {
+      "trainNo": "68093",
+      "name": "Kharagpur - Jhargram MEMU*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "04:10"
     },
     {
       "trainNo": "15643",
       "name": "Puri - Kamakhya Express (Via Howrah) (PT)",
-      "scheduled_arrival": "04:12"
+      "scheduled_arrival": "04:12",
+      "scheduled_departure": "04:20"
     },
     {
       "trainNo": "12882",
       "name": "Puri - Shalimar Garib Rath Express",
-      "scheduled_arrival": "04:15"
+      "scheduled_arrival": "04:15",
+      "scheduled_departure": "04:20"
     },
     {
       "trainNo": "12888",
       "name": "Puri - Shalimar Weekly SF Express",
-      "scheduled_arrival": "04:15"
+      "scheduled_arrival": "04:15",
+      "scheduled_departure": "04:20"
     },
     {
       "trainNo": "12896",
       "name": "Puri - Shalimar Weekly SF Express",
-      "scheduled_arrival": "04:15"
+      "scheduled_arrival": "04:15",
+      "scheduled_departure": "04:20"
     },
     {
       "trainNo": "22804",
       "name": "Sambalpur - Shalimar SF Express (via Talcher Road)",
-      "scheduled_arrival": "04:15"
+      "scheduled_arrival": "04:15",
+      "scheduled_departure": "04:20"
     },
     {
       "trainNo": "22836",
       "name": "Puri - Shalimar SF Express",
-      "scheduled_arrival": "04:15"
+      "scheduled_arrival": "04:15",
+      "scheduled_departure": "04:20"
+    },
+    {
+      "trainNo": "18085",
+      "name": "Kharagpur - Ranchi MEMU Express (UnReserved)*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "04:30"
     },
     {
       "trainNo": "20832",
       "name": "Mahima Gosain Express",
-      "scheduled_arrival": "04:30"
+      "scheduled_arrival": "04:30",
+      "scheduled_departure": "04:35"
     },
     {
       "trainNo": "18616",
       "name": "Kriya Yoga Express",
-      "scheduled_arrival": "04:35"
+      "scheduled_arrival": "04:35",
+      "scheduled_departure": "04:40"
     },
     {
       "trainNo": "38802",
       "name": "Midnapore - Howrah Local",
-      "scheduled_arrival": "04:35"
+      "scheduled_arrival": "04:35",
+      "scheduled_departure": "04:40"
+    },
+    {
+      "trainNo": "18021",
+      "name": "Kharagpur - Khurda Road Express*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "04:40"
+    },
+    {
+      "trainNo": "68091",
+      "name": "Kharagpur - Jhargram MEMU*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "04:45"
     },
     {
       "trainNo": "12151",
       "name": "Samarsata SF Express (PT)",
-      "scheduled_arrival": "04:50"
+      "scheduled_arrival": "04:50",
+      "scheduled_departure": "04:55"
     },
     {
       "trainNo": "12949",
       "name": "Porbandar - Santragachi Kavi Guru SF Express (PT)",
-      "scheduled_arrival": "04:50"
+      "scheduled_arrival": "04:50",
+      "scheduled_departure": "04:55"
     },
     {
       "trainNo": "06077",
       "name": "MGR Chennai Central - Santragachi Special Fare Festival Special",
-      "scheduled_arrival": "05:00"
+      "scheduled_arrival": "05:00",
+      "scheduled_departure": "05:02"
+    },
+    {
+      "trainNo": "38706",
+      "name": "Kharagpur - Howrah Local*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "05:20"
     },
     {
       "trainNo": "38801",
       "name": "Howrah - Midnapore Fast Local",
-      "scheduled_arrival": "05:22"
+      "scheduled_arrival": "05:22",
+      "scheduled_departure": "05:25"
     },
     {
       "trainNo": "18410",
       "name": "Sri Jagannath Express",
-      "scheduled_arrival": "05:30"
+      "scheduled_arrival": "05:30",
+      "scheduled_departure": "05:35"
+    },
+    {
+      "trainNo": "68013",
+      "name": "Kharagpur - Tatanagar MEMU*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "05:40"
     },
     {
       "trainNo": "38804",
       "name": "Midnapore - Howrah Local",
-      "scheduled_arrival": "05:49"
+      "scheduled_arrival": "05:49",
+      "scheduled_departure": "05:52"
+    },
+    {
+      "trainNo": "18027",
+      "name": "Kharagpur - Asansol MEMU Express (UnReserved)*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "06:00"
+    },
+    {
+      "trainNo": "68049",
+      "name": "Kharagpur - Bhadrak MEMU*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "06:10"
     },
     {
       "trainNo": "38703",
       "name": "Howrah - Kharagpur Local*",
-      "scheduled_arrival": "06:15"
+      "scheduled_arrival": "06:15",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "58028",
       "name": "Tatanagar - Kharagpur Passenger (UnReserved)*",
-      "scheduled_arrival": "06:15"
+      "scheduled_arrival": "06:15",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "38806",
       "name": "Midnapore - Howrah Fast Local",
-      "scheduled_arrival": "06:20"
+      "scheduled_arrival": "06:20",
+      "scheduled_departure": "06:25"
     },
     {
       "trainNo": "02840",
       "name": "Puri - Shalimar Special Fare SF Special",
-      "scheduled_arrival": "06:30"
+      "scheduled_arrival": "06:30",
+      "scheduled_departure": "06:35"
     },
     {
       "trainNo": "06559",
       "name": "SMVT Bengaluru - Narangi Special Fare  Festival Special",
-      "scheduled_arrival": "06:30"
+      "scheduled_arrival": "06:30",
+      "scheduled_departure": "06:40"
     },
     {
       "trainNo": "12509",
       "name": "SMVT Bengaluru - Guwahati SF Express (PT)",
-      "scheduled_arrival": "06:40"
+      "scheduled_arrival": "06:40",
+      "scheduled_departure": "06:48"
     },
     {
       "trainNo": "12515",
       "name": "Coimbatore - Silchar SF  Express (PT)",
-      "scheduled_arrival": "06:40"
+      "scheduled_arrival": "06:40",
+      "scheduled_departure": "06:48"
+    },
+    {
+      "trainNo": "38708",
+      "name": "Kharagpur - Howrah Local*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "06:40"
     },
     {
       "trainNo": "01930",
       "name": "Puri - VGL Jhansi Special Fare Special",
-      "scheduled_arrival": "06:41"
+      "scheduled_arrival": "06:41",
+      "scheduled_departure": "06:41"
     },
     {
       "trainNo": "38803",
       "name": "Howrah - Midnapore Local",
-      "scheduled_arrival": "06:44"
+      "scheduled_arrival": "06:44",
+      "scheduled_departure": "06:47"
     },
     {
       "trainNo": "38808",
       "name": "Midnapore - Howrah Fast Local",
-      "scheduled_arrival": "06:47"
+      "scheduled_arrival": "06:47",
+      "scheduled_departure": "06:50"
     },
     {
       "trainNo": "68048",
       "name": "Belda - Kharagpur MEMU*",
-      "scheduled_arrival": "06:55"
+      "scheduled_arrival": "06:55",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "12222",
       "name": "Howrah - Pune AC Duronto Express",
-      "scheduled_arrival": "07:10"
+      "scheduled_arrival": "07:10",
+      "scheduled_departure": "07:10"
     },
     {
       "trainNo": "12262",
       "name": "Howrah - Mumbai CSMT AC Duronto Express",
-      "scheduled_arrival": "07:10"
+      "scheduled_arrival": "07:10",
+      "scheduled_departure": "07:10"
     },
     {
       "trainNo": "68016",
       "name": "Tatanagar - Kharagpur MEMU*",
-      "scheduled_arrival": "07:10"
+      "scheduled_arrival": "07:10",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "15022",
       "name": "Gorakhpur - Shalimar Weekly Express",
-      "scheduled_arrival": "07:20"
+      "scheduled_arrival": "07:20",
+      "scheduled_departure": "07:25"
     },
     {
       "trainNo": "20971",
       "name": "Udaipur City - Shalimar SF Express",
-      "scheduled_arrival": "07:20"
+      "scheduled_arrival": "07:20",
+      "scheduled_departure": "07:25"
     },
     {
       "trainNo": "22829",
       "name": "Bhuj - Shalimar SF Express (PT)",
-      "scheduled_arrival": "07:20"
+      "scheduled_arrival": "07:20",
+      "scheduled_departure": "07:25"
     },
     {
       "trainNo": "68002",
       "name": "Jaleswar - Howrah MEMU",
-      "scheduled_arrival": "07:25"
+      "scheduled_arrival": "07:25",
+      "scheduled_departure": "07:30"
     },
     {
       "trainNo": "20871",
       "name": "Howrah - Rourkela Vande Bharat Express",
-      "scheduled_arrival": "07:28"
+      "scheduled_arrival": "07:28",
+      "scheduled_departure": "07:30"
     },
     {
       "trainNo": "68001",
       "name": "Santragachi - Jhargram MEMU",
-      "scheduled_arrival": "07:30"
+      "scheduled_arrival": "07:30",
+      "scheduled_departure": "07:35"
     },
     {
       "trainNo": "12842",
       "name": "Coromandel Express (PT)",
-      "scheduled_arrival": "07:35"
+      "scheduled_arrival": "07:35",
+      "scheduled_departure": "07:40"
     },
     {
       "trainNo": "38705",
       "name": "Howrah - Kharagpur Local*",
-      "scheduled_arrival": "07:35"
+      "scheduled_arrival": "07:35",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "22895",
       "name": "Howrah - Puri Vande Bharat Express",
-      "scheduled_arrival": "07:38"
+      "scheduled_arrival": "07:38",
+      "scheduled_departure": "07:40"
     },
     {
       "trainNo": "12883",
       "name": "Rupasi Bangla Express",
-      "scheduled_arrival": "07:45"
+      "scheduled_arrival": "07:45",
+      "scheduled_departure": "07:50"
+    },
+    {
+      "trainNo": "38714",
+      "name": "Kharagpur - Howrah Fast Local*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "07:45"
     },
     {
       "trainNo": "18004",
       "name": "Rani Shiromoni Express (UnReserved)",
-      "scheduled_arrival": "07:47"
+      "scheduled_arrival": "07:47",
+      "scheduled_departure": "07:52"
     },
     {
       "trainNo": "12021",
       "name": "Howrah - Barbil Jan Shatabdi Express",
-      "scheduled_arrival": "07:53"
+      "scheduled_arrival": "07:53",
+      "scheduled_departure": "07:55"
     },
     {
       "trainNo": "38810",
       "name": "Midnapore - Howrah Local",
-      "scheduled_arrival": "08:00"
+      "scheduled_arrival": "08:00",
+      "scheduled_departure": "08:03"
     },
     {
       "trainNo": "38805",
       "name": "Howrah - Midnapore Local",
-      "scheduled_arrival": "08:02"
+      "scheduled_arrival": "08:02",
+      "scheduled_departure": "08:05"
     },
     {
       "trainNo": "12871",
       "name": "Howrah - Titlagarh Ispat Express",
-      "scheduled_arrival": "08:06"
+      "scheduled_arrival": "08:06",
+      "scheduled_departure": "08:08"
     },
     {
       "trainNo": "22861",
       "name": "Howrah - Kantabanji Ispat Express",
-      "scheduled_arrival": "08:06"
+      "scheduled_arrival": "08:06",
+      "scheduled_departure": "08:08"
     },
     {
       "trainNo": "12814",
       "name": "Steel Express (PT)",
-      "scheduled_arrival": "08:18"
+      "scheduled_arrival": "08:18",
+      "scheduled_departure": "08:20"
     },
     {
       "trainNo": "22808",
       "name": "MGR Chennai Central - Santragachi AC SF Express (PT)",
-      "scheduled_arrival": "08:25"
+      "scheduled_arrival": "08:25",
+      "scheduled_departure": "08:30"
     },
     {
       "trainNo": "22842",
       "name": "Tambaram - Santragachi Antyodaya Express",
-      "scheduled_arrival": "08:25"
+      "scheduled_arrival": "08:25",
+      "scheduled_departure": "08:30"
+    },
+    {
+      "trainNo": "18035",
+      "name": "Kharagpur - Hatia Express (UnReserved)*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "08:35"
     },
     {
       "trainNo": "22818",
       "name": "Mysuru - Howrah Weekly SF Express (PT)",
-      "scheduled_arrival": "08:35"
+      "scheduled_arrival": "08:35",
+      "scheduled_departure": "08:40"
     },
     {
       "trainNo": "02842",
       "name": "MGR Chennai Central - Shalimar Special Fare Special",
-      "scheduled_arrival": "08:50"
+      "scheduled_arrival": "08:50",
+      "scheduled_departure": "08:55"
     },
     {
       "trainNo": "12507",
       "name": "Aronai Express (PT)",
-      "scheduled_arrival": "08:57"
+      "scheduled_arrival": "08:57",
+      "scheduled_departure": "09:05"
     },
     {
       "trainNo": "15227",
       "name": "SMVT Bengaluru - Muzaffarpur Express (PT)",
-      "scheduled_arrival": "08:57"
+      "scheduled_arrival": "08:57",
+      "scheduled_departure": "09:05"
     },
     {
       "trainNo": "22501",
       "name": "SMVT Bengaluru - New Tinsukia SF Express (PT)",
-      "scheduled_arrival": "08:57"
+      "scheduled_arrival": "08:57",
+      "scheduled_departure": "09:05"
     },
     {
       "trainNo": "12659",
       "name": "Gurudev SF Express (PT)",
-      "scheduled_arrival": "09:00"
+      "scheduled_arrival": "09:00",
+      "scheduled_departure": "09:05"
     },
     {
       "trainNo": "22641",
       "name": "Thiruvananthapuram Central - Shalimar SF Express (PT)",
-      "scheduled_arrival": "09:00"
+      "scheduled_arrival": "09:00",
+      "scheduled_departure": "09:05"
     },
     {
       "trainNo": "18029",
       "name": "Mumbai LTT - Shalimar Express (PT)",
-      "scheduled_arrival": "09:05"
+      "scheduled_arrival": "09:05",
+      "scheduled_departure": "09:10"
     },
     {
       "trainNo": "18044",
       "name": "Bagha Jatin Express (UnReserved)",
-      "scheduled_arrival": "09:10"
+      "scheduled_arrival": "09:10",
+      "scheduled_departure": "09:15"
     },
     {
       "trainNo": "38807",
       "name": "Howrah - Midnapore Local",
-      "scheduled_arrival": "09:17"
+      "scheduled_arrival": "09:17",
+      "scheduled_departure": "09:20"
     },
     {
       "trainNo": "38812",
       "name": "Midnapore - Howrah Local",
-      "scheduled_arrival": "09:17"
+      "scheduled_arrival": "09:17",
+      "scheduled_departure": "09:22"
     },
     {
       "trainNo": "12828",
       "name": "Purulia - Howrah SF Express",
-      "scheduled_arrival": "09:21"
+      "scheduled_arrival": "09:21",
+      "scheduled_departure": "09:23"
     },
     {
       "trainNo": "12885",
       "name": "Aranyak Express",
-      "scheduled_arrival": "09:25"
+      "scheduled_arrival": "09:25",
+      "scheduled_departure": "09:30"
     },
     {
       "trainNo": "13506",
       "name": "Asansol - Digha Express",
-      "scheduled_arrival": "09:30"
+      "scheduled_arrival": "09:30",
+      "scheduled_departure": "09:35"
     },
     {
       "trainNo": "22330",
       "name": "Asansol - Haldia SF Express",
-      "scheduled_arrival": "09:30"
+      "scheduled_arrival": "09:30",
+      "scheduled_departure": "09:35"
     },
     {
       "trainNo": "18008",
       "name": "Simlipal Intercity Express (UnReserved)",
-      "scheduled_arrival": "09:45"
+      "scheduled_arrival": "09:45",
+      "scheduled_departure": "09:50"
     },
     {
       "trainNo": "68008",
       "name": "Jhargram - Santragachi MEMU",
-      "scheduled_arrival": "09:45"
+      "scheduled_arrival": "09:45",
+      "scheduled_departure": "09:50"
     },
     {
       "trainNo": "01149",
       "name": "Bhiwandi Road - Sankrail Goods Terminal Mixed Special (UnReserved)",
-      "scheduled_arrival": "10:00"
+      "scheduled_arrival": "10:00",
+      "scheduled_departure": "10:30"
     },
     {
       "trainNo": "12703",
       "name": "Falaknuma  Express (PT)",
-      "scheduled_arrival": "10:00"
+      "scheduled_arrival": "10:00",
+      "scheduled_departure": "10:05"
+    },
+    {
+      "trainNo": "68021",
+      "name": "Kharagpur - Baleshwar MEMU*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "10:00"
     },
     {
       "trainNo": "38707",
       "name": "Howrah - Kharagpur Local*",
-      "scheduled_arrival": "10:15"
+      "scheduled_arrival": "10:15",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "12859",
       "name": "Gitanjali Express (PT)",
-      "scheduled_arrival": "10:18"
+      "scheduled_arrival": "10:18",
+      "scheduled_departure": "10:23"
     },
     {
       "trainNo": "06086",
       "name": "Patna - Ernakulam Special Fare Special",
-      "scheduled_arrival": "10:25"
+      "scheduled_arrival": "10:25",
+      "scheduled_departure": "10:35"
     },
     {
       "trainNo": "12074",
       "name": "Bhubaneswar - Howrah Jan Shatabdi Express",
-      "scheduled_arrival": "10:30"
+      "scheduled_arrival": "10:30",
+      "scheduled_departure": "10:35"
     },
     {
       "trainNo": "38809",
       "name": "Howrah - Midnapore Local",
-      "scheduled_arrival": "10:37"
+      "scheduled_arrival": "10:37",
+      "scheduled_departure": "10:40"
     },
     {
       "trainNo": "08865",
       "name": "NSC Bose Itwari - Shalimar Special Fare Durga Puja Special",
-      "scheduled_arrival": "10:45"
+      "scheduled_arrival": "10:45",
+      "scheduled_departure": "10:55"
     },
     {
       "trainNo": "22832",
       "name": "Yesvantpur - Howrah Superfast Express (PT)",
-      "scheduled_arrival": "10:50"
+      "scheduled_arrival": "10:50",
+      "scheduled_departure": "10:55"
     },
     {
       "trainNo": "22878",
       "name": "Ernakulam - Howrah Antyodaya Express",
-      "scheduled_arrival": "10:50"
+      "scheduled_arrival": "10:50",
+      "scheduled_departure": "10:55"
     },
     {
       "trainNo": "68102",
       "name": "Adra - Kharagpur MEMU*",
-      "scheduled_arrival": "10:55"
+      "scheduled_arrival": "10:55",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "02864",
       "name": "Yesvantpur - Santragachi Special Fare AC SF Special",
-      "scheduled_arrival": "11:00"
+      "scheduled_arrival": "11:00",
+      "scheduled_departure": "11:05"
     },
     {
       "trainNo": "12821",
       "name": "Dhauli Express (PT)",
-      "scheduled_arrival": "11:00"
+      "scheduled_arrival": "11:00",
+      "scheduled_departure": "11:05"
+    },
+    {
+      "trainNo": "38716",
+      "name": "Kharagpur - Howrah Local*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "11:00"
     },
     {
       "trainNo": "20898",
       "name": "Ranchi - Howrah Vande Bharat Express",
-      "scheduled_arrival": "11:13"
+      "scheduled_arrival": "11:13",
+      "scheduled_departure": "11:15"
     },
     {
       "trainNo": "12278",
       "name": "Puri - Howrah Shatabdi Express",
-      "scheduled_arrival": "11:15"
+      "scheduled_arrival": "11:15",
+      "scheduled_departure": "11:20"
     },
     {
       "trainNo": "12443",
       "name": "Haldia - Anand Vihar Terminal SF Express (PT)",
-      "scheduled_arrival": "11:20"
+      "scheduled_arrival": "11:20",
+      "scheduled_departure": "11:25"
     },
     {
       "trainNo": "22857",
       "name": "Santragachi - Anand Vihar Terminal Weekly SF Express (PT)",
-      "scheduled_arrival": "11:20"
+      "scheduled_arrival": "11:20",
+      "scheduled_departure": "11:25"
     },
     {
       "trainNo": "38814",
       "name": "Midnapore - Howrah Local",
-      "scheduled_arrival": "11:24"
+      "scheduled_arrival": "11:24",
+      "scheduled_departure": "11:27"
     },
     {
       "trainNo": "22503",
       "name": "Kanniyakumari - Dibrugarh Vivek SF Express (PT)",
-      "scheduled_arrival": "11:30"
+      "scheduled_arrival": "11:30",
+      "scheduled_departure": "11:40"
     },
     {
       "trainNo": "38811",
       "name": "Howrah - Midnapore Local",
-      "scheduled_arrival": "11:32"
+      "scheduled_arrival": "11:32",
+      "scheduled_departure": "11:35"
     },
     {
       "trainNo": "12833",
       "name": "Ahmedabad - Howrah SF Express (PT)",
-      "scheduled_arrival": "11:40"
+      "scheduled_arrival": "11:40",
+      "scheduled_departure": "11:45"
     },
     {
       "trainNo": "18046",
       "name": "East Coast Express (PT)",
-      "scheduled_arrival": "11:45"
+      "scheduled_arrival": "11:45",
+      "scheduled_departure": "11:50"
+    },
+    {
+      "trainNo": "68123",
+      "name": "Kharagpur - Tatanagar MEMU*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "11:45"
     },
     {
       "trainNo": "38816",
       "name": "Midnapore - Howrah Local",
-      "scheduled_arrival": "12:00"
+      "scheduled_arrival": "12:00",
+      "scheduled_departure": "12:05"
     },
     {
       "trainNo": "68006",
       "name": "Tatanagar - Kharagpur MEMU*",
-      "scheduled_arrival": "12:05"
+      "scheduled_arrival": "12:05",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "18033",
       "name": "Howrah - Ghatsila MEMU Express (UnReserved)",
-      "scheduled_arrival": "12:10"
+      "scheduled_arrival": "12:10",
+      "scheduled_departure": "12:15"
     },
     {
       "trainNo": "22863",
       "name": "Howrah - SMVT Bengaluru AC SF Express (PT)",
-      "scheduled_arrival": "12:15"
+      "scheduled_arrival": "12:15",
+      "scheduled_departure": "12:20"
     },
     {
       "trainNo": "12245",
       "name": "Howrah - SMVT Bengaluru Duronto Express",
-      "scheduled_arrival": "12:17"
+      "scheduled_arrival": "12:17",
+      "scheduled_departure": "12:17"
     },
     {
       "trainNo": "18038",
       "name": "Jajpur Keonjhar Road - Kharagpur Express (UnReserved)*",
-      "scheduled_arrival": "12:20"
+      "scheduled_arrival": "12:20",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "38813",
       "name": "Howrah - Midnapore Local",
-      "scheduled_arrival": "12:34"
+      "scheduled_arrival": "12:34",
+      "scheduled_departure": "12:37"
     },
     {
       "trainNo": "18010",
       "name": "Ajmer - Santragachi Weekly Express",
-      "scheduled_arrival": "12:37"
+      "scheduled_arrival": "12:37",
+      "scheduled_departure": "12:42"
     },
     {
       "trainNo": "08612",
       "name": "Ajmer - Santragachi Special Fare  Special",
-      "scheduled_arrival": "12:40"
+      "scheduled_arrival": "12:40",
+      "scheduled_departure": "12:45"
     },
     {
       "trainNo": "08008",
       "name": "Bhanjpur - Shalimar Special Fare Special",
-      "scheduled_arrival": "12:55"
+      "scheduled_arrival": "12:55",
+      "scheduled_departure": "13:00"
     },
     {
       "trainNo": "18628",
       "name": "Ranchi - Howrah Intercity Express (Via Adra)",
-      "scheduled_arrival": "13:00"
+      "scheduled_arrival": "13:00",
+      "scheduled_departure": "13:02"
     },
     {
       "trainNo": "38815",
       "name": "Howrah - Midnapore Local",
-      "scheduled_arrival": "13:07"
+      "scheduled_arrival": "13:07",
+      "scheduled_departure": "13:10"
     },
     {
       "trainNo": "22892",
       "name": "Ranchi - Howrah Intercity SF Express (via Tatanagar)",
-      "scheduled_arrival": "13:10"
+      "scheduled_arrival": "13:10",
+      "scheduled_departure": "13:12"
     },
     {
       "trainNo": "18045",
       "name": "East Coast Express (PT)",
-      "scheduled_arrival": "13:22"
+      "scheduled_arrival": "13:22",
+      "scheduled_departure": "13:27"
     },
     {
       "trainNo": "38818",
       "name": "Midnapore - Howrah Local",
-      "scheduled_arrival": "13:23"
+      "scheduled_arrival": "13:23",
+      "scheduled_departure": "13:28"
     },
     {
       "trainNo": "20827",
       "name": "Jabalpur - Santragachi Humsafar Express",
-      "scheduled_arrival": "13:35"
+      "scheduled_arrival": "13:35",
+      "scheduled_departure": "13:40"
     },
     {
       "trainNo": "22169",
       "name": "Rani Kamalapati - Santragachi Humsafar Express",
-      "scheduled_arrival": "13:35"
+      "scheduled_arrival": "13:35",
+      "scheduled_departure": "13:40"
     },
     {
       "trainNo": "22825",
       "name": "Shalimar - MGR  Chennai Central SF Express (PT)",
-      "scheduled_arrival": "13:50"
+      "scheduled_arrival": "13:50",
+      "scheduled_departure": "13:55"
     },
     {
       "trainNo": "22849",
       "name": "Shalimar - Secunderabad Weekly SF Express (PT)",
-      "scheduled_arrival": "13:50"
+      "scheduled_arrival": "13:50",
+      "scheduled_departure": "13:55"
+    },
+    {
+      "trainNo": "18023",
+      "name": "Kharagpur - NSCB Jn. Gomoh  Express (UnReserved)*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "14:00"
+    },
+    {
+      "trainNo": "22603",
+      "name": "Kharagpur - Villupuram SF Express (PT)*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "14:00"
     },
     {
       "trainNo": "38711",
       "name": "Howrah - Kharagpur Local*",
-      "scheduled_arrival": "14:00"
+      "scheduled_arrival": "14:00",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "12504",
       "name": "Agartala - SMVT Bengaluru Humsafar Express (PT)",
-      "scheduled_arrival": "14:07"
+      "scheduled_arrival": "14:07",
+      "scheduled_departure": "14:15"
     },
     {
       "trainNo": "22306",
       "name": "Jasidih - SMVT Bengaluru Weekly SF Express (PT)",
-      "scheduled_arrival": "14:07"
+      "scheduled_arrival": "14:07",
+      "scheduled_departure": "14:15"
     },
     {
       "trainNo": "07046",
       "name": "Charlapalli - Naharlagun Special Fare Festival Special",
-      "scheduled_arrival": "14:10"
+      "scheduled_arrival": "14:10",
+      "scheduled_departure": "14:20"
     },
     {
       "trainNo": "20889",
       "name": "Howrah - Tirupati Humsafar Express",
-      "scheduled_arrival": "14:10"
+      "scheduled_arrival": "14:10",
+      "scheduled_departure": "14:15"
     },
     {
       "trainNo": "22887",
       "name": "Howrah - SMVT Bengaluru Humsafar Express (PT)",
-      "scheduled_arrival": "14:10"
+      "scheduled_arrival": "14:10",
+      "scheduled_departure": "14:15"
+    },
+    {
+      "trainNo": "38720",
+      "name": "Kharagpur - Howrah Local*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "14:10"
     },
     {
       "trainNo": "06085",
       "name": "Ernakulam - Patna Special Fare Special",
-      "scheduled_arrival": "14:15"
+      "scheduled_arrival": "14:15",
+      "scheduled_departure": "14:25"
     },
     {
       "trainNo": "07029",
       "name": "Agartala - Secunderabad Special Fare Special",
-      "scheduled_arrival": "14:20"
+      "scheduled_arrival": "14:20",
+      "scheduled_departure": "14:25"
     },
     {
       "trainNo": "22858",
       "name": "Anand Vihar Terminal - Santragachi Weekly SF Express",
-      "scheduled_arrival": "14:20"
+      "scheduled_arrival": "14:20",
+      "scheduled_departure": "14:25"
     },
     {
       "trainNo": "18627",
       "name": "Howrah - Ranchi Intercity Express (Via Adra)",
-      "scheduled_arrival": "14:22"
+      "scheduled_arrival": "14:22",
+      "scheduled_departure": "14:30"
     },
     {
       "trainNo": "22891",
       "name": "Howrah - Ranchi Intercity SF Express (via Tatanagar)",
-      "scheduled_arrival": "14:22"
+      "scheduled_arrival": "14:22",
+      "scheduled_departure": "14:30"
     },
     {
       "trainNo": "02863",
       "name": "Santragachi - Yesvantpur Special Fare AC SF Special",
-      "scheduled_arrival": "14:23"
+      "scheduled_arrival": "14:23",
+      "scheduled_departure": "14:28"
     },
     {
       "trainNo": "18009",
       "name": "Santragachi - Ajmer Weekly Express (PT)",
-      "scheduled_arrival": "14:25"
+      "scheduled_arrival": "14:25",
+      "scheduled_departure": "14:30"
     },
     {
       "trainNo": "18024",
       "name": "NSCB Jn. Gomoh - Kharagpur Express (UnReserved)*",
-      "scheduled_arrival": "14:35"
+      "scheduled_arrival": "14:35",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "22864",
       "name": "SMVT Bengaluru - Howrah AC SF Express",
-      "scheduled_arrival": "14:40"
+      "scheduled_arrival": "14:40",
+      "scheduled_departure": "14:45"
     },
     {
       "trainNo": "38820",
       "name": "Midnapore - Howrah Local",
-      "scheduled_arrival": "14:45"
+      "scheduled_arrival": "14:45",
+      "scheduled_departure": "14:50"
     },
     {
       "trainNo": "22852",
       "name": "Mangaluru Central - Santragachi Vivek Express (PT)",
-      "scheduled_arrival": "14:50"
+      "scheduled_arrival": "14:50",
+      "scheduled_departure": "14:55"
     },
     {
       "trainNo": "08845",
       "name": "Santragachi - Charlapalli  Festival Special (UnReserved)",
-      "scheduled_arrival": "15:00"
+      "scheduled_arrival": "15:00",
+      "scheduled_departure": "15:00"
     },
     {
       "trainNo": "12073",
       "name": "Howrah - Bhubaneswar Jan Shatabdi Express",
-      "scheduled_arrival": "15:00"
+      "scheduled_arrival": "15:00",
+      "scheduled_departure": "15:05"
     },
     {
       "trainNo": "38713",
       "name": "Howrah - Kharagpur Local*",
-      "scheduled_arrival": "15:00"
+      "scheduled_arrival": "15:00",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "12246",
       "name": "SMVT Bengaluru - Howrah Duronto Express",
-      "scheduled_arrival": "15:01"
+      "scheduled_arrival": "15:01",
+      "scheduled_departure": "15:01"
     },
     {
       "trainNo": "38817",
       "name": "Howrah - Midnapore Local",
-      "scheduled_arrival": "15:07"
+      "scheduled_arrival": "15:07",
+      "scheduled_departure": "15:10"
     },
     {
       "trainNo": "12860",
       "name": "Gitanjali Express (PT)",
-      "scheduled_arrival": "15:15"
+      "scheduled_arrival": "15:15",
+      "scheduled_departure": "15:20"
+    },
+    {
+      "trainNo": "38722",
+      "name": "Kharagpur - Howrah Local*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "15:20"
     },
     {
       "trainNo": "68094",
       "name": "Jhargram - Kharagpur MEMU*",
-      "scheduled_arrival": "15:20"
+      "scheduled_arrival": "15:20",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "12704",
       "name": "Falaknuma Express (PT)",
-      "scheduled_arrival": "15:30"
+      "scheduled_arrival": "15:30",
+      "scheduled_departure": "15:35"
     },
     {
       "trainNo": "12768",
       "name": "Santragachi - Hazur Sahib Nanded  SF  Express (PT)",
-      "scheduled_arrival": "15:30"
+      "scheduled_arrival": "15:30",
+      "scheduled_departure": "15:35"
     },
     {
       "trainNo": "12870",
       "name": "Howrah - Mumbai CSMT Weekly SF Express (PT)",
-      "scheduled_arrival": "15:30"
+      "scheduled_arrival": "15:30",
+      "scheduled_departure": "15:35"
     },
     {
       "trainNo": "22894",
       "name": "Howrah - Sainagar Shirdi SF Express (PT)",
-      "scheduled_arrival": "15:30"
+      "scheduled_arrival": "15:30",
+      "scheduled_departure": "15:35"
     },
     {
       "trainNo": "38717",
       "name": "Howrah - Kharagpur Local*",
-      "scheduled_arrival": "15:40"
+      "scheduled_arrival": "15:40",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "22512",
       "name": "Kamakhya - Mumbai LTT Karmabhoomi Express (PT)",
-      "scheduled_arrival": "15:42"
+      "scheduled_arrival": "15:42",
+      "scheduled_departure": "15:50"
     },
     {
       "trainNo": "38822",
       "name": "Midnapore - Howrah Fast Local",
-      "scheduled_arrival": "15:44"
+      "scheduled_arrival": "15:44",
+      "scheduled_departure": "15:47"
     },
     {
       "trainNo": "12277",
       "name": "Howrah - Puri Shatabdi Express",
-      "scheduled_arrival": "15:55"
+      "scheduled_arrival": "15:55",
+      "scheduled_departure": "16:00"
     },
     {
       "trainNo": "07030",
       "name": "Secunderabad - Agartala Special Fare Special",
-      "scheduled_arrival": "16:00"
+      "scheduled_arrival": "16:00",
+      "scheduled_departure": "16:10"
     },
     {
       "trainNo": "68022",
       "name": "Baleshwar - Kharagpur MEMU*",
-      "scheduled_arrival": "16:00"
+      "scheduled_arrival": "16:00",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "12503",
       "name": "SMVT Bengaluru - Agartala Humsafar Express (PT)",
-      "scheduled_arrival": "16:05"
+      "scheduled_arrival": "16:05",
+      "scheduled_departure": "16:10"
     },
     {
       "trainNo": "12513",
       "name": "Charlapalli - Silchar Weekly SF Express (PT)",
-      "scheduled_arrival": "16:05"
+      "scheduled_arrival": "16:05",
+      "scheduled_departure": "16:10"
     },
     {
       "trainNo": "20890",
       "name": "Tirupati - Howrah Humsafar Express",
-      "scheduled_arrival": "16:05"
+      "scheduled_arrival": "16:05",
+      "scheduled_departure": "16:10"
     },
     {
       "trainNo": "22888",
       "name": "SMVT Bengaluru - Howrah Humsafar Express",
-      "scheduled_arrival": "16:05"
+      "scheduled_arrival": "16:05",
+      "scheduled_departure": "16:10"
     },
     {
       "trainNo": "38819",
       "name": "Howrah - Midnapore Local",
-      "scheduled_arrival": "16:05"
+      "scheduled_arrival": "16:05",
+      "scheduled_departure": "16:10"
     },
     {
       "trainNo": "20897",
       "name": "Howrah - Ranchi Vande Bharat Express",
-      "scheduled_arrival": "16:06"
+      "scheduled_arrival": "16:06",
+      "scheduled_departure": "16:08"
     },
     {
       "trainNo": "12872",
       "name": "Titlagarh - Howrah Ispat Express",
-      "scheduled_arrival": "16:07"
+      "scheduled_arrival": "16:07",
+      "scheduled_departure": "16:12"
     },
     {
       "trainNo": "22862",
       "name": "Kantabanji - Howrah Ispat Express",
-      "scheduled_arrival": "16:07"
+      "scheduled_arrival": "16:07",
+      "scheduled_departure": "16:12"
+    },
+    {
+      "trainNo": "18037",
+      "name": "Kharagpur - Jajpur Keonjhar Road Express (UnReserved)*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "16:15"
     },
     {
       "trainNo": "22831",
       "name": "Howrah - Yesvantpur Superfast Express (PT)",
-      "scheduled_arrival": "16:20"
+      "scheduled_arrival": "16:20",
+      "scheduled_departure": "16:25"
     },
     {
       "trainNo": "22851",
       "name": "Santragachi - Mangaluru Central Vivek Express (PT)",
-      "scheduled_arrival": "16:20"
+      "scheduled_arrival": "16:20",
+      "scheduled_departure": "16:25"
     },
     {
       "trainNo": "22855",
       "name": "Santragachi - Tirupati SF Express (PT)",
-      "scheduled_arrival": "16:20"
+      "scheduled_arrival": "16:20",
+      "scheduled_departure": "16:25"
     },
     {
       "trainNo": "22877",
       "name": "Howrah - Ernakulam Antyodaya Express",
-      "scheduled_arrival": "16:20"
+      "scheduled_arrival": "16:20",
+      "scheduled_departure": "16:25"
+    },
+    {
+      "trainNo": "58027",
+      "name": "Kharagpur - Tatanagar Passenger (UnReserved)*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "16:20"
     },
     {
       "trainNo": "38824",
       "name": "Midnapore - Howrah Fast Local",
-      "scheduled_arrival": "16:29"
+      "scheduled_arrival": "16:29",
+      "scheduled_departure": "16:32"
     },
     {
       "trainNo": "20821",
       "name": "Pune - Santragachi Humsafar Express",
-      "scheduled_arrival": "16:30"
+      "scheduled_arrival": "16:30",
+      "scheduled_departure": "16:35"
     },
     {
       "trainNo": "22511",
       "name": "Mumbai LTT - Kamakhya Karmabhoomi Express (PT)",
-      "scheduled_arrival": "16:30"
+      "scheduled_arrival": "16:30",
+      "scheduled_departure": "16:35"
     },
     {
       "trainNo": "18034",
       "name": "Ghatsila - Howrah MEMU Express (UnReserved)",
-      "scheduled_arrival": "16:33"
+      "scheduled_arrival": "16:33",
+      "scheduled_departure": "16:43"
     },
     {
       "trainNo": "22329",
       "name": "Haldia - Asansol SF Express",
-      "scheduled_arrival": "16:35"
+      "scheduled_arrival": "16:35",
+      "scheduled_departure": "16:40"
     },
     {
       "trainNo": "12822",
       "name": "Dhauli Express",
-      "scheduled_arrival": "16:55"
+      "scheduled_arrival": "16:55",
+      "scheduled_departure": "17:00"
     },
     {
       "trainNo": "12841",
       "name": "Coromandel Express (PT)",
-      "scheduled_arrival": "16:55"
+      "scheduled_arrival": "16:55",
+      "scheduled_departure": "17:00"
+    },
+    {
+      "trainNo": "68101",
+      "name": "Kharagpur - Adra MEMU*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "17:00"
     },
     {
       "trainNo": "13505",
       "name": "Digha - Asansol Express",
-      "scheduled_arrival": "17:15"
+      "scheduled_arrival": "17:15",
+      "scheduled_departure": "17:20"
     },
     {
       "trainNo": "18030",
       "name": "Shalimar - Mumbai LTT Express (PT)",
-      "scheduled_arrival": "17:20"
+      "scheduled_arrival": "17:20",
+      "scheduled_departure": "17:25"
     },
     {
       "trainNo": "12886",
       "name": "Aranyak Express",
-      "scheduled_arrival": "17:23"
+      "scheduled_arrival": "17:23",
+      "scheduled_departure": "17:28"
     },
     {
       "trainNo": "12864",
       "name": "SMVT Bengaluru - Howrah SF Express (PT)",
-      "scheduled_arrival": "17:25"
+      "scheduled_arrival": "17:25",
+      "scheduled_departure": "17:30"
     },
     {
       "trainNo": "12815",
       "name": "Nandan Kanan Express (PT)",
-      "scheduled_arrival": "17:27"
+      "scheduled_arrival": "17:27",
+      "scheduled_departure": "17:27"
     },
     {
       "trainNo": "12767",
       "name": "Hazur Sahib Nanded - Santragachi Weekly SF Express (PT)",
-      "scheduled_arrival": "17:30"
+      "scheduled_arrival": "17:30",
+      "scheduled_departure": "17:35"
     },
     {
       "trainNo": "12869",
       "name": "Mumbai CSMT - Howrah Weekly SF Express (PT)",
-      "scheduled_arrival": "17:30"
+      "scheduled_arrival": "17:30",
+      "scheduled_departure": "17:35"
     },
     {
       "trainNo": "22305",
       "name": "SMVT Bengaluru - Jasidih Weekly SF Express",
-      "scheduled_arrival": "17:30"
+      "scheduled_arrival": "17:30",
+      "scheduled_departure": "17:40"
     },
     {
       "trainNo": "22893",
       "name": "Sainagar Shirdi - Howrah SF Express (PT)",
-      "scheduled_arrival": "17:30"
+      "scheduled_arrival": "17:30",
+      "scheduled_departure": "17:35"
     },
     {
       "trainNo": "38719",
       "name": "Howrah - Kharagpur  Local*",
-      "scheduled_arrival": "17:30"
+      "scheduled_arrival": "17:30",
+      "scheduled_departure": ""
+    },
+    {
+      "trainNo": "38724",
+      "name": "Kharagpur - Howrah Local*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "17:30"
     },
     {
       "trainNo": "07047",
       "name": "Naharlagun - Charlapalli Special Fare Festival Special",
-      "scheduled_arrival": "17:35"
+      "scheduled_arrival": "17:35",
+      "scheduled_departure": "17:40"
     },
     {
       "trainNo": "12665",
       "name": "Howrah - Kanniyakumari SF Express (PT)",
-      "scheduled_arrival": "17:35"
+      "scheduled_arrival": "17:35",
+      "scheduled_departure": "17:40"
     },
     {
       "trainNo": "12773",
       "name": "Shalimar - Secunderabad AC SF Express (PT)",
-      "scheduled_arrival": "17:35"
+      "scheduled_arrival": "17:35",
+      "scheduled_departure": "17:40"
     },
     {
       "trainNo": "13434",
       "name": "Malda Town - SMVT Bengaluru Amrit Bharat Express",
-      "scheduled_arrival": "17:35"
+      "scheduled_arrival": "17:35",
+      "scheduled_departure": "17:40"
     },
     {
       "trainNo": "22817",
       "name": "Howrah - Mysuru Weekly SF Express (PT)",
-      "scheduled_arrival": "17:35"
+      "scheduled_arrival": "17:35",
+      "scheduled_departure": "17:40"
     },
     {
       "trainNo": "12444",
       "name": "Anand Vihar Terminal - Haldia SF Express",
-      "scheduled_arrival": "17:40"
+      "scheduled_arrival": "17:40",
+      "scheduled_departure": "17:45"
     },
     {
       "trainNo": "18043",
       "name": "Bagha Jatin Express (UnReserved)",
-      "scheduled_arrival": "17:48"
+      "scheduled_arrival": "17:48",
+      "scheduled_departure": "17:53"
     },
     {
       "trainNo": "20872",
       "name": "Rourkela - Howrah Vande Bharat Express",
-      "scheduled_arrival": "17:48"
+      "scheduled_arrival": "17:48",
+      "scheduled_departure": "17:50"
     },
     {
       "trainNo": "68014",
       "name": "Tatanagar - Kharagpur MEMU*",
-      "scheduled_arrival": "17:50"
+      "scheduled_arrival": "17:50",
+      "scheduled_departure": ""
+    },
+    {
+      "trainNo": "68011",
+      "name": "Kharagpur - Tatanagar MEMU*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "18:00"
     },
     {
       "trainNo": "38826",
       "name": "Midnapore - Howrah Local",
-      "scheduled_arrival": "18:04"
+      "scheduled_arrival": "18:04",
+      "scheduled_departure": "18:08"
     },
     {
       "trainNo": "18007",
       "name": "Simlipal Intercity Express (UnReserved)",
-      "scheduled_arrival": "18:05"
+      "scheduled_arrival": "18:05",
+      "scheduled_departure": "18:10"
     },
     {
       "trainNo": "38821",
       "name": "Howrah - Midnapore Fast Local",
-      "scheduled_arrival": "18:09"
+      "scheduled_arrival": "18:09",
+      "scheduled_departure": "18:12"
     },
     {
       "trainNo": "08007",
       "name": "Shalimar - Bhanjpur Special Fare Special",
-      "scheduled_arrival": "18:15"
+      "scheduled_arrival": "18:15",
+      "scheduled_departure": "18:20"
     },
     {
       "trainNo": "12827",
       "name": "Howrah - Purulia SF Express",
-      "scheduled_arrival": "18:26"
+      "scheduled_arrival": "18:26",
+      "scheduled_departure": "18:28"
     },
     {
       "trainNo": "22604",
       "name": "Villupuram - Kharagpur SF Express (PT)*",
-      "scheduled_arrival": "18:35"
+      "scheduled_arrival": "18:35",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "12221",
       "name": "Pune - Howrah AC Duronto Express",
-      "scheduled_arrival": "18:40"
+      "scheduled_arrival": "18:40",
+      "scheduled_departure": "18:40"
     },
     {
       "trainNo": "12261",
       "name": "Mumbai CSMT - Howrah AC Duronto Express",
-      "scheduled_arrival": "18:40"
+      "scheduled_arrival": "18:40",
+      "scheduled_departure": "18:40"
     },
     {
       "trainNo": "22896",
       "name": "Puri - Howrah Vande Bharat Express",
-      "scheduled_arrival": "18:40"
+      "scheduled_arrival": "18:40",
+      "scheduled_departure": "18:42"
     },
     {
       "trainNo": "03429",
       "name": "Charlapalli - Malda Town Special Fare Puja Special",
-      "scheduled_arrival": "18:45"
+      "scheduled_arrival": "18:45",
+      "scheduled_departure": "18:55"
     },
     {
       "trainNo": "18036",
       "name": "Hatia - Kharagpur Express (UnReserved)*",
-      "scheduled_arrival": "18:45"
+      "scheduled_arrival": "18:45",
+      "scheduled_departure": ""
+    },
+    {
+      "trainNo": "38728",
+      "name": "Kharagpur - Howrah Local*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "18:50"
     },
     {
       "trainNo": "12022",
       "name": "Barbil - Howrah Jan Shatabdi Express",
-      "scheduled_arrival": "18:58"
+      "scheduled_arrival": "18:58",
+      "scheduled_departure": "19:00"
     },
     {
       "trainNo": "12813",
       "name": "Steel Express (PT)",
-      "scheduled_arrival": "18:58"
+      "scheduled_arrival": "18:58",
+      "scheduled_departure": "19:00"
     },
     {
       "trainNo": "68007",
       "name": "Howrah - Jaleswar MEMU",
-      "scheduled_arrival": "19:05"
+      "scheduled_arrival": "19:05",
+      "scheduled_departure": "19:10"
     },
     {
       "trainNo": "38721",
       "name": "Howrah - Kharagpur Local*",
-      "scheduled_arrival": "19:10"
+      "scheduled_arrival": "19:10",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "12884",
       "name": "Rupasi Bangla Express",
-      "scheduled_arrival": "19:11"
+      "scheduled_arrival": "19:11",
+      "scheduled_departure": "19:13"
     },
     {
       "trainNo": "12663",
       "name": "Howrah - Tiruchchirappalli SF Express (PT)",
-      "scheduled_arrival": "19:15"
+      "scheduled_arrival": "19:15",
+      "scheduled_departure": "19:20"
     },
     {
       "trainNo": "20822",
       "name": "Santragachi - Pune Humsafar Express",
-      "scheduled_arrival": "19:15"
+      "scheduled_arrival": "19:15",
+      "scheduled_departure": "19:20"
     },
     {
       "trainNo": "22807",
       "name": "Santragachi - MGR  Chennai Central AC SF Express (PT)",
-      "scheduled_arrival": "19:15"
+      "scheduled_arrival": "19:15",
+      "scheduled_departure": "19:20"
     },
     {
       "trainNo": "22841",
       "name": "Santragachi - Tambaram Antyodaya Express",
-      "scheduled_arrival": "19:15"
+      "scheduled_arrival": "19:15",
+      "scheduled_departure": "19:20"
     },
     {
       "trainNo": "13418",
       "name": "Malda Town - Digha Express",
-      "scheduled_arrival": "19:30"
+      "scheduled_arrival": "19:30",
+      "scheduled_departure": "19:35"
     },
     {
       "trainNo": "08866",
       "name": "Shalimar - NSC Bose Itwari Special Fare Durga Puja Special",
-      "scheduled_arrival": "19:35"
+      "scheduled_arrival": "19:35",
+      "scheduled_departure": "19:45"
     },
     {
       "trainNo": "38823",
       "name": "Howrah - Midnapore Fast Local",
-      "scheduled_arrival": "19:35"
+      "scheduled_arrival": "19:35",
+      "scheduled_departure": "19:40"
     },
     {
       "trainNo": "15640",
       "name": "Kamakhya - Puri Express (via Adra) (PT)",
-      "scheduled_arrival": "19:43"
+      "scheduled_arrival": "19:43",
+      "scheduled_departure": "19:43"
     },
     {
       "trainNo": "18003",
       "name": "Rani Shiromoni Express (UnReserved)",
-      "scheduled_arrival": "19:50"
+      "scheduled_arrival": "19:50",
+      "scheduled_departure": "19:55"
     },
     {
       "trainNo": "38828",
       "name": "Midnapore - Howrah Local",
-      "scheduled_arrival": "19:54"
+      "scheduled_arrival": "19:54",
+      "scheduled_departure": "19:57"
     },
     {
       "trainNo": "22873",
       "name": "Digha - Vishakapatnam SF Express (PT)",
-      "scheduled_arrival": "19:58"
+      "scheduled_arrival": "19:58",
+      "scheduled_departure": "20:03"
     },
     {
       "trainNo": "22889",
       "name": "Samudra Kanya Express",
-      "scheduled_arrival": "19:58"
+      "scheduled_arrival": "19:58",
+      "scheduled_departure": "20:03"
     },
     {
       "trainNo": "22853",
       "name": "Shalimar - Visakhapatnam SF Express",
-      "scheduled_arrival": "20:00"
+      "scheduled_arrival": "20:00",
+      "scheduled_departure": "20:05"
     },
     {
       "trainNo": "02841",
       "name": "Shalimar - MGR Chennai Central Special Fare Special",
-      "scheduled_arrival": "20:10"
+      "scheduled_arrival": "20:10",
+      "scheduled_departure": "20:15"
     },
     {
       "trainNo": "38825",
       "name": "Howrah - Midnapore Fast Local",
-      "scheduled_arrival": "20:20"
+      "scheduled_arrival": "20:20",
+      "scheduled_departure": "20:25"
     },
     {
       "trainNo": "68050",
       "name": "Bhadrak - Kharagpur MEMU*",
-      "scheduled_arrival": "20:20"
+      "scheduled_arrival": "20:20",
+      "scheduled_departure": ""
+    },
+    {
+      "trainNo": "68015",
+      "name": "Kharagpur - Tatanagar MEMU*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "20:35"
     },
     {
       "trainNo": "12840",
       "name": "MGR Chennai Central - Howrah Mail (PT)",
-      "scheduled_arrival": "20:40"
+      "scheduled_arrival": "20:40",
+      "scheduled_departure": "20:45"
+    },
+    {
+      "trainNo": "38730",
+      "name": "Kharagpur - Howrah Local*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "20:40"
     },
     {
       "trainNo": "18409",
       "name": "Sri Jagannath Express (PT)",
-      "scheduled_arrival": "20:45"
+      "scheduled_arrival": "20:45",
+      "scheduled_departure": "20:50"
     },
     {
       "trainNo": "12253",
       "name": "Anga Express (PT)",
-      "scheduled_arrival": "20:58"
+      "scheduled_arrival": "20:58",
+      "scheduled_departure": "21:03"
     },
     {
       "trainNo": "12868",
       "name": "Puducherry - Howrah SF Express (PT)",
-      "scheduled_arrival": "20:58"
+      "scheduled_arrival": "20:58",
+      "scheduled_departure": "21:03"
     },
     {
       "trainNo": "18048",
       "name": "Vasco-da-Gama - Shalimar Amaravati Express (PT)",
-      "scheduled_arrival": "20:58"
+      "scheduled_arrival": "20:58",
+      "scheduled_departure": "21:03"
     },
     {
       "trainNo": "12810",
       "name": "Howrah - Mumbai CSMT Mail (Via Nagpur) (PT)",
-      "scheduled_arrival": "21:05"
+      "scheduled_arrival": "21:05",
+      "scheduled_departure": "21:10"
     },
     {
       "trainNo": "22856",
       "name": "Tirupati - Santragachi Weekly SF Express (PT)",
-      "scheduled_arrival": "21:05"
+      "scheduled_arrival": "21:05",
+      "scheduled_departure": "21:10"
     },
     {
       "trainNo": "38827",
       "name": "Howrah - Midnapore Fast Local",
-      "scheduled_arrival": "21:07"
+      "scheduled_arrival": "21:07",
+      "scheduled_departure": "21:10"
     },
     {
       "trainNo": "12152",
       "name": "Samarsata SF Express (PT)",
-      "scheduled_arrival": "21:22"
+      "scheduled_arrival": "21:22",
+      "scheduled_departure": "21:27"
     },
     {
       "trainNo": "12950",
       "name": "Santragachi - Porbandar Kavi Guru SF Express (PT)",
-      "scheduled_arrival": "21:22"
+      "scheduled_arrival": "21:22",
+      "scheduled_departure": "21:27"
     },
     {
       "trainNo": "08611",
       "name": "Santragachi - Ajmer Special Fare Special",
-      "scheduled_arrival": "21:30"
+      "scheduled_arrival": "21:30",
+      "scheduled_departure": "21:35"
     },
     {
       "trainNo": "12664",
       "name": "Tiruchchirappalli - Howrah SF Express (PT)",
-      "scheduled_arrival": "21:30"
+      "scheduled_arrival": "21:30",
+      "scheduled_departure": "21:35"
     },
     {
       "trainNo": "12666",
       "name": "Kanniyakumari - Howrah SF Express (PT)",
-      "scheduled_arrival": "21:30"
+      "scheduled_arrival": "21:30",
+      "scheduled_departure": "21:35"
     },
     {
       "trainNo": "22826",
       "name": "MGR Chennai Central - Shalimar Weekly SF Express (PT)",
-      "scheduled_arrival": "21:30"
+      "scheduled_arrival": "21:30",
+      "scheduled_departure": "21:35"
     },
     {
       "trainNo": "68124",
       "name": "Tatanagar - Kharagpur MEMU*",
-      "scheduled_arrival": "21:30"
+      "scheduled_arrival": "21:30",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "15021",
       "name": "Shalimar - Gorakhpur Weekly Express (PT)",
-      "scheduled_arrival": "21:35"
+      "scheduled_arrival": "21:35",
+      "scheduled_departure": "21:40"
     },
     {
       "trainNo": "20828",
       "name": "Santragachi - Jabalpur Humsafar Express",
-      "scheduled_arrival": "21:35"
+      "scheduled_arrival": "21:35",
+      "scheduled_departure": "21:40"
     },
     {
       "trainNo": "20972",
       "name": "Shalimar - Udaipur City SF Express (PT)",
-      "scheduled_arrival": "21:35"
+      "scheduled_arrival": "21:35",
+      "scheduled_departure": "21:40"
     },
     {
       "trainNo": "22170",
       "name": "Santragachi - Rani Kamalapati  Humsafar Express",
-      "scheduled_arrival": "21:35"
+      "scheduled_arrival": "21:35",
+      "scheduled_departure": "21:40"
     },
     {
       "trainNo": "22830",
       "name": "Shalimar - Bhuj SF Express (PT)",
-      "scheduled_arrival": "21:35"
+      "scheduled_arrival": "21:35",
+      "scheduled_departure": "21:40"
+    },
+    {
+      "trainNo": "68047",
+      "name": "Kharagpur - Belda MEMU*",
+      "scheduled_arrival": "",
+      "scheduled_departure": "21:40"
     },
     {
       "trainNo": "38830",
       "name": "Midnapore - Howrah Local",
-      "scheduled_arrival": "21:45"
+      "scheduled_arrival": "21:45",
+      "scheduled_departure": "21:50"
     },
     {
       "trainNo": "12102",
       "name": "Jnaneswari Express (PT)",
-      "scheduled_arrival": "22:05"
+      "scheduled_arrival": "22:05",
+      "scheduled_departure": "22:10"
     },
     {
       "trainNo": "12906",
       "name": "Shalimar - Porbandar SF Express (PT)",
-      "scheduled_arrival": "22:05"
+      "scheduled_arrival": "22:05",
+      "scheduled_departure": "22:10"
     },
     {
       "trainNo": "22906",
       "name": "Shalimar - Okha Weekly SF Express (PT)",
-      "scheduled_arrival": "22:05"
+      "scheduled_arrival": "22:05",
+      "scheduled_departure": "22:10"
     },
     {
       "trainNo": "22201",
       "name": "Sealdah - Puri Duronto Express",
-      "scheduled_arrival": "22:10"
+      "scheduled_arrival": "22:10",
+      "scheduled_departure": "22:15"
     },
     {
       "trainNo": "38829",
       "name": "Howrah - Midnapore Fast Local",
-      "scheduled_arrival": "22:15"
+      "scheduled_arrival": "22:15",
+      "scheduled_departure": "22:20"
     },
     {
       "trainNo": "12881",
       "name": "Shalimar - Puri Garib Rath Express (PT)",
-      "scheduled_arrival": "22:22"
+      "scheduled_arrival": "22:22",
+      "scheduled_departure": "22:27"
     },
     {
       "trainNo": "12887",
       "name": "Shalimar - Puri Weekly SF Express (PT)",
-      "scheduled_arrival": "22:22"
+      "scheduled_arrival": "22:22",
+      "scheduled_departure": "22:27"
     },
     {
       "trainNo": "12895",
       "name": "Shalimar - Puri Weekly SF Express (PT)",
-      "scheduled_arrival": "22:22"
+      "scheduled_arrival": "22:22",
+      "scheduled_departure": "22:27"
     },
     {
       "trainNo": "22803",
       "name": "Shalimar - Sambalpur SF Express (via Talcher Road)",
-      "scheduled_arrival": "22:22"
+      "scheduled_arrival": "22:22",
+      "scheduled_departure": "22:27"
     },
     {
       "trainNo": "22835",
       "name": "Shalimar - Puri Weekly SF Express",
-      "scheduled_arrival": "22:22"
+      "scheduled_arrival": "22:22",
+      "scheduled_departure": "22:27"
     },
     {
       "trainNo": "18028",
       "name": "Asansol - Kharagpur MEMU Express (UnReserved)*",
-      "scheduled_arrival": "22:45"
+      "scheduled_arrival": "22:45",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "18615",
       "name": "Kriya Yoga Express (PT)",
-      "scheduled_arrival": "22:55"
+      "scheduled_arrival": "22:55",
+      "scheduled_departure": "23:00"
     },
     {
       "trainNo": "20831",
       "name": "Mahima Gosain Express",
-      "scheduled_arrival": "23:03"
+      "scheduled_arrival": "23:03",
+      "scheduled_departure": "23:08"
     },
     {
       "trainNo": "38832",
       "name": "Midnapore - Kharagpur Local*",
-      "scheduled_arrival": "23:05"
+      "scheduled_arrival": "23:05",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "02839",
       "name": "Shalimar - Puri Special Fare SF Special",
-      "scheduled_arrival": "23:10"
+      "scheduled_arrival": "23:10",
+      "scheduled_departure": "23:15"
     },
     {
       "trainNo": "38831",
       "name": "Howrah - Midnapore Local",
-      "scheduled_arrival": "23:12"
+      "scheduled_arrival": "23:12",
+      "scheduled_departure": "23:15"
     },
     {
       "trainNo": "01150",
       "name": "Santragachi - Thane Mixed Special (UnReserved)",
-      "scheduled_arrival": "23:15"
+      "scheduled_arrival": "23:15",
+      "scheduled_departure": "23:45"
     },
     {
       "trainNo": "68092",
       "name": "Jhargram - Kharagpur MEMU*",
-      "scheduled_arrival": "23:15"
+      "scheduled_arrival": "23:15",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "12130",
       "name": "Azad Hind Express (PT)",
-      "scheduled_arrival": "23:20"
+      "scheduled_arrival": "23:20",
+      "scheduled_departure": "23:25"
     },
     {
       "trainNo": "08846",
       "name": "Charlapalli - Santragachi Festival Special (UnReserved)",
-      "scheduled_arrival": "23:38"
+      "scheduled_arrival": "23:38",
+      "scheduled_departure": "23:38"
     },
     {
       "trainNo": "18086",
       "name": "Ranchi - Kharagpur MEMU Express (UnReserved)*",
-      "scheduled_arrival": "23:45"
+      "scheduled_arrival": "23:45",
+      "scheduled_departure": ""
     },
     {
       "trainNo": "38725",
       "name": "Howrah - Kharagpur Local*",
-      "scheduled_arrival": "23:55"
+      "scheduled_arrival": "23:55",
+      "scheduled_departure": ""
     }
-  ]
+  ],
+  "waitingList": []
 }

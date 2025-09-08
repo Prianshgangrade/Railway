@@ -1,3 +1,105 @@
+2025-09-08 23:06:41 | UNASSIGNED: Train 38831 unassigned from Platform 4, Platform 2 and returned to arrival list.
+2025-09-08 23:05:49 | ARRIVED & ASSIGNED: Train 38831 arrived at 23:05 and assigned to Platform 2, Platform 4.
+2025-09-08 23:02:40 | WAITING: Train 38831 added to the waiting list.
+2025-09-08 21:46:19 | System initialized: Station state created from master files.
+2025-09-08 21:40:40 | ARRIVED & ASSIGNED: Train 12664 arrived at 21:40 and assigned to Platform 6.
+2025-09-08 21:39:57 | ARRIVED & ASSIGNED: Train 08611 arrived at 21:39 and assigned to Platform 1, Platform 3.
+2025-09-08 12:09:12 | WAITING: Train 68006 added to the waiting list.
+2025-09-07 23:50:25 | System initialized: Station state created from master files.
+2025-09-07 23:49:43 | UNASSIGNED: Train 38725 unassigned from Platform 2A and returned to arrival list.
+2025-09-07 23:49:37 | ARRIVED & ASSIGNED: Train 38725 arrived at 23:49 and assigned to Platform 2A.
+2025-09-07 23:39:35 | System initialized: Station state created from master files.
+2025-09-07 23:39:12 | UNASSIGNED: Train 18086 unassigned from Platform 1A and returned to arrival list.
+2025-09-07 23:39:09 | ARRIVED & ASSIGNED: Train 18086 arrived at 23:39 and assigned to Platform 1A.
+2025-09-07 23:35:26 | UNASSIGNED: Train 12837 unassigned from Platform 1, Platform 3.
+2025-09-07 23:35:16 | UNASSIGNED: Train 12130 unassigned from Platform 4, Platform 2.
+2025-09-07 23:35:03 | ARRIVED & ASSIGNED: Train 12130 arrived at 23:34 and assigned to Platform 2, Platform 4.
+2025-09-07 23:13:10 | ARRIVED & ASSIGNED: Train 12837 arrived at 23:13 and assigned to Platform 1, Platform 3.
+2025-09-07 23:13:02 | UNASSIGNED: Train 12834 unassigned from Platform 1, Platform 3.
+2025-09-07 23:12:53 | UNASSIGNED: Train 12837 unassigned from Platform 2, Platform 4.
+2025-09-07 23:12:49 | ARRIVED & ASSIGNED: Train 12834 arrived at 23:12 and assigned to Platform 1, Platform 3.
+2025-09-07 23:12:39 | ARRIVED & ASSIGNED: Train 12837 arrived at 23:12 and assigned to Platform 2, Platform 4.
+2025-09-07 23:12:32 | UNASSIGNED: Train 12834 unassigned from Platform 3, Platform 1.
+2025-09-07 23:12:27 | ARRIVED & ASSIGNED: Train 12834 arrived at 23:12 and assigned to Platform 1, Platform 3.
+2025-09-07 23:07:12 | DEPARTED: Train 12834 departed from Platform 2 at 23:07.
+2025-09-07 23:07:06 | ARRIVED & ASSIGNED: Train 12834 arrived at 23:07 and assigned to Platform 2.
+2025-09-07 23:06:53 | UNASSIGNED: Train 12837 unassigned from Platform 2.
+2025-09-07 23:06:47 | UNASSIGNED: Train 22863 unassigned from Platform 1.
+2025-09-07 23:06:38 | ARRIVED & ASSIGNED: Train 22863 arrived at 23:06 and assigned to Platform 1.
+2025-09-07 23:05:58 | ARRIVED & ASSIGNED: Train 12837 arrived at 23:05 and assigned to Platform 2.
+2025-09-07 22:48:09 | WAITING LIST: Train 12837 removed from waiting list.
+2025-09-07 22:48:07 | WAITING: Train 12837 added to the waiting list.
+2025-09-07 22:31:53 | DEPARTED: Train 12863 departed from Platform 4 at 22:31.
+2025-09-07 22:31:52 | DEPARTED: Train 13433 departed from Platform 1 at 22:31.
+2025-09-07 22:26:03 | ARRIVED & ASSIGNED: Train 13433 arrived at 22:26 and assigned to Platform 1.
+2025-09-07 22:26:01 | ARRIVED & ASSIGNED: Train 12863 arrived at 22:25 and assigned to Platform 4.
+2025-09-07 22:25:37 | WAITING: Train 13433 added to the waiting list.
+2025-09-07 22:24:32 | WAITING: Train 12863 added to the waiting list.
+2025-09-07 22:23:42 | UNASSIGNED: Train 12837 unassigned from Platform 4.
+2025-09-07 22:23:37 | ARRIVED & ASSIGNED: Train 12837 arrived at 22:23 and assigned to Platform 4.
+2025-09-07 21:51:47 | System initialized: Station state created from master files.
+2025-09-07 20:12:57 | ARRIVED & ASSIGNED: Train 12837 arrived at 20:12 and assigned to Platform 1.
+2025-09-07 20:12:41 | UNASSIGNED: Train 12837 unassigned from Platform 2.
+2025-09-07 20:12:23 | UNASSIGNED: Train 12863 unassigned from Platform 1.
+2025-09-07 20:08:51 | ARRIVED & ASSIGNED: Train 12863 arrived at 20:08 and assigned to Platform 1.
+2025-09-07 20:07:15 | WAITING: Train 12863 added to the waiting list.
+2025-09-07 20:05:40 | ARRIVED & ASSIGNED: Train 12837 arrived at 20:05 and assigned to Platform 2.
+2025-09-07 20:02:24 | UNASSIGNED: Train 12837 unassigned from Track 9.
+2025-09-07 20:02:20 | ARRIVED & ASSIGNED: Train 12837 arrived at 20:02 and assigned to Track 9.
+2025-09-07 20:02:05 | UNASSIGNED: Train 12837 unassigned from Platform 4.
+2025-09-07 20:02:00 | ARRIVED & ASSIGNED: Train 12837 arrived at 20:01 and assigned to Platform 4.
+2025-09-07 19:51:15 | UNASSIGNED: Train 12834 unassigned from Platform 2.
+2025-09-07 19:51:05 | UNASSIGNED: Train 12837 unassigned from Platform 3.
+2025-09-07 19:51:00 | WAITING LIST: Train 13433 removed from waiting list.
+2025-09-07 19:50:50 | WAITING: Train 13433 added to the waiting list.
+2025-09-07 19:50:40 | ARRIVED & ASSIGNED: Train 12837 arrived at 19:50 and assigned to Platform 3.
+2025-09-07 19:50:29 | ARRIVED & ASSIGNED: Train 12834 arrived at 19:50 and assigned to Platform 2.
+2025-09-07 19:49:10 | System initialized: Station state created from master files.
+2025-09-07 16:00:28 | TRAIN DELETED: Train a123 removed from the master schedule.
+2025-09-07 16:00:03 | TRAIN ADDED: New train a123 added to the master schedule.
+2025-09-07 15:59:29 | WAITING LIST: Train 38727 removed from waiting list.
+2025-09-07 15:59:15 | WAITING: Train 38727 added to the waiting list.
+2025-09-06 22:53:45 | DEPARTED: Train 12834 departed from Platform 8 at 22:53.
+2025-09-06 22:53:43 | ARRIVED & ASSIGNED: Train 12834 arrived at 22:53 and assigned to Platform 8.
+2025-09-06 22:53:31 | DEPARTED: Train 12834 departed from Platform 2 at 22:53.
+2025-09-06 22:53:28 | ARRIVED & ASSIGNED: Train 12834 arrived at 22:53 and assigned to Platform 2.
+2025-09-06 22:26:14 | MAINTENANCE: Maintenance for Platform 4A set to ON.
+2025-09-06 22:25:22 | WAITING LIST: Train 12834 removed from waiting list.
+2025-09-06 22:25:16 | WAITING: Train 12834 added to the waiting list.
+2025-09-06 22:24:55 | System initialized: Station state created from master files.
+2025-09-06 22:17:45 | WAITING LIST: Train 12833 removed from waiting list.
+2025-09-06 22:17:44 | WAITING LIST: Train 15228 removed from waiting list.
+2025-09-06 22:17:43 | WAITING LIST: Train 18047 removed from waiting list.
+2025-09-06 22:17:30 | WAITING: Train 12833 added to the waiting list.
+2025-09-06 22:16:41 | DEPARTED: Train 12863 departed from Platform 8 at 22:16.
+2025-09-06 22:16:40 | DEPARTED: Train 12254 departed from Platform 7 at 22:16.
+2025-09-06 22:16:39 | DEPARTED: Train 18049 departed from Platform 6 at 22:16.
+2025-09-06 22:16:38 | DEPARTED: Train 13433 departed from Platform 5 at 22:16.
+2025-09-06 22:16:36 | DEPARTED: Train 12867 departed from Platform 4A at 22:16.
+2025-09-06 22:16:35 | DEPARTED: Train 18005 departed from Platform 3A at 22:16.
+2025-09-06 22:16:33 | DEPARTED: Train 38727 departed from Platform 2A at 22:16.
+2025-09-06 22:16:32 | DEPARTED: Train 15644 departed from Platform 1A at 22:16.
+2025-09-06 22:16:31 | DEPARTED: Train 18022 departed from Platform 4 at 22:16.
+2025-09-06 22:16:30 | DEPARTED: Train 12834 departed from Platform 2 at 22:16.
+2025-09-06 22:16:27 | UNASSIGNED: Train 12837 unassigned from Platform 1.
+2025-09-06 22:11:30 | WAITING: Train 15228 added to the waiting list.
+2025-09-06 22:11:26 | WAITING: Train 18047 added to the waiting list.
+2025-09-06 22:11:23 | ARRIVED & ASSIGNED: Train 12254 arrived at 22:11 and assigned to Platform 7.
+2025-09-06 22:11:20 | ARRIVED & ASSIGNED: Train 18022 arrived at 22:11 and assigned to Platform 4.
+2025-09-06 22:11:16 | ARRIVED & ASSIGNED: Train 12867 arrived at 22:11 and assigned to Platform 4A.
+2025-09-06 22:11:14 | ARRIVED & ASSIGNED: Train 15644 arrived at 22:11 and assigned to Platform 1A.
+2025-09-06 22:11:10 | ARRIVED & ASSIGNED: Train 18049 arrived at 22:11 and assigned to Platform 6.
+2025-09-06 22:11:08 | ARRIVED & ASSIGNED: Train 38727 arrived at 22:11 and assigned to Platform 2A.
+2025-09-06 22:11:03 | ARRIVED & ASSIGNED: Train 12863 arrived at 22:11 and assigned to Platform 8.
+2025-09-06 22:11:00 | ARRIVED & ASSIGNED: Train 13433 arrived at 22:10 and assigned to Platform 5.
+2025-09-06 22:10:55 | ARRIVED & ASSIGNED: Train 18005 arrived at 22:10 and assigned to Platform 3A.
+2025-09-06 22:10:51 | ARRIVED & ASSIGNED: Train 12837 arrived at 22:10 and assigned to Platform 1.
+2025-09-06 22:10:22 | ARRIVED & ASSIGNED: Train 12834 arrived at 22:10 and assigned to Platform 2.
+2025-09-06 21:56:00 | UNASSIGNED: Train 12867 unassigned from Platform 4.
+2025-09-06 21:55:55 | ARRIVED & ASSIGNED: Train 12867 arrived at 21:55 and assigned to Platform 4.
+2025-09-06 20:44:19 | TRAIN DELETED: Train 12532 removed from the master schedule.
+2025-09-06 20:43:59 | TRAIN ADDED: New train 12532 added to the master schedule.
+2025-09-06 20:35:50 | UNASSIGNED: Train 12863 unassigned from Platform 4.
 2025-09-06 20:30:15 | UNASSIGNED: Train 12834 unassigned from Platform 1.
 2025-09-06 20:30:11 | ARRIVED & ASSIGNED: Train 12834 arrived at 20:30 and assigned to Platform 1.
 2025-09-06 20:30:04 | UNASSIGNED: Train 12834 unassigned from Platform 1.

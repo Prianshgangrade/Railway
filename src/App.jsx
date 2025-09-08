@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 
 // --- LOGIN COMPONENT ---
@@ -65,15 +65,21 @@ const LoginPage = ({ onLogin }) => {
 const useCurrentTime = () => {
     const [time, setTime] = useState(new Date());
     useEffect(() => {
-        const timerId = setInterval(() => setTime(new Date()), 1000);
+        const timerId = setInterval(() => setTime(new Date()), 1000); // Update every second
         return () => clearInterval(timerId);
     }, []);
-    return time.toLocaleString('en-IN', {
+    return time; // Return the full Date object
+};
+
+const FormattedTime = ({ dateObj }) => {
+    if (!dateObj) return null;
+    return dateObj.toLocaleString('en-IN', {
         dateStyle: 'full',
         timeStyle: 'medium',
         timeZone: 'Asia/Kolkata'
     });
 };
+
 
 const Modal = ({ children, isOpen, onClose, title }) => {
     if (!isOpen) return null;
@@ -100,7 +106,7 @@ const Header = () => {
         <header className="mb-6 text-center">
             <h1 className="text-4xl font-bold text-gray-800">Kharagpur Railway Station Control</h1>
             <p className="text-xl text-gray-600">Station Master Dashboard</p>
-            <div className="mt-2 text-md text-gray-500">{currentTime}</div>
+            <div className="mt-2 text-md text-gray-500"><FormattedTime dateObj={currentTime} /></div>
         </header>
     );
 };
@@ -139,20 +145,20 @@ const Track = ({ number, trackData, onUnassignPlatform }) => {
             {isOccupied && trainDetails ? (
                 <div>
                     <div className="flex justify-between items-center mt-1">
-                        <div className={`text-sm ${isOccupied ? 'text-green-100' : 'text-gray-700'}`}>
+                        <div className={`text-sm ${isOccupied ? 'text-green-100' : 'text-gray-700'} flex-1 min-w-0 mr-2`}>
                             <p className="font-medium truncate">{trainDetails.trainNo} - {trainDetails.name}</p>
                         </div>
                         <button 
                             onClick={() => onUnassignPlatform(trackData.id, trainDetails)}
-                            className="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600 transition-all"
+                            className="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600 transition-all flex-shrink-0"
                         >
                             Unassign
                         </button>
                     </div>
                     {actualArrival && (
-                         <p className={`text-xs mt-1 font-semibold ${isOccupied ? 'text-green-200' : 'text-gray-600'}`}>
+                        <p className={`text-xs mt-1 font-semibold ${isOccupied ? 'text-green-200' : 'text-gray-600'}`}>
                             Actual Arrival: {actualArrival}
-                         </p>
+                        </p>
                     )}
                 </div>
             ) : <div className="h-10"></div>}
@@ -194,20 +200,20 @@ const Platform = ({ name, platformData, onUnassignPlatform }) => {
             {isOccupied && trainDetails ? (
                 <div>
                     <div className="flex justify-between items-center mt-1">
-                        <div className={`text-sm ${isOccupied ? 'text-green-100' : 'text-gray-700'}`}>
+                        <div className={`text-sm ${isOccupied ? 'text-green-100' : 'text-gray-700'} flex-1 min-w-0 mr-2`}>
                             <p className="font-medium truncate">{trainDetails.trainNo} - {trainDetails.name}</p>
                         </div>
                         <button 
                             onClick={() => onUnassignPlatform(platformData.id, trainDetails)}
-                            className="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600 transition-all"
+                            className="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600 transition-all flex-shrink-0"
                         >
                             Unassign
                         </button>
                     </div>
-                     {actualArrival && (
-                         <p className={`text-xs mt-1 font-semibold ${isOccupied ? 'text-green-200' : 'text-gray-600'}`}>
+                    {actualArrival && (
+                        <p className={`text-xs mt-1 font-semibold ${isOccupied ? 'text-green-200' : 'text-gray-600'}`}>
                             Actual Arrival: {actualArrival}
-                         </p>
+                        </p>
                     )}
                 </div>
             ) : <div className="h-10"></div>}
@@ -218,75 +224,122 @@ const Platform = ({ name, platformData, onUnassignPlatform }) => {
     );
 };
 
-const RailwayLayout = ({ platforms, onOpenModal, onUnassignPlatform }) => {
+const WaitingList = ({ waitingList, onFindPlatform, onRemove }) => {
+    if (!waitingList || waitingList.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="w-full max-w-4xl mx-auto p-4 mb-4 bg-red-100 border border-red-300 rounded-xl shadow-lg">
+            <h3 className="text-xl font-bold text-red-800 mb-3 text-center">Waiting List</h3>
+            <div className="space-y-2">
+                {waitingList.map(train => (
+                    <div key={train.trainNo} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
+                        <div>
+                            <p className="font-bold text-gray-800">{train.trainNo} - {train.name}</p>
+                            <p className="text-sm text-gray-500">
+                                Scheduled: {train.scheduled_arrival ? `${train.scheduled_arrival} (Arr)` : `${train.scheduled_departure} (Dep)`}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => onFindPlatform(train)}
+                                className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                            >
+                                Find Platform
+                            </button>
+                            {/* <button
+                                onClick={() => onRemove(train.trainNo)}
+                                className="bg-yellow-500 text-white font-semibold px-4 py-2 rounded-md hover:bg-yellow-600 transition-colors"
+                            >
+                                Remove
+                            </button> */}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const RailwayLayout = ({ platforms, onOpenModal, onUnassignPlatform, waitingList, onFindPlatformForWaitingTrain, onRemoveFromWaitingList }) => {
     if (!platforms) return <div className="text-center p-8 text-gray-500">Loading station layout...</div>;
 
     const platformMap = new Map(platforms.map(p => [p.id, p]));
 
     return (
-        <div className="w-full max-w-4xl mx-auto p-6 space-y-3 bg-gray-200 rounded-xl shadow-lg">
-            <div className="mb-6">
-                <nav className="flex gap-0 justify-center bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <button onClick={() => onOpenModal('suggestions')} className="flex-1 px-4 py-3 bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors border-r border-gray-200 font-semibold">
-                        Arriving trains
-                    </button>
-                    <button onClick={() => onOpenModal('departing')} className="flex-1 px-4 py-3 bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors border-r border-gray-200 font-semibold">
-                        Departing trains
-                    </button>
-                    <button onClick={() => onOpenModal('maintenance')} className="flex-1 px-4 py-3 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 transition-colors border-r border-gray-200 font-semibold">
-                        Maintenance
-                    </button>
-                    <button onClick={() => onOpenModal('misc')} className="flex-1 px-4 py-3 bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors border-r border-gray-200 font-semibold">
-                        Miscellaneous
-                    </button>
-                    <button onClick={() => onOpenModal('logs')} className="flex-1 px-4 py-3 bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors font-semibold">
-                        View Logs
-                    </button>
-                </nav>
-            </div>
+        <>
+            <div className="w-full max-w-4xl mx-auto p-6 space-y-3 bg-gray-200 rounded-xl shadow-lg">
+                <div className="mb-6">
+                    <nav className="flex gap-0 justify-center bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <button onClick={() => onOpenModal('suggestions')} className="flex-1 px-4 py-3 bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors border-r border-gray-200 font-semibold">
+                            Arriving trains
+                        </button>
+                        <button onClick={() => onOpenModal('departing')} className="flex-1 px-4 py-3 bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors border-r border-gray-200 font-semibold">
+                            Departing trains
+                        </button>
+                        <button onClick={() => onOpenModal('maintenance')} className="flex-1 px-4 py-3 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 transition-colors border-r border-gray-200 font-semibold">
+                            Maintenance
+                        </button>
+                        <button onClick={() => onOpenModal('misc')} className="flex-1 px-4 py-3 bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors border-r border-gray-200 font-semibold">
+                            Miscellaneous
+                        </button>
+                        <button onClick={() => onOpenModal('logs')} className="flex-1 px-4 py-3 bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors font-semibold">
+                            View Logs
+                        </button>
+                    </nav>
+                </div>
 
-            <Track number="1" trackData={platformMap.get("Track 1")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number="2" trackData={platformMap.get("Track 2")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number="3" trackData={platformMap.get("Track 3")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number="4" trackData={platformMap.get("Track 4")} onUnassignPlatform={onUnassignPlatform} />
+                <WaitingList 
+                    waitingList={waitingList} 
+                    onFindPlatform={onFindPlatformForWaitingTrain} 
+                    onRemove={onRemoveFromWaitingList} 
+                />
 
-            <div className="grid grid-cols-2 gap-3">
-                <Platform name="Platform 1" platformData={platformMap.get("Platform 1")} onUnassignPlatform={onUnassignPlatform} />
-                <Platform name="Platform 3" platformData={platformMap.get("Platform 3")} onUnassignPlatform={onUnassignPlatform} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-                <Platform name="Platform 1A" platformData={platformMap.get("Platform 1A")} onUnassignPlatform={onUnassignPlatform} />
-                <Platform name="Platform 3A" platformData={platformMap.get("Platform 3A")} onUnassignPlatform={onUnassignPlatform} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-                <Platform name="Platform 2A" platformData={platformMap.get("Platform 2A")} onUnassignPlatform={onUnassignPlatform} />
-                <Platform name="Platform 4A" platformData={platformMap.get("Platform 4A")} onUnassignPlatform={onUnassignPlatform} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-                <Platform name="Platform 2" platformData={platformMap.get("Platform 2")} onUnassignPlatform={onUnassignPlatform} />
-                <Platform name="Platform 4" platformData={platformMap.get("Platform 4")} onUnassignPlatform={onUnassignPlatform} />
-            </div>
 
-            <Platform name="Platform 5" platformData={platformMap.get("Platform 5")} onUnassignPlatform={onUnassignPlatform} />
-            <Platform name="Platform 6" platformData={platformMap.get("Platform 6")} onUnassignPlatform={onUnassignPlatform} />
-            <Platform name="Platform 7" platformData={platformMap.get("Platform 7")} onUnassignPlatform={onUnassignPlatform} />
-            <Platform name="Platform 8" platformData={platformMap.get("Platform 8")} onUnassignPlatform={onUnassignPlatform} />
+                <Track number="1" trackData={platformMap.get("Track 1")} onUnassignPlatform={onUnassignPlatform} />
+                <Track number="2" trackData={platformMap.get("Track 2")} onUnassignPlatform={onUnassignPlatform} />
+                <Track number="3" trackData={platformMap.get("Track 3")} onUnassignPlatform={onUnassignPlatform} />
+                <Track number="4" trackData={platformMap.get("Track 4")} onUnassignPlatform={onUnassignPlatform} />
 
-            <Track number="5" trackData={platformMap.get("Track 5")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number="6" trackData={platformMap.get("Track 6")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number="7" trackData={platformMap.get("Track 7")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number="8" trackData={platformMap.get("Track 8")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number="9" trackData={platformMap.get("Track 9")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number="10" trackData={platformMap.get("Track 10")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number="11" trackData={platformMap.get("Track 11")} onUnassignPlatform={onUnassignPlatform} />
-            <Track number="12" trackData={platformMap.get("Track 12")} onUnassignPlatform={onUnassignPlatform} />
-        </div>
+                <div className="grid grid-cols-2 gap-3">
+                    <Platform name="Platform 1" platformData={platformMap.get("Platform 1")} onUnassignPlatform={onUnassignPlatform} />
+                    <Platform name="Platform 3" platformData={platformMap.get("Platform 3")} onUnassignPlatform={onUnassignPlatform} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                    <Platform name="Platform 1A" platformData={platformMap.get("Platform 1A")} onUnassignPlatform={onUnassignPlatform} />
+                    <Platform name="Platform 3A" platformData={platformMap.get("Platform 3A")} onUnassignPlatform={onUnassignPlatform} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                    <Platform name="Platform 2A" platformData={platformMap.get("Platform 2A")} onUnassignPlatform={onUnassignPlatform} />
+                    <Platform name="Platform 4A" platformData={platformMap.get("Platform 4A")} onUnassignPlatform={onUnassignPlatform} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                    <Platform name="Platform 2" platformData={platformMap.get("Platform 2")} onUnassignPlatform={onUnassignPlatform} />
+                    <Platform name="Platform 4" platformData={platformMap.get("Platform 4")} onUnassignPlatform={onUnassignPlatform} />
+                </div>
+
+                <Platform name="Platform 5" platformData={platformMap.get("Platform 5")} onUnassignPlatform={onUnassignPlatform} />
+                <Platform name="Platform 6" platformData={platformMap.get("Platform 6")} onUnassignPlatform={onUnassignPlatform} />
+                <Platform name="Platform 7" platformData={platformMap.get("Platform 7")} onUnassignPlatform={onUnassignPlatform} />
+                <Platform name="Platform 8" platformData={platformMap.get("Platform 8")} onUnassignPlatform={onUnassignPlatform} />
+
+                <Track number="5" trackData={platformMap.get("Track 5")} onUnassignPlatform={onUnassignPlatform} />
+                <Track number="6" trackData={platformMap.get("Track 6")} onUnassignPlatform={onUnassignPlatform} />
+                <Track number="7" trackData={platformMap.get("Track 7")} onUnassignPlatform={onUnassignPlatform} />
+                <Track number="8" trackData={platformMap.get("Track 8")} onUnassignPlatform={onUnassignPlatform} />
+                <Track number="9" trackData={platformMap.get("Track 9")} onUnassignPlatform={onUnassignPlatform} />
+                <Track number="10" trackData={platformMap.get("Track 10")} onUnassignPlatform={onUnassignPlatform} />
+                <Track number="11" trackData={platformMap.get("Track 11")} onUnassignPlatform={onUnassignPlatform} />
+                <Track number="12" trackData={platformMap.get("Track 12")} onUnassignPlatform={onUnassignPlatform} />
+            </div>
+        </>
     );
 }
 
 
 // --- MODAL COMPONENTS ---
-const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignPlatform, trainToReassign }) => {
+const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignPlatform, trainToReassign, onAddToWaitingList }) => {
     const [selectedTrain, setSelectedTrain] = useState(null);
     const [suggestions, setSuggestions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -294,6 +347,7 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
     const [view, setView] = useState('selection');
     const [freightNeedsPlatform, setFreightNeedsPlatform] = useState(null);
     const [loggedArrivalTime, setLoggedArrivalTime] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const resetState = useCallback(() => {
         setSelectedTrain(null);
@@ -303,6 +357,7 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
         setView('selection');
         setFreightNeedsPlatform(null);
         setLoggedArrivalTime('');
+        setSearchTerm('');
     }, []);
 
     const fetchSuggestionsForTrain = useCallback(async (train, needsPlatform) => {
@@ -340,21 +395,24 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
     useEffect(() => {
         if (isOpen) {
             if (trainToReassign) {
+                // Pre-select the train if it's for re-assignment
                 const train = arrivingTrains.find(t => t.trainNo === trainToReassign.trainNo);
                 if (train) {
                     setSelectedTrain(train);
                     const isFreight = train.name.includes('Freight') || train.name.includes('Goods');
+                    // Automatically fetch suggestions if it's not a freight train
                     if (!isFreight) {
                         fetchSuggestionsForTrain(train, true);
                     }
                 }
-            } else {
-                resetState();
             }
+            // Do not reset here to keep selection stable
         } else {
-           resetState();
+            // Reset when modal is closed
+            resetState();
         }
-    }, [isOpen, trainToReassign, arrivingTrains, resetState, fetchSuggestionsForTrain]);
+    }, [isOpen, trainToReassign, fetchSuggestionsForTrain]); // removed arrivingTrains & resetState to prevent re-renders
+
 
     const handleTrainSelection = (trainNo) => {
         const train = arrivingTrains.find(t => t.trainNo === trainNo);
@@ -380,15 +438,45 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
         onClose();
     };
 
+    const handleAddToWaitingList = () => {
+        if (selectedTrain) {
+            onAddToWaitingList(selectedTrain.trainNo);
+            onClose();
+        }
+    };
+
+    const filteredTrains = arrivingTrains.filter(train => 
+        train.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        String(train.trainNo).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Arriving Trains and Platform Suggestions">
+        <Modal isOpen={isOpen} onClose={onClose} title="Immediate Train Actions">
             {view === 'selection' && (
                 <div className="space-y-4">
                     <div>
-                        <label htmlFor="suggest-train-list" className="block text-sm font-medium text-gray-700 mb-2">1. Select Arriving Train:</label>
-                        <select id="suggest-train-list" value={selectedTrain?.trainNo || ''} onChange={e => handleTrainSelection(e.target.value)} className="w-full p-2 border rounded-md" disabled={!!trainToReassign}>
-                            <option value="" disabled>Select a train...</option>
-                            {arrivingTrains.map(train => <option key={train.trainNo} value={train.trainNo}>{train.trainNo} - {train.name}</option>)}
+                        <label htmlFor="suggest-train-list" className="block text-sm font-medium text-gray-700 mb-2">1. Select Train for Assignment:</label>
+                        <input
+                            type="text"
+                            placeholder="Search by name or number..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full p-2 border rounded-md mb-2"
+                        />
+                        <select 
+                            id="suggest-train-list" 
+                            value={selectedTrain?.trainNo || ''} 
+                            onChange={e => handleTrainSelection(e.target.value)} 
+                            className="w-full p-2 border rounded-md" 
+                            disabled={!!trainToReassign}
+                            size={filteredTrains.length > 5 ? 5 : filteredTrains.length + 1}
+                        >
+                            <option value="" disabled hidden={!selectedTrain}>Select a train...</option>
+                            {filteredTrains.map(train => (
+                                <option key={train.trainNo} value={train.trainNo}>
+                                    {train.trainNo} - {train.name} ({train.scheduled_arrival ? `${train.scheduled_arrival} Arr` : `${train.scheduled_departure} Dep`})
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -413,7 +501,7 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
                 <div className="space-y-4">
                     <div className="p-3 bg-gray-100 rounded-md border">
                         <p className="font-semibold">{selectedTrain?.trainNo} - {selectedTrain?.name}</p>
-                        <p className="text-sm font-bold text-blue-700">Actual Arrival Time: {loggedArrivalTime}</p>
+                        <p className="text-sm font-bold text-blue-700">Assignment Time: {loggedArrivalTime}</p>
                     </div>
 
                     {isLoading && <div className="text-center text-gray-500">Recalculating...</div>}
@@ -440,9 +528,20 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
                             </div>
                         </div>
                         ) : !isLoading && (
-                        <div className="text-center p-4 bg-red-50 border-red-200 border rounded-md">
-                            <p className="font-semibold text-red-800">No Suitable Platforms/Tracks Found</p>
-                            <p className="text-sm text-red-700">All suitable options may be occupied or under maintenance.</p>
+                            <div className="text-center p-4 bg-yellow-50 border-yellow-200 border rounded-md">
+                                <p className="font-semibold text-yellow-800">No Suitable Platforms/Tracks Found</p>
+                                <p className="text-sm text-yellow-700">All suitable options may be occupied or under maintenance.</p>
+                            </div>
+                    )}
+
+                    {!isLoading && selectedTrain && (
+                         <div className="mt-4 border-t pt-4">
+                             <button 
+                                 onClick={handleAddToWaitingList} 
+                                 className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-red-700 transition"
+                             >
+                                 Move to Waiting List
+                             </button>
                         </div>
                     )}
                 </div>
@@ -505,26 +604,24 @@ const MaintenanceModal = ({ isOpen, onClose, platforms, onToggleMaintenance }) =
 
 const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onDeleteTrain }) => {
     const initialFormState = {
-        trainNumber: '', train_type: 'Express', size: 'short', 
-        direction: 'UP', source: '', destination: '',
-        scheduled_arrival: '', scheduled_departure: '',
+        'TRAIN NO': '', 'TRAIN NAME': '', 'TYPE': 'Express', 'ZONE': 'SER', 'DIRECTION': 'UP',
+        'ISTERMINATING': false, 'PLATFORM NO': '', 'DAYS': 'Daily', 'LENGTH': 'long',
+        'ORIGIN FROM STATION': '', 'DEPARTURE FROM ORIGIN': '', 'TERMINAL': '',
+        'ARRIVAL AT KGP': '', 'DEPARTURE FROM KGP': '', 'DESTINATION': '', 'ARRIVAL AT DESTINATION': ''
     };
     const [newTrain, setNewTrain] = useState(initialFormState);
     const [trainToDelete, setTrainToDelete] = useState(null);
+    const [deleteSearchTerm, setDeleteSearchTerm] = useState('');
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setNewTrain(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        setNewTrain(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!newTrain.trainNumber || !newTrain.source || !newTrain.destination || !newTrain.scheduled_departure) {
-            toast.error("Please fill all required fields for the new train.");
-            return;
-        }
         onAddTrain(newTrain);
-        setNewTrain(initialFormState);
+        setNewTrain(initialFormState); // Reset form after submission
     };
     
     const handleDeleteClick = (trainNo) => {
@@ -534,12 +631,17 @@ const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onDeleteTrain 
     const confirmDelete = () => {
         onDeleteTrain(trainToDelete);
         setTrainToDelete(null);
-    }
+    };
+
+    const filteredDeleteList = arrivingTrains.filter(train =>
+        train.name.toLowerCase().includes(deleteSearchTerm.toLowerCase()) ||
+        String(train.trainNo).toLowerCase().includes(deleteSearchTerm.toLowerCase())
+    );
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Miscellaneous Operations">
             {trainToDelete && (
-                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
                     <div className="bg-white p-6 rounded-lg shadow-xl text-center">
                         <h4 className="text-lg font-bold mb-4">Confirm Deletion</h4>
                         <p>Are you sure you want to delete train {trainToDelete}?</p>
@@ -555,29 +657,28 @@ const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onDeleteTrain 
                 {/* Add Train Form */}
                 <div className="space-y-4">
                     <h4 className="text-lg font-semibold border-b pb-2">Add New Train</h4>
-                    <form onSubmit={handleSubmit} className="space-y-3">
-                        <input name="trainNumber" value={newTrain.trainNumber} onChange={handleInputChange} placeholder="Train Number (e.g., T1234)" className="w-full p-2 border rounded-md" required />
+                    <form onSubmit={handleSubmit} className="space-y-3 text-sm">
+                        <input name="TRAIN NO" value={newTrain['TRAIN NO']} onChange={handleInputChange} placeholder="Train Number*" className="w-full p-2 border rounded-md" required />
+                        <input name="TRAIN NAME" value={newTrain['TRAIN NAME']} onChange={handleInputChange} placeholder="Train Name*" className="w-full p-2 border rounded-md" required />
                         <div className="grid grid-cols-2 gap-2">
-                            <input name="source" value={newTrain.source} onChange={handleInputChange} placeholder="Source" className="w-full p-2 border rounded-md" required />
-                            <input name="destination" value={newTrain.destination} onChange={handleInputChange} placeholder="Destination" className="w-full p-2 border rounded-md" required />
+                            <input name="ORIGIN FROM STATION" value={newTrain['ORIGIN FROM STATION']} onChange={handleInputChange} placeholder="Origin Station*" className="w-full p-2 border rounded-md" required />
+                            <input name="DESTINATION" value={newTrain['DESTINATION']} onChange={handleInputChange} placeholder="Destination*" className="w-full p-2 border rounded-md" required />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <select name="train_type" value={newTrain.train_type} onChange={handleInputChange} className="w-full p-2 border rounded-md">
-                                <option>Express</option><option>Superfast</option><option>Passenger</option><option>Local</option><option>Freight</option><option>Goods</option>
-                            </select>
-                            <select name="direction" value={newTrain.direction} onChange={handleInputChange} className="w-full p-2 border rounded-md">
-                                <option>UP</option><option>DOWN</option>
-                            </select>
+                            <div><label className="text-xs">Scheduled Arrival (KGP)</label><input type="time" name="ARRIVAL AT KGP" value={newTrain['ARRIVAL AT KGP']} onChange={handleInputChange} className="w-full p-2 border rounded-md" /></div>
+                            <div><label className="text-xs">Scheduled Departure (KGP)*</label><input type="time" name="DEPARTURE FROM KGP" value={newTrain['DEPARTURE FROM KGP']} onChange={handleInputChange} className="w-full p-2 border rounded-md" required /></div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                             <select name="size" value={newTrain.size} onChange={handleInputChange} className="w-full p-2 border rounded-md">
-                                <option value="short">Short</option>
-                                <option value="long">Long</option>
-                            </select>
+                        <select name="TYPE" value={newTrain['TYPE']} onChange={handleInputChange} className="w-full p-2 border rounded-md"><option>Express</option><option>Superfast</option><option>Passenger</option><option>Local</option><option>Freight</option><option>Goods</option></select>
+                            <select name="DIRECTION" value={newTrain['DIRECTION']} onChange={handleInputChange} className="w-full p-2 border rounded-md"><option>UP</option><option>DOWN</option></select>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <div><label className="text-xs">Scheduled Arrival</label><input type="time" name="scheduled_arrival" value={newTrain.scheduled_arrival} onChange={handleInputChange} className="w-full p-2 border rounded-md" /></div>
-                            <div><label className="text-xs">Scheduled Departure</label><input type="time" name="scheduled_departure" value={newTrain.scheduled_departure} onChange={handleInputChange} className="w-full p-2 border rounded-md" required /></div>
+                            <select name="LENGTH" value={newTrain['LENGTH']} onChange={handleInputChange} className="w-full p-2 border rounded-md"><option value="long">Long</option><option value="short">Short</option></select>
+                            <select name="ZONE" value={newTrain['ZONE']} onChange={handleInputChange} className="w-full p-2 border rounded-md"><option>SER</option><option>CR</option><option>ECOR</option><option>NCR</option></select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <input name="DAYS" value={newTrain['DAYS']} onChange={handleInputChange} placeholder="Days (e.g., SMTWTFS)" className="w-full p-2 border rounded-md" />
+                            <div className="flex items-center"><input type="checkbox" name="ISTERMINATING" checked={newTrain['ISTERMINATING']} onChange={handleInputChange} className="mr-2" /><label>Terminates at KGP</label></div>
                         </div>
                         <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition">Add Train</button>
                     </form>
@@ -585,18 +686,25 @@ const MiscModal = ({ isOpen, onClose, arrivingTrains, onAddTrain, onDeleteTrain 
                 {/* Delete Train List */}
                 <div className="space-y-4">
                     <h4 className="text-lg font-semibold border-b pb-2">Delete Arriving Train</h4>
+                    <input
+                        type="text"
+                        placeholder="Search by name or number..."
+                        value={deleteSearchTerm}
+                        onChange={e => setDeleteSearchTerm(e.target.value)}
+                        className="w-full p-2 border rounded-md mb-2"
+                    />
                     <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
-                        {arrivingTrains.length > 0 ? arrivingTrains.map(train => (
+                        {filteredDeleteList.length > 0 ? filteredDeleteList.map(train => (
                             <div key={train.trainNo} className="flex justify-between items-center p-2 bg-gray-50 rounded-md border">
-                                <div>
+                                <div className="flex-1 min-w-0 mr-2">
                                     <p className="font-semibold">{train.trainNo}</p>
                                     <p className="text-sm text-gray-600 truncate">{train.name}</p>
                                 </div>
-                                <button onClick={() => handleDeleteClick(train.trainNo)} className="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600 transition">
+                                <button onClick={() => handleDeleteClick(train.trainNo)} className="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-md hover:bg-red-600 transition flex-shrink-0">
                                     Delete
                                 </button>
                             </div>
-                        )) : <p className="text-gray-500 text-sm text-center pt-4">No trains in the 'arriving' list.</p>}
+                        )) : <p className="text-gray-500 text-sm text-center pt-4">No matching trains found.</p>}
                     </div>
                 </div>
             </div>
@@ -649,7 +757,7 @@ const ReassignPromptModal = ({ reassignPrompt, onCancel, onConfirmUnassign, onCo
                         Yes, Re-assign
                     </button>
                 </div>
-                 <button onClick={onCancel} className="mt-4 text-sm text-gray-500 hover:underline">Cancel</button>
+                <button onClick={onCancel} className="mt-4 text-sm text-gray-500 hover:underline">Cancel</button>
             </div>
         </div>
     );
@@ -660,11 +768,62 @@ const ReassignPromptModal = ({ reassignPrompt, onCancel, onConfirmUnassign, onCo
 const MainApp = () => {
     const [platforms, setPlatforms] = useState([]);
     const [arrivingTrains, setArrivingTrains] = useState([]);
+    const [waitingList, setWaitingList] = useState([]);
     const [activeModal, setActiveModal] = useState(null);
     const [error, setError] = useState(null);
     const [logs, setLogs] = useState([]);
     const [reassignPrompt, setReassignPrompt] = useState({ isOpen: false, platformId: null, trainDetails: null });
     const [trainForImmediateSuggestion, setTrainForImmediateSuggestion] = useState(null);
+    
+    const currentTime = useCurrentTime();
+
+    const immediateActionTrains = useMemo(() => {
+        const now = currentTime;
+        const arrivalLowerBound = new Date(now.getTime() - 15 * 60 * 1000);
+        const arrivalUpperBound = new Date(now.getTime() + 15 * 60 * 1000);
+        const departureUpperBound = new Date(now.getTime() + 30 * 60 * 1000);
+    
+        return arrivingTrains.filter(train => {
+            const getScheduledDateTime = (timeStr, baseDate) => {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                const scheduledTime = new Date(baseDate);
+                scheduledTime.setHours(hours, minutes, 0, 0);
+                return scheduledTime;
+            };
+    
+            // Case 1: Train has a scheduled arrival time
+            if (train.scheduled_arrival) {
+                let scheduledTime = getScheduledDateTime(train.scheduled_arrival, now);
+    
+                // Handle midnight crossover for arrivals
+                // If current time is early morning (e.g., 00:10) and scheduled time is late evening (e.g., 23:55),
+                // the scheduled time belongs to the previous day.
+                if (now.getHours() < 2 && scheduledTime.getHours() > 22) {
+                    scheduledTime.setDate(now.getDate() - 1);
+                }
+                // If current time is late evening (e.g., 23:50) and scheduled time is early morning (e.g., 00:05),
+                // the scheduled time belongs to the next day.
+                if (now.getHours() > 22 && scheduledTime.getHours() < 2) {
+                    scheduledTime.setDate(now.getDate() + 1);
+                }
+    
+                return scheduledTime >= arrivalLowerBound && scheduledTime <= arrivalUpperBound;
+            }
+            // Case 2: Train has only a scheduled departure (originating train)
+            else if (train.scheduled_departure) {
+                let scheduledTime = getScheduledDateTime(train.scheduled_departure, now);
+    
+                // Handle midnight crossover for departures
+                if (now.getHours() > 22 && scheduledTime.getHours() < 2) {
+                    scheduledTime.setDate(now.getDate() + 1);
+                }
+    
+                return scheduledTime >= now && scheduledTime <= departureUpperBound;
+            }
+            return false;
+        });
+    }, [arrivingTrains, currentTime]);
+
 
     const fetchStationData = useCallback(async () => {
         try {
@@ -674,6 +833,7 @@ const MainApp = () => {
             if (data.error) throw new Error(data.error);
             setPlatforms(data.platforms || []);
             setArrivingTrains(data.arrivingTrains || []);
+            setWaitingList(data.waitingList || []);
         } catch (err) {
             console.error("Error fetching station data:", err);
             setError(err.message);
@@ -750,11 +910,24 @@ const MainApp = () => {
     // --- Action Handlers ---
     const handleAssignPlatform = useCallback((trainNo, platformIds, actualArrival) => {
         handleApiCall('assign-platform', { trainNo, platformIds, actualArrival }, `Assigning train ${trainNo}...`);
-    }, [fetchStationData]);
+    }, []);
+
+    const handleAddToWaitingList = useCallback((trainNo) => {
+        handleApiCall('add-to-waiting-list', { trainNo }, `Adding ${trainNo} to waiting list...`);
+    }, []);
+
+    const handleRemoveFromWaitingList = useCallback((trainNo) => {
+        handleApiCall('remove-from-waiting-list', { trainNo }, `Removing ${trainNo} from waiting list...`);
+    }, []);
+
+    const handleFindPlatformForWaitingTrain = (train) => {
+        setTrainForImmediateSuggestion(train);
+        setActiveModal('suggestions');
+    };
 
     const handleUnassignPlatform = useCallback((platformId) => {
         return handleApiCall('unassign-platform', { platformId }, `Unassigning train from ${platformId}...`);
-    }, [fetchStationData]);
+    }, []);
 
     const promptForReassignment = (platformId, trainDetails) => {
         setReassignPrompt({ isOpen: true, platformId, trainDetails });
@@ -777,19 +950,19 @@ const MainApp = () => {
 
     const handleDepartTrain = useCallback((platformId) => {
         handleApiCall('depart-train', { platformId }, `Departing train from ${platformId}...`);
-    }, [fetchStationData]);
+    }, []);
 
     const handleToggleMaintenance = useCallback((platformId) => {
         handleApiCall('toggle-maintenance', { platformId }, `Updating maintenance for ${platformId}...`);
-    }, [fetchStationData]);
+    }, []);
 
     const handleAddTrain = useCallback((trainData) => {
-        handleApiCall('add-train', trainData, `Adding train ${trainData.trainNumber}...`);
-    }, [fetchStationData]);
+        handleApiCall('add-train', trainData, `Adding train ${trainData['TRAIN NO']}...`);
+    }, []);
 
     const handleDeleteTrain = useCallback((trainNo) => {
         handleApiCall('delete-train', { trainNo }, `Deleting train ${trainNo}...`);
-    }, [fetchStationData]);
+    }, []);
     
     if (error) {
         return (
@@ -809,7 +982,14 @@ const MainApp = () => {
             <ToastContainer />
             <div className="container mx-auto p-4 md:p-8">
                 <Header />
-                <RailwayLayout platforms={platforms} onOpenModal={setActiveModal} onUnassignPlatform={promptForReassignment} />
+                <RailwayLayout 
+                    platforms={platforms} 
+                    onOpenModal={setActiveModal} 
+                    onUnassignPlatform={promptForReassignment}
+                    waitingList={waitingList}
+                    onFindPlatformForWaitingTrain={handleFindPlatformForWaitingTrain}
+                    onRemoveFromWaitingList={handleRemoveFromWaitingList}
+                />
             </div>
             
             {/* --- Modals --- */}
@@ -819,17 +999,18 @@ const MainApp = () => {
                     setActiveModal(null);
                     setTrainForImmediateSuggestion(null); // Clear the reassign trigger
                 }} 
-                arrivingTrains={arrivingTrains} 
+                arrivingTrains={[...immediateActionTrains, ...waitingList]}
                 platforms={platforms} 
                 onAssignPlatform={handleAssignPlatform}
                 trainToReassign={trainForImmediateSuggestion}
+                onAddToWaitingList={handleAddToWaitingList}
             />
             <DepartingModal isOpen={activeModal === 'departing'} onClose={() => setActiveModal(null)} platforms={platforms} onDepartTrain={handleDepartTrain} />
             <MaintenanceModal isOpen={activeModal === 'maintenance'} onClose={() => setActiveModal(null)} platforms={platforms} onToggleMaintenance={handleToggleMaintenance} />
             <MiscModal 
                 isOpen={activeModal === 'misc'} 
                 onClose={() => setActiveModal(null)} 
-                arrivingTrains={arrivingTrains}
+                arrivingTrains={arrivingTrains} // Full list for management
                 onAddTrain={handleAddTrain}
                 onDeleteTrain={handleDeleteTrain}
             />
