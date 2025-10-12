@@ -1,3 +1,5 @@
+2025-10-12 17:31:46 | UNASSIGNED: Train 18030 unassigned from Platform 2, Platform 4 and returned to arrival list.
+2025-10-12 17:31:43 | ARRIVED & ASSIGNED: Train 18030 arrived at 17:31 and assigned to Platform 2, Platform 4.
 2025-09-08 23:06:41 | UNASSIGNED: Train 38831 unassigned from Platform 4, Platform 2 and returned to arrival list.
 2025-09-08 23:05:49 | ARRIVED & ASSIGNED: Train 38831 arrived at 23:05 and assigned to Platform 2, Platform 4.
 2025-09-08 23:02:40 | WAITING: Train 38831 added to the waiting list.
