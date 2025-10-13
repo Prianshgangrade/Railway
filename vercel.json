@@ -4,7 +4,11 @@
             "src": "api/index.py",
             "use": "@vercel/python",
             "config": {
-                "includeFiles": "api/**"
+                "includeFiles": [
+                    "scoring_algorithm.py",
+                    "platform_data.json",
+                    "train_data.json"
+                ]
             }
         },
         {
@@ -18,11 +22,11 @@
     "routes": [
         {
             "src": "/stream",
-            "dest": "api/index.py"
+            "dest": "/api/index"
         },
         {
             "src": "/api/(.*)",
-            "dest": "api/index.py"
+            "dest": "/api/index"
         },
         {
             "src": "/assets/(.*)",
