@@ -5,9 +5,9 @@
             "use": "@vercel/python",
             "config": {
                 "includeFiles": [
-                    "scoring_algorithm.py",
-                    "platform_data.json",
-                    "train_data.json"
+                    "api/scoring_algorithm.py",
+                    "api/platform_data.json",
+                    "api/train_data.json"
                 ]
             }
         },
@@ -22,15 +22,18 @@
     "routes": [
         {
             "src": "/stream",
-            "dest": "/api/index"
+            "dest": "api/index"
         },
         {
             "src": "/api/(.*)",
-            "dest": "/api/index"
+            "dest": "api/index"
         },
         {
             "src": "/assets/(.*)",
-            "dest": "/assets/$1"
+            "headers": {
+                "cache-control": "public, max-age=31536000, immutable"
+            },
+            "continue": true
         },
         {
             "src": "/(.*)",
