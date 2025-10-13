@@ -1,8 +1,11 @@
 {
     "builds": [
         {
-            "src": "api/**/*.py",
-            "use": "@vercel/python"
+            "src": "api/index.py",
+            "use": "@vercel/python",
+            "config": {
+                "includeFiles": "api/**"
+            }
         },
         {
             "src": "package.json",
