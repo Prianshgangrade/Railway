@@ -9,6 +9,7 @@ import queue
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
+import certifi # <-- ADDED THIS LINE
 
 # --- Load Environment Variables ---
 load_dotenv()
@@ -23,8 +24,10 @@ if not MONGO_URI:
     exit()
 
 try:
-    client = MongoClient(MONGO_URI)
-    db = client.get_database('railwayDB') # Or your preferred DB name
+    # --- THIS IS THE MODIFIED LINE ---
+    client = MongoClient(MONGO_URI, tlsCAFile=certifi.where()) 
+    # --- END MODIFICATION ---
+    db = client.get_database('railwayDB')
     trains_collection = db['trains']
     platforms_collection = db['platforms']
     state_collection = db['station_state']
@@ -33,7 +36,7 @@ try:
 except Exception as e:
     print(f"\n--- MONGODB CONNECTION ERROR ---")
     print(f"Could not connect to MongoDB. Error: {e}")
-    print("Please check your MONGO_URI in the .env file.")
+    print("Please check your MONGO_URI in the .env file and your network connection.")
     print("--------------------------------\n")
     exit()
 
@@ -68,14 +71,11 @@ def initialize_station_state():
         try:
             platforms_master_raw = list(platforms_collection.find({}, {'_id': 0}))
             
-            # --- MODIFICATION: Handle incorrect data import shape ---
-            # If the import resulted in a single document with a "tracks" array, use that array.
             if len(platforms_master_raw) == 1 and 'tracks' in platforms_master_raw[0]:
                 print("DEBUG: Detected single-document import for platforms. Using inner 'tracks' array.")
                 platforms_master = platforms_master_raw[0]['tracks']
             else:
                 platforms_master = platforms_master_raw
-            # --- END MODIFICATION ---
 
             trains_master = list(trains_collection.find({}, {'_id': 0}))
 
@@ -102,7 +102,7 @@ def initialize_station_state():
                 })
             
             initial_state = {
-                "_id": "current_station_state", # Use a fixed ID for easy updates
+                "_id": "current_station_state",
                 "platforms": initial_platforms,
                 "arrivingTrains": sorted(initial_schedule, key=lambda x: x.get('scheduled_arrival') or x.get('scheduled_departure') or '99:99'),
                 "waitingList": []
@@ -123,7 +123,6 @@ def read_state():
         initialize_station_state()
         state = state_collection.find_one({"_id": "current_station_state"})
     
-    # Convert ObjectId to string for JSON serialization if it exists
     if state and '_id' in state:
         state['_id'] = str(state['_id'])
         
@@ -131,12 +130,7 @@ def read_state():
 
 def write_state(new_state):
     """Writes the new state to MongoDB, replacing the existing state document."""
-    if '_id' in new_state and isinstance(new_state['_id'], str):
-        query = {"_id": new_state['_id']}
-    else:
-        query = {"_id": "current_station_state"}
-        
-    state_collection.replace_one(query, new_state, upsert=True)
+    state_collection.replace_one({"_id": "current_station_state"}, new_state, upsert=True)
 
 
 # --- The rest of your Flask app ---
@@ -175,9 +169,7 @@ def get_station_data():
 
 @app.route("/api/logs")
 def get_logs():
-    # Fetch latest 100 logs, sorted by timestamp descending
     log_entries = list(logs_collection.find().sort("timestamp", -1).limit(100))
-    # Convert ObjectId and datetime to string for JSON
     logs_json = [{"timestamp": log['timestamp'].strftime('%Y-%m-%d %H:%M:%S'), "action": log['action']} for log in log_entries]
     return jsonify(logs_json)
 
@@ -190,9 +182,7 @@ def get_platform_suggestions():
 
     train_data = trains_collection.find_one({"TRAIN NO": train_no})
     if not train_data:
-        # Check if train_no is string or int
         train_data = trains_collection.find_one({"TRAIN NO": str(train_no)})
-
     if not train_data:
         return jsonify({"error": f"Train {train_no} not found in master schedule."}), 404
 
@@ -289,8 +279,6 @@ def delete_train():
     log_action(f"TRAIN DELETED: Train {train_no_to_delete} removed from the master schedule.")
     write_state(state)
     return jsonify({"message": f"Train {train_no_to_delete} deleted successfully."})
-
-# ... (The rest of your endpoints are added back in here for completeness) ...
 
 @app.route("/api/add-to-waiting-list", methods=['POST'])
 def add_to_waiting_list():
@@ -448,5 +436,6 @@ def toggle_maintenance():
 
 
 if __name__ == "__main__":
+    with app.app_context():
+        initialize_station_state()
     app.run(port=5000, debug=True)
-

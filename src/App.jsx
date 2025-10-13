@@ -248,12 +248,6 @@ const WaitingList = ({ waitingList, onFindPlatform, onRemove }) => {
                             >
                                 Find Platform
                             </button>
-                            {/* <button
-                                onClick={() => onRemove(train.trainNo)}
-                                className="bg-yellow-500 text-white font-semibold px-4 py-2 rounded-md hover:bg-yellow-600 transition-colors"
-                            >
-                                Remove
-                            </button> */}
                         </div>
                     </div>
                 ))}
@@ -367,7 +361,7 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
         setLoggedArrivalTime(arrivalTimeToLog);
 
         try {
-            const response = await fetch('http://localhost:5000/api/platform-suggestions', {
+            const response = await fetch('/api/platform-suggestions', { // MODIFICATION: Relative path
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -395,23 +389,19 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
     useEffect(() => {
         if (isOpen) {
             if (trainToReassign) {
-                // Pre-select the train if it's for re-assignment
                 const train = arrivingTrains.find(t => t.trainNo === trainToReassign.trainNo);
                 if (train) {
                     setSelectedTrain(train);
                     const isFreight = train.name.includes('Freight') || train.name.includes('Goods');
-                    // Automatically fetch suggestions if it's not a freight train
                     if (!isFreight) {
                         fetchSuggestionsForTrain(train, true);
                     }
                 }
             }
-            // Do not reset here to keep selection stable
         } else {
-            // Reset when modal is closed
             resetState();
         }
-    }, [isOpen, trainToReassign, fetchSuggestionsForTrain]); // removed arrivingTrains & resetState to prevent re-renders
+    }, [isOpen, trainToReassign, arrivingTrains, fetchSuggestionsForTrain, resetState]);
 
 
     const handleTrainSelection = (trainNo) => {
@@ -536,12 +526,12 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
 
                     {!isLoading && selectedTrain && (
                          <div className="mt-4 border-t pt-4">
-                             <button 
+                               <button 
                                  onClick={handleAddToWaitingList} 
                                  className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-red-700 transition"
-                             >
+                               >
                                  Move to Waiting List
-                             </button>
+                               </button>
                         </div>
                     )}
                 </div>
@@ -791,29 +781,21 @@ const MainApp = () => {
                 return scheduledTime;
             };
     
-            // Case 1: Train has a scheduled arrival time
             if (train.scheduled_arrival) {
                 let scheduledTime = getScheduledDateTime(train.scheduled_arrival, now);
     
-                // Handle midnight crossover for arrivals
-                // If current time is early morning (e.g., 00:10) and scheduled time is late evening (e.g., 23:55),
-                // the scheduled time belongs to the previous day.
                 if (now.getHours() < 2 && scheduledTime.getHours() > 22) {
                     scheduledTime.setDate(now.getDate() - 1);
                 }
-                // If current time is late evening (e.g., 23:50) and scheduled time is early morning (e.g., 00:05),
-                // the scheduled time belongs to the next day.
                 if (now.getHours() > 22 && scheduledTime.getHours() < 2) {
                     scheduledTime.setDate(now.getDate() + 1);
                 }
     
                 return scheduledTime >= arrivalLowerBound && scheduledTime <= arrivalUpperBound;
             }
-            // Case 2: Train has only a scheduled departure (originating train)
             else if (train.scheduled_departure) {
                 let scheduledTime = getScheduledDateTime(train.scheduled_departure, now);
     
-                // Handle midnight crossover for departures
                 if (now.getHours() > 22 && scheduledTime.getHours() < 2) {
                     scheduledTime.setDate(now.getDate() + 1);
                 }
@@ -827,7 +809,7 @@ const MainApp = () => {
 
     const fetchStationData = useCallback(async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/station-data');
+            const response = await fetch('/api/station-data'); // MODIFICATION: Relative path
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             if (data.error) throw new Error(data.error);
@@ -843,7 +825,7 @@ const MainApp = () => {
 
     const fetchLogs = useCallback(async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/logs');
+            const response = await fetch('/api/logs'); // MODIFICATION: Relative path
             if (!response.ok) throw new Error('Failed to fetch logs');
             const data = await response.json();
             setLogs(data);
@@ -863,9 +845,8 @@ const MainApp = () => {
     }, [fetchStationData]);
 
     useEffect(() => {
-        const sseUrl = 'http://localhost:5000/stream';
-        console.log("Connecting to SSE stream at:", sseUrl);
-        const eventSource = new EventSource(sseUrl);
+        const eventSource = new EventSource('/stream'); // MODIFICATION: Relative path
+        console.log("Connecting to SSE stream at: /stream");
 
         eventSource.addEventListener('departure_alert', (event) => {
             const data = JSON.parse(event.data);
@@ -888,7 +869,7 @@ const MainApp = () => {
 
     const handleApiCall = async (endpoint, body, successMsg) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/${endpoint}`, {
+            const response = await fetch(`/api/${endpoint}`, { // MODIFICATION: Relative path
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -910,15 +891,15 @@ const MainApp = () => {
     // --- Action Handlers ---
     const handleAssignPlatform = useCallback((trainNo, platformIds, actualArrival) => {
         handleApiCall('assign-platform', { trainNo, platformIds, actualArrival }, `Assigning train ${trainNo}...`);
-    }, []);
+    }, [handleApiCall]);
 
     const handleAddToWaitingList = useCallback((trainNo) => {
         handleApiCall('add-to-waiting-list', { trainNo }, `Adding ${trainNo} to waiting list...`);
-    }, []);
+    }, [handleApiCall]);
 
     const handleRemoveFromWaitingList = useCallback((trainNo) => {
         handleApiCall('remove-from-waiting-list', { trainNo }, `Removing ${trainNo} from waiting list...`);
-    }, []);
+    }, [handleApiCall]);
 
     const handleFindPlatformForWaitingTrain = (train) => {
         setTrainForImmediateSuggestion(train);
@@ -927,7 +908,7 @@ const MainApp = () => {
 
     const handleUnassignPlatform = useCallback((platformId) => {
         return handleApiCall('unassign-platform', { platformId }, `Unassigning train from ${platformId}...`);
-    }, []);
+    }, [handleApiCall]);
 
     const promptForReassignment = (platformId, trainDetails) => {
         setReassignPrompt({ isOpen: true, platformId, trainDetails });
@@ -950,19 +931,19 @@ const MainApp = () => {
 
     const handleDepartTrain = useCallback((platformId) => {
         handleApiCall('depart-train', { platformId }, `Departing train from ${platformId}...`);
-    }, []);
+    }, [handleApiCall]);
 
     const handleToggleMaintenance = useCallback((platformId) => {
         handleApiCall('toggle-maintenance', { platformId }, `Updating maintenance for ${platformId}...`);
-    }, []);
+    }, [handleApiCall]);
 
     const handleAddTrain = useCallback((trainData) => {
         handleApiCall('add-train', trainData, `Adding train ${trainData['TRAIN NO']}...`);
-    }, []);
+    }, [handleApiCall]);
 
     const handleDeleteTrain = useCallback((trainNo) => {
         handleApiCall('delete-train', { trainNo }, `Deleting train ${trainNo}...`);
-    }, []);
+    }, [handleApiCall]);
     
     if (error) {
         return (
