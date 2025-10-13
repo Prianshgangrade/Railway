@@ -18,6 +18,14 @@
             "dest": "api/index.py"
         },
         {
+            "src": "/assets/(.*)",
+            "dest": "/assets/$1"
+        },
+        {
+            "src": "/(.*)",
+            "handle": "filesystem"
+        },
+        {
             "src": "/(.*)",
             "dest": "/index.html"
         }
