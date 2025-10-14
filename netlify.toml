@@ -1,0 +1,26 @@
+# This file tells Netlify how to build and deploy your site.
+
+# 1. Frontend Build Settings
+# Specifies the command to build your React app and where the output is located.
+[build]
+  command = "npm run build"
+  publish = "dist"
+  # Specifies that your Python serverless functions are in the /api directory.
+  functions = "api"
+
+# 2. API Rewrites
+# This rule tells Netlify to send any request starting with /api/
+# to your Python backend function.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/index"
+  status = 200
+
+# 3. Frontend Catch-all Rule
+# This is for your React single-page application (SPA). It ensures that if a user
+# refreshes the page on a route like /dashboard, they are still served the main
+# index.html file, allowing React Router to take over.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
