@@ -435,7 +435,9 @@ def toggle_maintenance():
     return jsonify({"message": f"Maintenance status toggled for {platform_id}."})
 
 
+# When running locally, run Flask directly
 if __name__ == "__main__":
     with app.app_context():
         initialize_station_state()
-    app.run(port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
