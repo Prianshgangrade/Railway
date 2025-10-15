@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 
+// When frontend (Netlify) and backend (Vercel) are on different domains,
+// set VITE_API_BASE_URL to your Vercel URL (e.g., https://your-app.vercel.app)
+// In same-origin deployments, leave it empty.
+const API_BASE = (import.meta.env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const apiUrl = (path) => `${API_BASE}${path}`;
+
 // --- LOGIN COMPONENT ---
 const LoginPage = ({ onLogin }) => {
     const [username, setUsername] = useState('');
@@ -361,7 +367,7 @@ const SuggestionModal = ({ isOpen, onClose, arrivingTrains, platforms, onAssignP
         setLoggedArrivalTime(arrivalTimeToLog);
 
         try {
-            const response = await fetch('/api/platform-suggestions', { // MODIFICATION: Relative path
+            const response = await fetch(apiUrl('/api/platform-suggestions'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -809,7 +815,7 @@ const MainApp = () => {
 
     const fetchStationData = useCallback(async () => {
         try {
-            const response = await fetch('/api/station-data'); // MODIFICATION: Relative path
+            const response = await fetch(apiUrl('/api/station-data'));
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             if (data.error) throw new Error(data.error);
@@ -825,7 +831,7 @@ const MainApp = () => {
 
     const fetchLogs = useCallback(async () => {
         try {
-            const response = await fetch('/api/logs'); // MODIFICATION: Relative path
+            const response = await fetch(apiUrl('/api/logs'));
             if (!response.ok) throw new Error('Failed to fetch logs');
             const data = await response.json();
             setLogs(data);
@@ -845,8 +851,9 @@ const MainApp = () => {
     }, [fetchStationData]);
 
     useEffect(() => {
-        const eventSource = new EventSource('/stream'); // MODIFICATION: Relative path
-        console.log("Connecting to SSE stream at: /stream");
+        const sseUrl = apiUrl('/api/stream');
+        const eventSource = new EventSource(sseUrl);
+        console.log("Connecting to SSE stream at:", sseUrl);
 
         eventSource.addEventListener('departure_alert', (event) => {
             const data = JSON.parse(event.data);
@@ -869,7 +876,7 @@ const MainApp = () => {
 
     const handleApiCall = async (endpoint, body, successMsg) => {
         try {
-            const response = await fetch(`/api/${endpoint}`, { // MODIFICATION: Relative path
+            const response = await fetch(apiUrl(`/api/${endpoint}`), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
