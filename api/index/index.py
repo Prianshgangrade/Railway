@@ -330,14 +330,38 @@ def home():
 @app.route("/stream")
 @app.route("/api/stream")
 def stream():
+    """SSE endpoint for departure alerts.
+
+    Adds explicit headers to play nicely behind proxies (e.g., Render) and
+    sends periodic heartbeats to keep the connection alive.
+    """
+
     def event_generator():
+        # Send an initial comment to establish the stream immediately
+        yield ": connected\n\n"
         while True:
             try:
-                msg = sse_broadcaster.get(timeout=20)
+                msg = sse_broadcaster.get(timeout=15)
+                # msg is already a properly formatted SSE event string
                 yield msg
             except queue.Empty:
-                yield ": heartbeat\n\n"
-    return Response(event_generator(), mimetype="text/event-stream")
+                # Periodic heartbeat to avoid idle timeouts and proxy buffering
+                yield "event: ping\ndata: {}\n\n"
+
+    headers = {
+        # Required for SSE
+        "Content-Type": "text/event-stream",
+        # Prevent any intermediate from caching/buffering
+        "Cache-Control": "no-cache",
+        # Helpful for some reverse proxies to avoid buffering (nginx, etc.)
+        "X-Accel-Buffering": "no",
+        # Keep the TCP connection open
+        "Connection": "keep-alive",
+        # CORS: although CORS(app) is enabled, set explicitly for SSE
+        "Access-Control-Allow-Origin": "*",
+    }
+
+    return Response(event_generator(), headers=headers)
 
 @app.route("/api/station-data")
 def get_station_data():
@@ -736,4 +760,11 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Render gives PORT env var
     app.run(host="0.0.0.0", port=port, debug=True)
     # app.run(port=5000, debug=True)
+
+else:
+    # When imported by gunicorn on Render, eagerly load the matrix once at startup
+    try:
+        BLOCKAGE_MATRIX, INCOMING_LINES = load_blockage_matrix()
+    except Exception as _e:
+        print(f"WARNING: Failed to load blockage matrix at import time: {_e}")
 
