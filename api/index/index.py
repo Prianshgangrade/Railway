@@ -56,7 +56,20 @@ except Exception:
 
 
 app = Flask(__name__)
-CORS(app)
+# Configure CORS to explicitly allow Railway frontend and common origins
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "https://railway-production-f8eb.up.railway.app",
+            "https://kgpfront.onrender.com/",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
 
 API_DIR = os.path.dirname(__file__)
 BLOCKAGE_MATRIX_FILE = os.path.join(API_DIR, 'Track Connections.xlsx - Tracks.csv')
