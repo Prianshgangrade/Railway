@@ -405,6 +405,7 @@ def get_platform_suggestions():
     frontend_platforms = request_data.get('platforms')
     freight_needs_platform = request_data.get('freightNeedsPlatform')
 
+
     if not all([train_no, incoming_line, frontend_platforms]):
         return jsonify({"error": "Missing required parameters: trainNo, incomingLine, and platforms are all required."}), 400
     
@@ -419,7 +420,7 @@ def get_platform_suggestions():
         train_name=train_data.get('TRAIN NAME'),
         train_type='Freight' if is_freight else 'Passenger',
         is_terminating=train_data.get('ISTERMINATING', False),
-        length=train_data.get('LENGTH', 'Long').lower(),
+        length=str(train_data.get('LENGTH', 'Long')).strip().lower(),
         needs_platform=freight_needs_platform if is_freight else True,
         direction=train_data.get('DIRECTION'),
         historical_platform=str(train_data.get('PLATFORM NO', '')).split(',')[0].strip(),

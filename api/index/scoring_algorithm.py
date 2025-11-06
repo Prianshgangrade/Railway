@@ -25,10 +25,18 @@ def _tie_break_rank(direction: str, platform_id: str) -> int:
     else:
         bucket = platform_id
 
+    # Directional tie-break order; include all platforms that may appear
+    # Spec:
+    #  - UP:   P2-4 > P1-3 > P5 > P6 > P8 > P7
+    #  - DOWN: P8 > P7 > P6 > P5 > P2-4 > P1-3
     up_order = ['P2-4', 'P1-3', 'P5', 'P6', 'P8']
     down_order = ['P8', 'P7', 'P6', 'P5', 'P2-4', 'P1-3']
     order = up_order if str(direction).upper() == 'UP' else down_order
-    return order.index(bucket)
+    # Gracefully handle buckets not present in the ordering (e.g., P1A/P3A)
+    try:
+        return order.index(bucket)
+    except ValueError:
+        return len(order)
 
 def get_available_platforms(frontend_platforms):
 
