@@ -782,7 +782,7 @@ if __name__ == "__main__":
     # app.run(port=5000, debug=True)
 
 else:
-   try:
+    try:
         BLOCKAGE_MATRIX, INCOMING_LINES = load_blockage_matrix()
         with app.app_context():
             initialize_station_state()
