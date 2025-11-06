@@ -56,18 +56,14 @@ except Exception:
 
 
 app = Flask(__name__)
-# Configure CORS to explicitly allow Railway frontend and common origins
+# Configure CORS to allow all origins (simplest fix for cross-deployment issues)
 CORS(app, resources={
-    r"/api/*": {
-        "origins": [
-            "https://railway-production-f8eb.up.railway.app",
-            "https://kgpfront.onrender.com/",
-            "http://localhost:5173",
-            "http://127.0.0.1:5173"
-        ],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS", "DELETE", "PUT"],
+        "allow_headers": ["Content-Type", "Authorization", "Cache-Control", "X-Requested-With"],
+        "expose_headers": ["Content-Type", "Cache-Control", "X-Accel-Buffering"],
+        "supports_credentials": False
     }
 })
 
