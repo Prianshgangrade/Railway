@@ -1,0 +1,2 @@
+date,trainNo,trainName,scheduled_arrival,scheduled_departure,actual_arrival,actual_departure,top3_suggestions,actual_platform,incoming_line,outgoing_line
+2025-10-30,12834,Howrah - Ahmedabad SF Express (PT),00:45,00:50,,,"Platform 3, Platform 1, Platform 4",,HWH UP,
