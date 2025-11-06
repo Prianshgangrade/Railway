@@ -21,9 +21,9 @@ export default defineConfig({
     // This fixes potential CORS issues and simplifies frontend fetch calls.
     proxy: {
       // Any request from your frontend that starts with "/api"
-      // will be forwarded to your Python backend at http://127.0.0.1:5000
+      // will be forwarded to your local FastAPI backend (uvicorn) at http://127.0.0.1:8000
       '/api': {
-        target: 'http://127.0.0.1:5000',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
       },
