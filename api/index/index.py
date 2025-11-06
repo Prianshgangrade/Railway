@@ -13,6 +13,7 @@ from bson.objectid import ObjectId
 from dotenv import load_dotenv
 import certifi
 
+
 load_dotenv()
 
 MONGO_URI = os.getenv('MONGO_URI')
@@ -39,7 +40,7 @@ except Exception as e:
     print("--------------------------------\n")
     exit()
 
-
+from index.scoring_algorithm import ScoringTrain, get_available_platforms, calculate_platform_scores
 
 try:
 
