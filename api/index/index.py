@@ -40,16 +40,19 @@ except Exception as e:
     print("--------------------------------\n")
     exit()
 
-from index import scoring_algorithm, get_available_platforms, calculate_platform_scores
-
+# Robust import of local scoring module for both package and script execution
 try:
-    
-    from index.scoring_algorithm import ScoringTrain, get_available_platforms, calculate_platform_scores
-except ImportError:
-    print("Warning: scoring_algorithm.py not found.")
-    class ScoringTrain: pass
-    def get_available_platforms(p): return []
-    def calculate_platform_scores(t, a, i, m): return []
+    # When running under gunicorn as package (index.index)
+    from .scoring_algorithm import ScoringTrain, get_available_platforms, calculate_platform_scores  # type: ignore
+except Exception:
+    try:
+        # When running this file directly (python index.py)
+        from scoring_algorithm import ScoringTrain, get_available_platforms, calculate_platform_scores  # type: ignore
+    except Exception as e:
+        print(f"Warning: scoring_algorithm import failed: {e}")
+        class ScoringTrain: pass
+        def get_available_platforms(p): return []
+        def calculate_platform_scores(t, a, i, m): return []
 
 
 app = Flask(__name__)
