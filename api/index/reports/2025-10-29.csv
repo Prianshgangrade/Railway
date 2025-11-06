@@ -1,5 +1,0 @@
-date,trainNo,trainName,scheduled_arrival,scheduled_departure,actual_arrival,actual_departure,top3_suggestions,actual_platform,incoming_line,outgoing_line
-2025-10-29,12834,Howrah - Ahmedabad SF Express (PT),00:45,00:50,,,"Platform 3, Platform 1, Platform 4",,HWH UP,
-2025-10-29,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,,,"Platform 4, Platform 8, Platform 5",,TATA DN,
-2025-10-29,13433,SMVT Bengaluru - Malda Town Amrit Bharat Express (PT),00:15,00:20,,,"Platform 1, Platform 3, Platform 4",,TATA MD,
-2025-10-29,18012,Chakradharpur - Howrah Express,02:20,02:25,,,"Platform 2, Platform 1, Platform 3",,TATA MD,

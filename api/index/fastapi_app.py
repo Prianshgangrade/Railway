@@ -7,6 +7,7 @@ import threading
 from datetime import datetime, timedelta
 
 from fastapi import FastAPI, Request, Response, HTTPException
+from fastapi import BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
@@ -129,6 +130,19 @@ def time_difference_seconds(time_str1, time_str2):
 
 def log_action(action_string: str):
     logs_collection.insert_one({"timestamp": datetime.now(), "action": action_string})
+
+
+def persist_state(state_doc: dict):
+    """Persist the station state to Mongo.
+    Separated into a function so we can schedule it as a background task to avoid
+    blocking the request/response cycle on slow network I/O.
+    """
+    try:
+        state_collection.replace_one({"_id": "current_station_state"}, state_doc, upsert=True)
+    except Exception:
+        # Intentionally swallow errors in background to avoid surfacing to users
+        # (operational logs in Mongo/Render console will still show failures)
+        pass
 
 
 def upsert_daily_report(train_no, update_fields, date_str=None):
@@ -534,7 +548,7 @@ async def assign_platform(body: dict):
 
 
 @app.post("/api/unassign-platform")
-async def unassign_platform(body: dict):
+async def unassign_platform(body: dict, background_tasks: BackgroundTasks):
     platform_id = body.get('platformId')
     state = state_collection.find_one({"_id": "current_station_state"}) or {}
 
@@ -561,8 +575,9 @@ async def unassign_platform(body: dict):
         _clear_platform(state, linked_platform_id)
         cleared_platforms.append(linked_platform_id)
 
-    log_action(f"UNASSIGNED: Train {train_details['trainNo']} unassigned from {', '.join(cleared_platforms)} and returned to arrival list.")
-    state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
+    # Queue persistence and logging to run after response is sent to minimize perceived latency
+    background_tasks.add_task(log_action, f"UNASSIGNED: Train {train_details['trainNo']} unassigned from {', '.join(cleared_platforms)} and returned to arrival list.")
+    background_tasks.add_task(persist_state, state)
     return {"message": f"Train {train_details['trainNo']} unassigned from {', '.join(cleared_platforms)}."}
 
 
