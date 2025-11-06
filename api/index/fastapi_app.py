@@ -46,6 +46,10 @@ sse_broadcaster: queue.Queue[str] = queue.Queue()
 active_timers: dict[str, threading.Timer] = {}
 timers_lock = threading.Lock()
 
+# Coalesced CSV write scheduling (avoid churn while keeping eventual consistency)
+csv_timers: dict[str, threading.Timer] = {}
+csv_timers_lock = threading.Lock()
+
 # --- FastAPI app ---
 app = FastAPI(title="Kharagpur Station Control API", version="2.0")
 
@@ -145,6 +149,35 @@ def persist_state(state_doc: dict):
         pass
 
 
+def schedule_csv_write(date_str: str):
+    """Debounce CSV generation for a date; runs ~1s after last schedule."""
+    def _run():
+        try:
+            write_csv_for_date(date_str)
+        finally:
+            with csv_timers_lock:
+                csv_timers.pop(date_str, None)
+
+    with csv_timers_lock:
+        if date_str in csv_timers:
+            try:
+                csv_timers[date_str].cancel()
+            except Exception:
+                pass
+        t = threading.Timer(1.0, _run)
+        csv_timers[date_str] = t
+        t.start()
+
+
+def persist_report_update(train_no: str, update_fields: dict):
+    """Upsert daily report and schedule CSV generation for today's date in the background."""
+    try:
+        upsert_daily_report(train_no, update_fields)
+        schedule_csv_write(_today_str())
+    except Exception:
+        pass
+
+
 def upsert_daily_report(train_no, update_fields, date_str=None):
     if not train_no:
         return
@@ -194,6 +227,19 @@ def write_csv_for_date(date_str):
 async def startup_event():
     global BLOCKAGE_MATRIX, INCOMING_LINES
     BLOCKAGE_MATRIX, INCOMING_LINES = load_blockage_matrix()
+    # Ensure helpful indexes exist (idempotent)
+    try:
+        reports_collection.create_index([('date', 1), ('trainNo', 1)], unique=True)
+    except Exception:
+        pass
+    try:
+        logs_collection.create_index('timestamp')
+    except Exception:
+        pass
+    try:
+        trains_collection.create_index('TRAIN NO', unique=True)
+    except Exception:
+        pass
     # Initialize station state if absent
     if state_collection.count_documents({}) == 0:
         try:
@@ -324,7 +370,7 @@ class SuggestRequest(BaseModel):
 
 
 @app.post("/api/platform-suggestions")
-async def platform_suggestions(body: SuggestRequest):
+async def platform_suggestions(body: SuggestRequest, background_tasks: BackgroundTasks):
     train_no = body.trainNo
     incoming_line = body.incomingLine
     frontend_platforms = body.platforms
@@ -365,18 +411,18 @@ async def platform_suggestions(body: SuggestRequest):
             'blockages': suggestion.get('blockages', {})
         })
 
-    try:
-        top3 = [s['platformId'] for s in final[:3]]
-        upsert_daily_report(train_no, {
+    top3 = [s['platformId'] for s in final[:3]]
+    background_tasks.add_task(
+        persist_report_update,
+        train_no,
+        {
             'trainName': train_data.get('TRAIN NAME', ''),
             'scheduled_arrival': train_data.get('ARRIVAL AT KGP', ''),
             'scheduled_departure': train_data.get('DEPARTURE FROM KGP', ''),
             'incoming_line': incoming_line,
-            'top3_suggestions': top3
-        })
-        write_csv_for_date(_today_str())
-    except Exception:
-        pass
+            'top3_suggestions': top3,
+        },
+    )
 
     return {"suggestions": final}
 
@@ -390,7 +436,7 @@ async def get_incoming_lines():
 
 
 @app.post("/api/add-train")
-async def add_train(body: dict):
+async def add_train(body: dict, background_tasks: BackgroundTasks):
     if trains_collection.find_one({"TRAIN NO": str(body.get('TRAIN NO'))}):
         raise HTTPException(status_code=409, detail=f"Train number {body.get('TRAIN NO')} already exists.")
     trains_collection.insert_one(body)
@@ -404,12 +450,12 @@ async def add_train(body: dict):
     })
     arr.sort(key=lambda x: x.get('scheduled_arrival') or x.get('scheduled_departure') or '99:99')
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
-    log_action(f"TRAIN ADDED: New train {body['TRAIN NO']} added to the master schedule.")
+    background_tasks.add_task(log_action, f"TRAIN ADDED: New train {body['TRAIN NO']} added to the master schedule.")
     return {"message": f"Train {body['TRAIN NO']} added successfully."}
 
 
 @app.post("/api/delete-train")
-async def delete_train(body: dict):
+async def delete_train(body: dict, background_tasks: BackgroundTasks):
     train_no_to_delete = str(body.get('trainNo'))
     result = trains_collection.delete_one({"TRAIN NO": train_no_to_delete})
     if result.deleted_count == 0:
@@ -418,12 +464,12 @@ async def delete_train(body: dict):
     state['arrivingTrains'] = [t for t in state.get('arrivingTrains', []) if str(t['trainNo']) != train_no_to_delete]
     state['waitingList'] = [t for t in state.get('waitingList', []) if str(t['trainNo']) != train_no_to_delete]
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
-    log_action(f"TRAIN DELETED: Train {train_no_to_delete} removed from the master schedule.")
+    background_tasks.add_task(log_action, f"TRAIN DELETED: Train {train_no_to_delete} removed from the master schedule.")
     return {"message": f"Train {train_no_to_delete} deleted successfully."}
 
 
 @app.post("/api/add-to-waiting-list")
-async def add_to_waiting_list(body: dict):
+async def add_to_waiting_list(body: dict, background_tasks: BackgroundTasks):
     train_no = body.get('trainNo')
     if not train_no:
         raise HTTPException(status_code=400, detail="Train number is required.")
@@ -436,12 +482,12 @@ async def add_to_waiting_list(body: dict):
         raise HTTPException(status_code=404, detail=f"Train {train_no} not found in arriving trains.")
     wl.append(train_to_wait)
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
-    log_action(f"WAITING: Train {train_no} added to the waiting list.")
+    background_tasks.add_task(log_action, f"WAITING: Train {train_no} added to the waiting list.")
     return {"message": f"Train {train_no} added to the waiting list."}
 
 
 @app.post("/api/remove-from-waiting-list")
-async def remove_from_waiting_list(body: dict):
+async def remove_from_waiting_list(body: dict, background_tasks: BackgroundTasks):
     train_no = body.get('trainNo')
     if not train_no:
         raise HTTPException(status_code=400, detail="Train number is required.")
@@ -452,12 +498,12 @@ async def remove_from_waiting_list(body: dict):
         raise HTTPException(status_code=404, detail=f"Train {train_no} not found in the waiting list.")
     state['waitingList'] = [t for t in wl if t['trainNo'] != train_no]
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
-    log_action(f"WAITING LIST: Train {train_no} removed from waiting list.")
+    background_tasks.add_task(log_action, f"WAITING LIST: Train {train_no} removed from waiting list.")
     return {"message": f"Train {train_no} removed from the waiting list."}
 
 
 @app.post("/api/assign-platform")
-async def assign_platform(body: dict):
+async def assign_platform(body: dict, background_tasks: BackgroundTasks):
     train_no = body.get('trainNo')
     platform_ids_raw = body.get('platformIds')
     actual_arrival = body.get('actualArrival')
@@ -529,20 +575,21 @@ async def assign_platform(body: dict):
     if from_wait:
         state['waitingList'] = [t for t in state.get('waitingList', []) if t['trainNo'] != train_no]
 
-    log_action(f"ARRIVED & ASSIGNED: Train {train_no} arrived at {actual_arrival} and assigned to {', '.join(platform_ids)}.")
-
-    try:
-        upsert_daily_report(train_no, {
+    background_tasks.add_task(
+        log_action,
+        f"ARRIVED & ASSIGNED: Train {train_no} arrived at {actual_arrival} and assigned to {', '.join(platform_ids)}."
+    )
+    background_tasks.add_task(
+        persist_report_update,
+        train_no,
+        {
             'trainName': (train_data or {}).get('TRAIN NAME', ''),
             'scheduled_arrival': (train_data or {}).get('ARRIVAL AT KGP', ''),
             'scheduled_departure': (train_data or {}).get('DEPARTURE FROM KGP', ''),
             'actual_arrival': actual_arrival,
-            'actual_platform': ', '.join(platform_ids)
-        })
-        write_csv_for_date(_today_str())
-    except Exception:
-        pass
-
+            'actual_platform': ', '.join(platform_ids),
+        },
+    )
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
     return {"message": f"Train {train_no} assigned to {', '.join(platform_ids)}."}
 
@@ -575,14 +622,14 @@ async def unassign_platform(body: dict, background_tasks: BackgroundTasks):
         _clear_platform(state, linked_platform_id)
         cleared_platforms.append(linked_platform_id)
 
-    # Queue persistence and logging to run after response is sent to minimize perceived latency
+    # Persist state synchronously for immediate reflection; log in background
+    state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
     background_tasks.add_task(log_action, f"UNASSIGNED: Train {train_details['trainNo']} unassigned from {', '.join(cleared_platforms)} and returned to arrival list.")
-    background_tasks.add_task(persist_state, state)
     return {"message": f"Train {train_details['trainNo']} unassigned from {', '.join(cleared_platforms)}."}
 
 
 @app.post("/api/depart-train")
-async def depart_train(body: dict):
+async def depart_train(body: dict, background_tasks: BackgroundTasks):
     platform_id = body.get('platformId')
     state = state_collection.find_one({"_id": "current_station_state"}) or {}
 
@@ -610,18 +657,17 @@ async def depart_train(body: dict):
         cleared_platforms.append(linked_platform_id)
 
     departure_time = datetime.now().strftime('%H:%M')
-    log_action(f"DEPARTED: Train {train_details['trainNo']} departed from {', '.join(cleared_platforms)} at {departure_time}.")
-    try:
-        upsert_daily_report(train_details['trainNo'], {'actual_departure': departure_time})
-        write_csv_for_date(_today_str())
-    except Exception:
-        pass
+    background_tasks.add_task(
+        log_action,
+        f"DEPARTED: Train {train_details['trainNo']} departed from {', '.join(cleared_platforms)} at {departure_time}."
+    )
+    background_tasks.add_task(persist_report_update, train_details['trainNo'], {'actual_departure': departure_time})
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
     return {"message": f"Train {train_details['trainNo']} departed from {', '.join(cleared_platforms)}."}
 
 
 @app.post("/api/log-depart-line")
-async def log_depart_line(body: dict):
+async def log_depart_line(body: dict, background_tasks: BackgroundTasks):
     platform_id = body.get('platformId')
     line = body.get('line')
     if not platform_id or not line:
@@ -635,13 +681,9 @@ async def log_depart_line(body: dict):
                 break
     except Exception:
         pass
-    log_action(f"DEPART LINE: Train {train_no or ''} departing from {platform_id} via {line}.")
+    background_tasks.add_task(log_action, f"DEPART LINE: Train {train_no or ''} departing from {platform_id} via {line}.")
     if train_no:
-        try:
-            upsert_daily_report(train_no, {'outgoing_line': line})
-            write_csv_for_date(_today_str())
-        except Exception:
-            pass
+        background_tasks.add_task(persist_report_update, train_no, {'outgoing_line': line})
     return {"message": "Departure line logged."}
 
 
