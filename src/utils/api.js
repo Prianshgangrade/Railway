@@ -1,5 +1,5 @@
 // Centralized API base handling used across the app
-const API_BASE = (import.meta.env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const API_BASE ="https://railway-production-f8eb.up.railway.app";
 export const apiUrl = (path) => `${API_BASE}${path}`;
 export const eventSourceUrl = (path) => `${API_BASE}${path}`;
 export const reportDownloadUrl = (dateStr) => {
