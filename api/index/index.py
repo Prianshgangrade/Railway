@@ -327,6 +327,17 @@ def push_departure_alert(train_number, train_name, platform_id):
 def home():
     return "Kharagpur Station Control API is running."
 
+@app.route("/api/health")
+def health():
+    """Simple health check for uptime monitors."""
+    try:
+        # Ping DB lightly
+        _ = db.list_collection_names()
+        db_ok = True
+    except Exception:
+        db_ok = False
+    return jsonify({"status": "ok", "db": db_ok})
+
 @app.route("/stream")
 @app.route("/api/stream")
 def stream():
@@ -362,6 +373,15 @@ def stream():
     }
 
     return Response(event_generator(), headers=headers)
+
+@app.route("/api/debug/push-alert")
+def debug_push_alert():
+    """DEBUG: Manually push a departure alert to test SSE wiring."""
+    try:
+        push_departure_alert("TEST-001", "Debug Train", "Platform 1")
+        return jsonify({"message": "Debug departure_alert sent"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/station-data")
 def get_station_data():
@@ -762,9 +782,10 @@ if __name__ == "__main__":
     # app.run(port=5000, debug=True)
 
 else:
-    # When imported by gunicorn on Render, eagerly load the matrix once at startup
-    try:
+   try:
         BLOCKAGE_MATRIX, INCOMING_LINES = load_blockage_matrix()
+        with app.app_context():
+            initialize_station_state()
+        print("✅ Flask + Gunicorn initialization complete")
     except Exception as _e:
-        print(f"WARNING: Failed to load blockage matrix at import time: {_e}")
-
+        print(f"⚠️ WARNING: Failed to load blockage matrix at import time: {_e}")
