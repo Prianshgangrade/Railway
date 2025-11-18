@@ -178,6 +178,25 @@ def normalize_platform_labels(labels: list[str] | None) -> list[str]:
     return [normalize_platform_label(lbl) for lbl in labels if lbl]
 
 
+def find_partner_platform_id(platform_name: str | None) -> str | None:
+    """Resolve the paired platform for long-train assignments (e.g., Platform 1 ↔ Platform 3)."""
+    if not platform_name:
+        return None
+    m = re.match(r"^(Platform)\s*(\d+)([A-Za-z]*)$", platform_name.strip())
+    if not m:
+        return None
+    base, num_str, suffix = m.group(1), m.group(2), m.group(3) or ''
+    try:
+        num = int(num_str)
+    except ValueError:
+        return None
+    partner_map = {1: 3, 2: 4, 3: 1, 4: 2}
+    partner_num = partner_map.get(num)
+    if partner_num is None:
+        return None
+    return f"{base} {partner_num}{suffix}".strip()
+
+
 def coerce_label_list(value) -> list[str]:
     if not value:
         return []
@@ -344,10 +363,18 @@ def check_waiting_queue(state: dict | None = None, freed_platforms: list | None 
             best = ranked[0]
             pf_id = best.get('platformId')
             display_pf = f"Platform {pf_id.replace('P','')}" if pf_id and pf_id.startswith('P') else f"Track {pf_id.replace('T','')}"
+            suggested_platforms = [display_pf]
+            is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
+            if is_long and display_pf.startswith('Platform'):
+                partner = find_partner_platform_id(display_pf)
+                if partner:
+                    partner_entry = next((p for p in state.get('platforms', []) if p.get('id') == partner), None)
+                    if partner_entry and not partner_entry.get('isOccupied') and not partner_entry.get('isUnderMaintenance'):
+                        suggested_platforms.append(partner)
             suggestion = {
                 'trainNo': train_no,
                 'trainName': train_data.get('TRAIN NAME', ''),
-                'suggestedPlatformIds': [display_pf],
+                'suggestedPlatformIds': suggested_platforms,
                 'score': best.get('score'),
                 'enqueued_at': candidate.get('enqueued_at')
             }
@@ -631,17 +658,27 @@ async def platform_suggestions(body: SuggestRequest, background_tasks: Backgroun
     )
 
     available_platforms = get_available_platforms(frontend_platforms)
+    frontend_platforms = frontend_platforms or []
+    is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
     ranked = calculate_platform_scores(incoming_train, available_platforms, incoming_line, BLOCKAGE_MATRIX)
 
     final = []
     for suggestion in ranked:
         pf_id = suggestion['platformId']
         display_id = f"Platform {pf_id.replace('P','')}" if pf_id.startswith('P') else f"Track {pf_id.replace('T','')}"
+        combined_ids = [display_id]
+        if is_long and display_id.startswith('Platform'):
+            partner_id = find_partner_platform_id(display_id)
+            if partner_id:
+                partner_entry = next((p for p in frontend_platforms if p.get('id') == partner_id), None)
+                if partner_entry and not partner_entry.get('isOccupied') and not partner_entry.get('isUnderMaintenance'):
+                    if partner_id not in combined_ids:
+                        combined_ids.append(partner_id)
         # Preserve historical-match metadata from scorer (if present)
         final.append({
             'platformId': display_id,
             'score': suggestion['score'],
-            'platformIds': [display_id],
+            'platformIds': combined_ids,
             'blockages': suggestion.get('blockages', {}),
             'historicalMatch': suggestion.get('historicalMatch', False),
             'historicalPlatform': suggestion.get('historicalPlatform')
@@ -804,25 +841,10 @@ async def assign_platform(body: dict, background_tasks: BackgroundTasks):
         train_to_assign['incoming_line'] = provided_incoming_line
     stoppage_seconds = time_difference_seconds(train_data.get('ARRIVAL AT KGP'), train_data.get('DEPARTURE FROM KGP'))
 
-    def find_partner(platform_name: str):
-        m = re.match(r"^(Platform)\s*(\d+)([A-Za-z]*)$", platform_name)
-        if not m:
-            return None
-        base, num_str, suffix = m.group(1), m.group(2), m.group(3) or ''
-        try:
-            num = int(num_str)
-        except ValueError:
-            return None
-        partner_map = {1: 3, 2: 4, 3: 1, 4: 2}
-        if num not in partner_map:
-            return None
-        partner_num = partner_map[num]
-        return f"{base} {partner_num}{suffix}"
-
     is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
     if is_long and len(platform_ids) == 1:
         requested = platform_ids[0]
-        partner = find_partner(requested)
+        partner = find_partner_platform_id(requested)
         if partner:
             partner_obj = next((p for p in state.get('platforms', []) if p.get('id') == partner), None)
             if partner_obj and not partner_obj.get('isOccupied') and not partner_obj.get('isUnderMaintenance'):
@@ -982,21 +1004,7 @@ async def unassign_platform(body: dict, background_tasks: BackgroundTasks):
         train_data = trains_collection.find_one({"TRAIN NO": str(train_details.get('trainNo'))}) or {}
         is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
         if is_long:
-            def find_partner(pid: str):
-                m = re.match(r"^(Platform)\s*(\d+)([A-Za-z]*)$", pid)
-                if not m:
-                    return None
-                base, num_str, suffix = m.group(1), m.group(2), m.group(3) or ''
-                try:
-                    num = int(num_str)
-                except ValueError:
-                    return None
-                partner_map = {1: 3, 2: 4, 3: 1, 4: 2}
-                if num not in partner_map:
-                    return None
-                partner_num = partner_map[num]
-                return f"{base} {partner_num}{suffix}"
-            partner_guess = find_partner(platform_id)
+            partner_guess = find_partner_platform_id(platform_id)
             if partner_guess:
                 partner_obj = next((p for p in state.get('platforms', []) if p.get('id') == partner_guess), None)
                 if partner_obj and partner_obj.get('isOccupied') and partner_obj.get('trainDetails') and partner_obj['trainDetails'].get('trainNo') == train_details.get('trainNo'):
@@ -1138,25 +1146,10 @@ async def accept_waiting_suggestion(body: dict, background_tasks: BackgroundTask
     train_data = trains_collection.find_one({"TRAIN NO": str(train_no)}) or {}
     is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
 
-    def find_partner(platform_name: str):
-        m = re.match(r"^(Platform)\s*(\d+)([A-Za-z]*)$", platform_name)
-        if not m:
-            return None
-        base, num_str, suffix = m.group(1), m.group(2), m.group(3) or ''
-        try:
-            num = int(num_str)
-        except ValueError:
-            return None
-        partner_map = {1: 3, 2: 4, 3: 1, 4: 2}
-        if num not in partner_map:
-            return None
-        partner_num = partner_map[num]
-        return f"{base} {partner_num}{suffix}"
-
     # Expand suggested platforms with partner if long and only a single head platform suggested
     expanded_platforms = list(suggested_platforms)
     if is_long and len(expanded_platforms) == 1:
-        partner = find_partner(expanded_platforms[0])
+        partner = find_partner_platform_id(expanded_platforms[0])
         if partner:
             expanded_platforms.append(partner)
 

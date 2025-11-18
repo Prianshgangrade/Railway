@@ -465,3 +465,41 @@
 2025-11-19 01:03:35 | CHECK_WAITING_QUEUE: waiting list empty
 2025-11-19 01:03:35 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 01:03.
 2025-11-19 01:03:42 | ARRIVED & ASSIGNED: Train 12837 arrived at 01:03 and assigned to Platform 4, Platform 2. (platformArrival: 01:03)
+2025-11-19 01:20:52 | DEPART LINE: Train 12837 departing from Platform 4 via TATA MD.
+2025-11-19 01:20:52 | CHECK_WAITING_QUEUE: evaluating train 13433 incoming_line='TATA MD' free_platforms=['P1', 'P2', 'P2A', 'P3', 'P3A', 'P4', 'P4A', 'P5', 'P6', 'P7', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']
+2025-11-19 01:20:52 | CHECK_WAITING_QUEUE: suggesting Platform 1 for train 13433
+2025-11-19 01:20:52 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 01:20.
+2025-11-19 01:21:28 | ARRIVED & ASSIGNED: Train 12837 arrived at 01:21 and assigned to Platform 4, Platform 2. (platformArrival: 01:21)
+2025-11-19 01:21:34 | DEPART LINE: Train 12837 departing from Platform 4 via TATA MD.
+2025-11-19 01:21:34 | CHECK_WAITING_QUEUE: evaluating train 13433 incoming_line='TATA MD' free_platforms=['P1', 'P2', 'P2A', 'P3', 'P3A', 'P4', 'P4A', 'P5', 'P6', 'P7', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']
+2025-11-19 01:21:34 | CHECK_WAITING_QUEUE: suggesting Platform 1 for train 13433
+2025-11-19 01:21:34 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 01:21.
+2025-11-19 01:21:46 | ARRIVED & ASSIGNED: Train 12837 arrived at 01:21 and assigned to Platform 4, Platform 2. (platformArrival: 01:21)
+2025-11-19 01:31:18 | DEPART LINE: Train 12837 departing from Platform 4 via TATA MD.
+2025-11-19 01:31:18 | CHECK_WAITING_QUEUE: evaluating train 13433 incoming_line='TATA MD' free_platforms=['P1', 'P2', 'P2A', 'P3', 'P3A', 'P4', 'P4A', 'P5', 'P6', 'P7', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']
+2025-11-19 01:31:18 | CHECK_WAITING_QUEUE: suggesting Platform 3 for train 13433
+2025-11-19 01:31:18 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 01:31.
+2025-11-19 01:31:23 | SUGGESTION ACCEPTED: Train 13433 assigned to Platform 3, Platform 1 via suggestion 8796850d9e87467597591ff6c1c408b1 at 01:31.
+2025-11-19 01:31:33 | ARRIVED & ASSIGNED: Train 12837 arrived at 01:31 and assigned to Platform 4, Platform 2. (platformArrival: 01:31)
+2025-11-19 01:31:43 | DEPART LINE: Train 12837 departing from Platform 4 via TATA MD.
+2025-11-19 01:31:43 | CHECK_WAITING_QUEUE: waiting list empty
+2025-11-19 01:31:43 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 01:31.
+2025-11-19 01:37:00 | ARRIVED & ASSIGNED: Train 12837 arrived at 01:36 and assigned to Platform 4, Platform 2. (platformArrival: 01:36)
+2025-11-19 01:37:08 | DEPART LINE: Train 12837 departing from Platform 4 via TATA MD.
+2025-11-19 01:37:09 | CHECK_WAITING_QUEUE: waiting list empty
+2025-11-19 01:37:09 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 01:37.
+2025-11-19 01:37:17 | DEPART LINE: Train 13433 departing from Platform 3 via HWH MD.
+2025-11-19 01:37:18 | CHECK_WAITING_QUEUE: waiting list empty
+2025-11-19 01:37:18 | DEPARTED: Train 13433 departed from Platform 3, Platform 1 at 01:37.
+2025-11-19 01:37:25 | ARRIVED & ASSIGNED: Train 12837 arrived at 01:37 and assigned to Platform 4, Platform 2. (platformArrival: 01:37)
+2025-11-19 01:37:44 | UNASSIGNED: Train 12837 unassigned from Platform 2, Platform 4 and returned to arrival list.
+2025-11-19 01:37:44 | WAITING: Train 12837 enqueued at 2025-11-18T20:07:44.670235 (actualArrival: 00:13) (incoming: HWH UP).
+2025-11-19 01:37:54 | ARRIVED & ASSIGNED: Train 13433 arrived at 01:37 and assigned to Platform 5. (platformArrival: 01:37)
+2025-11-19 01:38:02 | DEPART LINE: Train 13433 departing from Platform 5 via HWH DN.
+2025-11-19 01:38:02 | CHECK_WAITING_QUEUE: evaluating train 12837 incoming_line='HWH UP' free_platforms=['P1', 'P2', 'P2A', 'P3', 'P3A', 'P4', 'P4A', 'P5', 'P6', 'P7', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']
+2025-11-19 01:38:02 | CHECK_WAITING_QUEUE: suggesting Platform 4 for train 12837
+2025-11-19 01:38:03 | DEPARTED: Train 13433 departed from Platform 5 at 01:38.
+2025-11-19 01:38:06 | SUGGESTION ACCEPTED: Train 12837 assigned to Platform 4, Platform 2 via suggestion 50bc37d813904d2d9e01241569e6bb59 at 01:38.
+2025-11-19 01:38:13 | DEPART LINE: Train 12837 departing from Platform 4 via TATA MD.
+2025-11-19 01:38:13 | CHECK_WAITING_QUEUE: waiting list empty
+2025-11-19 01:38:13 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 01:38.

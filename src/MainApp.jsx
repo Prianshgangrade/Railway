@@ -27,6 +27,11 @@ const TRACK_GROUPS = [
   ['Track 3', 'Track 6'],
 ];
 
+const normalizeTrainNo = (value) => (value === undefined || value === null ? '' : String(value));
+const extractTrainNo = (entity) => normalizeTrainNo(entity?.trainNo ?? entity?.train_no ?? entity?.['TRAIN NO']);
+const matchTrainNumber = (entity, target) => extractTrainNo(entity) === normalizeTrainNo(target);
+const toIdArray = (value) => (Array.isArray(value) ? value : [value]).filter(Boolean);
+
 // Modals extracted into separate components to preserve behavior and UI.
 
 export default function MainApp() {
@@ -40,6 +45,9 @@ export default function MainApp() {
   const [trainForImmediateSuggestion, setTrainForImmediateSuggestion] = useState(null);
   const [autoSuggestion, setAutoSuggestion] = useState(null); // automated suggestion from backend
   const latestFetchIdRef = useRef(0);
+  const platformsRef = useRef(platforms);
+  const arrivingTrainsRef = useRef(arrivingTrains);
+  const waitingListRef = useRef(waitingList);
 
   // Show all available trains for arrival; filtering will be handled by the search bar in SuggestionModal
 
@@ -74,6 +82,10 @@ export default function MainApp() {
       toast.error(err.message);
     }
   }, []);
+
+  useEffect(() => { platformsRef.current = platforms; }, [platforms]);
+  useEffect(() => { arrivingTrainsRef.current = arrivingTrains; }, [arrivingTrains]);
+  useEffect(() => { waitingListRef.current = waitingList; }, [waitingList]);
 
   useEffect(() => { fetchStationData(); }, [fetchStationData]);
   useEffect(() => { if (activeModal === 'logs') fetchLogs(); }, [activeModal, fetchLogs]);
@@ -137,31 +149,115 @@ export default function MainApp() {
     }
   };
 
-  const handleApiCall = async (endpoint, body, successMsg) => {
+  const lookupTrainByNumber = useCallback((trainNo) => {
+    const target = normalizeTrainNo(trainNo);
+    if (!target) return null;
+    const fromArrivals = arrivingTrainsRef.current.find(train => extractTrainNo(train) === target);
+    if (fromArrivals) return fromArrivals;
+    return waitingListRef.current.find(train => extractTrainNo(train) === target) || null;
+  }, []);
+
+  const buildTrainDetails = useCallback((trainNo, overrides = {}, extras = {}) => {
+    const fallback = lookupTrainByNumber(trainNo) || {};
+    const resolvedIncoming = overrides.incomingLine || overrides.incoming_line || fallback.incoming_line || fallback.incomingLine || null;
+    const resolvedArrival = overrides.actualArrival || overrides.actual_arrival || fallback.actualArrival || fallback.actual_arrival || null;
+    const resolvedName = overrides.trainName || fallback.name || (trainNo ? `Train ${trainNo}` : 'Train');
+    const terminating = overrides.isTerminating ?? fallback.isTerminating ?? fallback.ISTERMINATING ?? false;
+    return {
+      trainNo: trainNo || overrides.trainNo || fallback.trainNo || fallback.train_no || resolvedName,
+      name: resolvedName,
+      incomingLine: resolvedIncoming,
+      incoming_line: resolvedIncoming,
+      actualArrival: resolvedArrival,
+      isTerminating: terminating,
+        ...extras,
+    };
+  }, [lookupTrainByNumber]);
+
+  const applyPlatformChanges = useCallback((targetIds, updater) => {
+    const ids = toIdArray(targetIds);
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
+    setPlatforms(prev => prev.map(platform => (idSet.has(platform.id) ? updater(platform) : platform)));
+  }, []);
+
+  const handleApiCall = useCallback(async (endpoint, body, successMsg, optimisticUpdate) => {
+    const snapshot = optimisticUpdate ? {
+      platforms: platformsRef.current,
+      arrivingTrains: arrivingTrainsRef.current,
+      waitingList: waitingListRef.current,
+    } : null;
+    if (optimisticUpdate) {
+      try {
+        optimisticUpdate();
+      } catch (optimisticErr) {
+        console.warn('Optimistic update failed:', optimisticErr);
+      }
+    }
     try {
       const response = await fetch(apiUrl(`/api/${endpoint}`), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'An unknown error occurred.');
       toast.success(data.message || successMsg);
-      await fetchStationData();
+      fetchStationData();
       return true;
     } catch (err) {
       console.error(`Error calling ${endpoint}:`, err);
+      if (snapshot) {
+        setPlatforms(snapshot.platforms || []);
+        setArrivingTrains(snapshot.arrivingTrains || []);
+        setWaitingList(snapshot.waitingList || []);
+      }
       toast.error(err.message);
       return false;
     }
-  };
+  }, [fetchStationData]);
 
   const promptForReassignment = (platformId, trainDetails) => {
     setReassignPrompt({ isOpen: true, platformId, trainDetails });
   };
 
-  const handleUnassignPlatform = useCallback((platformId) => handleApiCall('unassign-platform', { platformId }, `Unassigning train from ${platformId}...`), []);
+  const handleUnassignPlatform = useCallback((platformId) => handleApiCall(
+    'unassign-platform',
+    { platformId },
+    `Unassigning train from ${platformId}...`,
+    () => applyPlatformChanges(platformId, (platform) => ({ ...platform, isOccupied: false, trainDetails: null, actualArrival: null }))
+  ), [handleApiCall, applyPlatformChanges]);
+
   const handleAssignPlatform = useCallback((trainNo, platformIds, actualArrival, incomingLine) => {
     const body = { trainNo, platformIds, actualArrival };
     if (incomingLine) body.incomingLine = incomingLine;
-    return handleApiCall('assign-platform', body, `Assigning train ${trainNo}...`);
-  }, []);
+    const ids = toIdArray(platformIds);
+    const arrivalTime = actualArrival || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const linkedMeta = new Map();
+    if (ids.length > 1) {
+      ids.forEach((id, index) => {
+        const partner = ids.find(otherId => otherId !== id);
+        linkedMeta.set(id, { linkedPlatformId: partner || null, isPrimary: index === 0 });
+      });
+    } else if (ids.length === 1) {
+      linkedMeta.set(ids[0], { linkedPlatformId: null, isPrimary: true });
+    }
+    return handleApiCall('assign-platform', body, `Assigning train ${trainNo}...`, () => {
+      applyPlatformChanges(ids, (platform) => {
+        const meta = linkedMeta.get(platform.id) || { linkedPlatformId: null, isPrimary: true };
+        const trainDetails = buildTrainDetails(trainNo, { actualArrival: arrivalTime, incomingLine }, {
+          linkedPlatformId: meta.linkedPlatformId,
+          isPrimary: meta.isPrimary,
+        });
+        return {
+          ...platform,
+          isOccupied: true,
+          isUnderMaintenance: false,
+          trainDetails,
+          actualArrival: arrivalTime,
+        };
+      });
+      setWaitingList(prev => prev.filter(train => !matchTrainNumber(train, trainNo)));
+      setArrivingTrains(prev => prev.filter(train => !matchTrainNumber(train, trainNo)));
+    });
+  }, [handleApiCall, applyPlatformChanges, buildTrainDetails]);
+
   const handleAssignFreightToPlatform = useCallback(({ platformId, incomingLine, trainName }) => {
     const body = {
       platformIds: [platformId],
@@ -169,27 +265,120 @@ export default function MainApp() {
     };
     if (incomingLine) body.incomingLine = incomingLine;
     if (trainName) body.trainName = trainName;
-    return handleApiCall('assign-platform', body, `Assigning freight to ${platformId}...`);
-  }, []);
+    const placeholderTrainNo = trainName || `Freight-${platformId}`;
+    return handleApiCall('assign-platform', body, `Assigning freight to ${platformId}...`, () => {
+      const trainDetails = buildTrainDetails(placeholderTrainNo, { trainName: trainName || 'Freight Consist', incomingLine });
+      applyPlatformChanges(platformId, (platform) => ({
+        ...platform,
+        isOccupied: true,
+        isUnderMaintenance: false,
+        trainDetails,
+        actualArrival: null,
+      }));
+    });
+  }, [handleApiCall, applyPlatformChanges, buildTrainDetails]);
+
   const handleAssignFreightToTrack = useCallback(({ trackId, incomingLine, trainName }) => {
     const body = { trackId };
     if (incomingLine) body.incomingLine = incomingLine;
     if (trainName) body.trainName = trainName;
-    return handleApiCall('assign-track', body, `Assigning freight to ${trackId}...`);
-  }, []);
-  const handleAddToWaitingList = useCallback((trainNo, incomingLine, actualArrival) => {
+    const placeholderTrainNo = trainName || `Freight-${trackId}`;
+    return handleApiCall('assign-track', body, `Assigning freight to ${trackId}...`, () => {
+      const trainDetails = buildTrainDetails(placeholderTrainNo, { trainName: trainName || `Freight @ ${trackId}`, incomingLine });
+      applyPlatformChanges(trackId, (platform) => ({
+        ...platform,
+        isOccupied: true,
+        isUnderMaintenance: false,
+        trainDetails,
+        actualArrival: null,
+      }));
+    });
+  }, [handleApiCall, applyPlatformChanges, buildTrainDetails]);
+
+  const handleAddToWaitingList = useCallback((trainNo, incomingLine, actualArrival, metadata = null) => {
     const body = { trainNo };
     if (incomingLine) body.incomingLine = incomingLine;
     if (actualArrival) body.actualArrival = actualArrival;
     // Debug: log the body so we can confirm frontend is sending incomingLine
     try { console.debug('AddToWaitingList body ->', body); } catch (e) {}
-    return handleApiCall('add-to-waiting-list', body, `Adding ${trainNo} to waiting list...`);
-  }, []);
-  const handleRemoveFromWaitingList = useCallback((trainNo) => handleApiCall('remove-from-waiting-list', { trainNo }, `Removing ${trainNo} from waiting list...`), []);
-  const handleDepartTrain = useCallback((platformId) => handleApiCall('depart-train', { platformId }, `Departing train from ${platformId}...`), []);
-  const handleToggleMaintenance = useCallback((platformId) => handleApiCall('toggle-maintenance', { platformId }, `Updating maintenance for ${platformId}...`), []);
-  const handleAddTrain = useCallback((trainData) => handleApiCall('add-train', trainData, `Adding train ${trainData['TRAIN NO']}...`), []);
-  const handleDeleteTrain = useCallback((trainNo) => handleApiCall('delete-train', { trainNo }, `Deleting train ${trainNo}...`), []);
+    return handleApiCall('add-to-waiting-list', body, `Adding ${trainNo} to waiting list...`, () => {
+      const cachedTrain = metadata || lookupTrainByNumber(trainNo) || {};
+      const enqueuedAt = new Date().toISOString();
+      const arrivalDisplay = actualArrival || cachedTrain.actualArrival || cachedTrain.actual_arrival || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const waitingEntry = {
+        ...cachedTrain,
+        trainNo,
+        name: cachedTrain.name || `Train ${trainNo}`,
+        incomingLine: incomingLine || cachedTrain.incomingLine || cachedTrain.incoming_line,
+        incoming_line: incomingLine || cachedTrain.incoming_line,
+        actualArrival: arrivalDisplay,
+        enqueued_at: enqueuedAt,
+      };
+      setWaitingList(prev => {
+        const hasTrain = prev.some(train => matchTrainNumber(train, trainNo));
+        if (hasTrain) {
+          return prev.map(train => (matchTrainNumber(train, trainNo) ? waitingEntry : train));
+        }
+        return [...prev, waitingEntry];
+      });
+      setArrivingTrains(prev => prev.filter(train => !matchTrainNumber(train, trainNo)));
+    });
+  }, [handleApiCall, lookupTrainByNumber]);
+
+  const handleRemoveFromWaitingList = useCallback((trainNo) => handleApiCall(
+    'remove-from-waiting-list',
+    { trainNo },
+    `Removing ${trainNo} from waiting list...`,
+    () => setWaitingList(prev => prev.filter(train => !matchTrainNumber(train, trainNo)))
+  ), [handleApiCall]);
+
+  const handleDepartTrain = useCallback((platformId) => handleApiCall(
+    'depart-train',
+    { platformId },
+    `Departing train from ${platformId}...`,
+    () => applyPlatformChanges(platformId, (platform) => ({ ...platform, isOccupied: false, trainDetails: null, actualArrival: null }))
+  ), [handleApiCall, applyPlatformChanges]);
+
+  const handleToggleMaintenance = useCallback((platformId) => handleApiCall(
+    'toggle-maintenance',
+    { platformId },
+    `Updating maintenance for ${platformId}...`,
+    () => applyPlatformChanges(platformId, (platform) => {
+      const nextMaintenance = !platform.isUnderMaintenance;
+      return {
+        ...platform,
+        isUnderMaintenance: nextMaintenance,
+        isOccupied: nextMaintenance ? false : platform.isOccupied,
+        trainDetails: nextMaintenance ? null : platform.trainDetails,
+      };
+    })
+  ), [handleApiCall, applyPlatformChanges]);
+
+  const handleAddTrain = useCallback((trainData) => handleApiCall(
+    'add-train',
+    trainData,
+    `Adding train ${trainData['TRAIN NO']}...`,
+    () => {
+      const normalized = {
+        trainNo: trainData['TRAIN NO'],
+        name: trainData['TRAIN NAME'],
+        scheduled_arrival: trainData['ARRIVAL AT KGP'] || trainData['ARRIVAL'] || '',
+        scheduled_departure: trainData['DEPARTURE FROM KGP'] || trainData['DEPARTURE'] || '',
+        ISTERMINATING: trainData['ISTERMINATING'],
+      };
+      setArrivingTrains(prev => {
+        const filtered = normalized.trainNo ? prev.filter(train => !matchTrainNumber(train, normalized.trainNo)) : prev;
+        return [normalized, ...filtered];
+      });
+    }
+  ), [handleApiCall]);
+
+  const handleDeleteTrain = useCallback((trainNo) => handleApiCall(
+    'delete-train',
+    { trainNo },
+    `Deleting train ${trainNo}...`,
+    () => setArrivingTrains(prev => prev.filter(train => !matchTrainNumber(train, trainNo)))
+  ), [handleApiCall]);
 
   const platformMap = new Map(platforms.map(p => [p.id, p]));
 
@@ -263,7 +452,7 @@ export default function MainApp() {
           const success = await handleUnassignPlatform(platformId);
           if (success && trainDetails?.trainNo) {
             const incomingLine = trainDetails?.incomingLine; // captured in Platform trainDetails if present
-            await handleAddToWaitingList(trainDetails.trainNo, incomingLine);
+            await handleAddToWaitingList(trainDetails.trainNo, incomingLine, undefined, trainDetails);
           }
           setReassignPrompt({ isOpen: false, platformId: null, trainDetails: null });
         }}
