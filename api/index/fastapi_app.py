@@ -59,6 +59,57 @@ TRACK_LABELS = {
 }
 ALLOWED_TRACK_IDS = set(TRACK_LABELS.keys())
 
+# --- Train metadata cache (cuts round trips to Mongo for every suggestion/assignment) ---
+TRAIN_CACHE: dict[str, dict] = {}
+train_cache_lock = threading.Lock()
+
+
+def refresh_train_cache():
+    """Warm the in-memory cache with all train docs. Called at startup and after bulk updates."""
+    try:
+        docs = list(trains_collection.find({}, {'_id': 0}))
+    except Exception as exc:
+        log_action(f"TRAIN_CACHE: initial load failed {exc}")
+        docs = []
+    with train_cache_lock:
+        TRAIN_CACHE.clear()
+        for doc in docs:
+            train_no = str(doc.get('TRAIN NO') or doc.get('trainNo') or '')
+            if train_no:
+                TRAIN_CACHE[train_no] = doc
+
+
+def cache_train_doc(train_doc: dict):
+    if not train_doc:
+        return
+    train_no = str(train_doc.get('TRAIN NO') or train_doc.get('trainNo') or '')
+    if not train_no:
+        return
+    with train_cache_lock:
+        TRAIN_CACHE[train_no] = train_doc
+
+
+def remove_from_train_cache(train_no: str | None):
+    if not train_no:
+        return
+    with train_cache_lock:
+        TRAIN_CACHE.pop(str(train_no), None)
+
+
+def get_train_record(train_no: str | None, force_db: bool = False) -> dict:
+    if not train_no:
+        return {}
+    train_no = str(train_no)
+    if not force_db:
+        with train_cache_lock:
+            cached = TRAIN_CACHE.get(train_no)
+        if cached:
+            return cached
+    doc = trains_collection.find_one({"TRAIN NO": train_no}) or {}
+    if doc:
+        cache_train_doc(doc)
+    return doc
+
 # --- SSE infra ---
 sse_broadcaster: queue.Queue[str] = queue.Queue()
 active_timers: dict[str, threading.Timer] = {}
@@ -226,6 +277,9 @@ def log_action(action_string: str):
         pass
 
 
+refresh_train_cache()
+
+
 def persist_state(state_doc: dict):
     """Persist the station state to Mongo.
     Separated into a function so we can schedule it as a background task to avoid
@@ -339,7 +393,7 @@ def check_waiting_queue(state: dict | None = None, freed_platforms: list | None 
 
         for candidate in wl[:top_k]:
             train_no = str(candidate.get('trainNo'))
-            train_data = trains_collection.find_one({"TRAIN NO": train_no}) or {}
+            train_data = get_train_record(train_no)
             incoming_line = candidate.get('incoming_line') or ''
             log_action(f"CHECK_WAITING_QUEUE: evaluating train {train_no} incoming_line='{incoming_line}' free_platforms={sorted(list(available_platforms))}")
             if not incoming_line:
@@ -639,7 +693,7 @@ async def platform_suggestions(body: SuggestRequest, background_tasks: Backgroun
     if not all([train_no, incoming_line, frontend_platforms]):
         raise HTTPException(status_code=400, detail="Missing required parameters: trainNo, incomingLine, and platforms are all required.")
 
-    train_data = trains_collection.find_one({"TRAIN NO": str(train_no)})
+    train_data = get_train_record(str(train_no))
     if not train_data:
         raise HTTPException(status_code=404, detail=f"Train {train_no} not found in master schedule.")
 
@@ -714,6 +768,7 @@ async def add_train(body: dict, background_tasks: BackgroundTasks):
     if trains_collection.find_one({"TRAIN NO": str(body.get('TRAIN NO'))}):
         raise HTTPException(status_code=409, detail=f"Train number {body.get('TRAIN NO')} already exists.")
     trains_collection.insert_one(body)
+    cache_train_doc(body)
     state = state_collection.find_one({"_id": "current_station_state"}) or {}
     arr = state.setdefault('arrivingTrains', [])
     arr.append({
@@ -734,6 +789,7 @@ async def delete_train(body: dict, background_tasks: BackgroundTasks):
     result = trains_collection.delete_one({"TRAIN NO": train_no_to_delete})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail=f"Train {train_no_to_delete} not found in master list.")
+    remove_from_train_cache(train_no_to_delete)
     state = state_collection.find_one({"_id": "current_station_state"}) or {}
     state['arrivingTrains'] = [t for t in state.get('arrivingTrains', []) if str(t['trainNo']) != train_no_to_delete]
     state['waitingList'] = [t for t in state.get('waitingList', []) if str(t['trainNo']) != train_no_to_delete]
@@ -828,7 +884,7 @@ async def assign_platform(body: dict, background_tasks: BackgroundTasks):
         else:
             raise HTTPException(status_code=404, detail="Train not found in arriving or waiting lists.")
 
-    train_data = trains_collection.find_one({"TRAIN NO": str(train_no)}) or {}
+    train_data = get_train_record(str(train_no))
     if not train_data and generated_freight:
         train_data = {
             'TRAIN NAME': train_to_assign.get('name'),
@@ -1001,7 +1057,7 @@ async def unassign_platform(body: dict, background_tasks: BackgroundTasks):
         cleared_platforms.append(linked_platform_id)
     else:
         # Fallback partner clear for long trains if link missing
-        train_data = trains_collection.find_one({"TRAIN NO": str(train_details.get('trainNo'))}) or {}
+        train_data = get_train_record(str(train_details.get('trainNo')))
         is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
         if is_long:
             partner_guess = find_partner_platform_id(platform_id)
@@ -1049,7 +1105,7 @@ async def depart_train(body: dict, background_tasks: BackgroundTasks):
     else:
         # Fallback: for long trains ensure partner is cleared even if link missing
         # Detect long train from master data
-        train_data = trains_collection.find_one({"TRAIN NO": str(train_details.get('trainNo'))}) or {}
+        train_data = get_train_record(str(train_details.get('trainNo')))
         is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
         if is_long:
             def find_partner(pid: str):
@@ -1143,7 +1199,7 @@ async def accept_waiting_suggestion(body: dict, background_tasks: BackgroundTask
     # Re-fetch state and verify platform(s) are free
     state = state_collection.find_one({"_id": "current_station_state"}) or {}
     # Determine if train requires partner platform (long train)
-    train_data = trains_collection.find_one({"TRAIN NO": str(train_no)}) or {}
+    train_data = get_train_record(str(train_no))
     is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
 
     # Expand suggested platforms with partner if long and only a single head platform suggested

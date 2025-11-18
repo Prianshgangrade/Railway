@@ -503,3 +503,26 @@
 2025-11-19 01:38:13 | DEPART LINE: Train 12837 departing from Platform 4 via TATA MD.
 2025-11-19 01:38:13 | CHECK_WAITING_QUEUE: waiting list empty
 2025-11-19 01:38:13 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 01:38.
+2025-11-19 01:44:47 | ARRIVED & ASSIGNED: Train 12837 arrived at 01:44 and assigned to Platform 4, Platform 2. (platformArrival: 01:44)
+2025-11-19 01:44:53 | DEPART LINE: Train 12837 departing from Platform 4 via TATA UP.
+2025-11-19 01:44:53 | CHECK_WAITING_QUEUE: evaluating train 13433 incoming_line='TATA MD' free_platforms=['P1', 'P2', 'P2A', 'P3', 'P3A', 'P4', 'P4A', 'P5', 'P6', 'P7', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']
+2025-11-19 01:44:53 | CHECK_WAITING_QUEUE: suggesting Platform 3 for train 13433
+2025-11-19 01:44:53 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 01:44.
+2025-11-19 02:36:36 | ARRIVED & ASSIGNED: Train 13433 arrived at 02:36 and assigned to Platform 1, Platform 3. (platformArrival: 02:36)
+2025-11-19 02:36:40 | UNASSIGNED: Train 12837 unassigned from Platform 2, Platform 4 and returned to arrival list.
+2025-11-19 02:36:40 | WAITING: Train 12837 enqueued at 2025-11-18T21:06:40.855803 (actualArrival: 00:13) (incoming: HWH UP).
+2025-11-19 02:36:48 | DEPART LINE: Train 13433 departing from Platform 1 via HWH DN.
+2025-11-19 02:36:49 | CHECK_WAITING_QUEUE: evaluating train 12837 incoming_line='HWH UP' free_platforms=['P1', 'P2', 'P2A', 'P3', 'P3A', 'P4', 'P4A', 'P5', 'P6', 'P7', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']
+2025-11-19 02:36:49 | CHECK_WAITING_QUEUE: suggesting Platform 4 for train 12837
+2025-11-19 02:36:49 | DEPARTED: Train 13433 departed from Platform 1, Platform 3 at 02:36.
+2025-11-19 02:36:50 | SUGGESTION ACCEPTED: Train 12837 assigned to Platform 4, Platform 2 via suggestion ee60065e654c42f795d9d7cd8709c540 at 02:36.
+2025-11-19 02:46:47 | UNASSIGNED: Train 12837 unassigned from Platform 2, Platform 4 and returned to arrival list.
+2025-11-19 02:46:48 | WAITING: Train 12837 enqueued at 2025-11-18T21:16:48.427821 (actualArrival: 00:13) (incoming: HWH UP).
+2025-11-19 02:46:56 | ARRIVED & ASSIGNED: Train 13433 arrived at 02:46 and assigned to Platform 4, Platform 2. (platformArrival: 02:46)
+2025-11-19 02:47:01 | DEPART LINE: Train 13433 departing from Platform 4 via HWH DN.
+2025-11-19 02:47:01 | CHECK_WAITING_QUEUE: evaluating train 12837 incoming_line='HWH UP' free_platforms=['P1', 'P2', 'P2A', 'P3', 'P3A', 'P4', 'P4A', 'P5', 'P6', 'P7', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']
+2025-11-19 02:47:01 | CHECK_WAITING_QUEUE: suggesting Platform 4 for train 12837
+2025-11-19 02:47:02 | DEPARTED: Train 13433 departed from Platform 4, Platform 2 at 02:47.
+2025-11-19 02:47:03 | SUGGESTION ACCEPTED: Train 12837 assigned to Platform 4, Platform 2 via suggestion 3d2907f2afaf42e3bf3b417504734c2a at 02:47.
+2025-11-19 02:47:09 | UNASSIGNED: Train 12837 unassigned from Platform 2, Platform 4 and returned to arrival list.
+2025-11-19 02:47:09 | WAITING: Train 12837 enqueued at 2025-11-18T21:17:09.654214 (actualArrival: 00:13) (incoming: HWH UP).
