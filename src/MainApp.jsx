@@ -13,6 +13,20 @@ import ReassignPromptModal from './components/modals/ReassignPromptModal';
 import { apiUrl, eventSourceUrl } from './utils/api';
 import { toast } from 'react-toastify';
 
+const TRACK_LABELS = {
+  'Track 1': 'Cuttuck 1',
+  'Track 2': 'Cuttuck 2',
+  'Track 3': 'Cuttuck 3',
+  'Track 4': 'Midnapore 1',
+  'Track 5': 'Midnapore 2',
+  'Track 6': 'Midnapore 3',
+};
+const TRACK_GROUPS = [
+  ['Track 1', 'Track 4'],
+  ['Track 2', 'Track 5'],
+  ['Track 3', 'Track 6'],
+];
+
 // Modals extracted into separate components to preserve behavior and UI.
 
 export default function MainApp() {
@@ -24,6 +38,7 @@ export default function MainApp() {
   const [logs, setLogs] = useState([]);
   const [reassignPrompt, setReassignPrompt] = useState({ isOpen: false, platformId: null, trainDetails: null });
   const [trainForImmediateSuggestion, setTrainForImmediateSuggestion] = useState(null);
+  const [autoSuggestion, setAutoSuggestion] = useState(null); // automated suggestion from backend
 
   // Show all available trains for arrival; filtering will be handled by the search bar in SuggestionModal
 
@@ -59,43 +74,205 @@ export default function MainApp() {
 
   useEffect(() => {
     const sseUrl = eventSourceUrl('/api/stream');
-    const eventSource = new EventSource(sseUrl);
+    const es = new EventSource(sseUrl);
     console.log('Connecting to SSE stream at:', sseUrl);
-    eventSource.addEventListener('departure_alert', (event) => {
-      const data = JSON.parse(event.data);
-      toast.error(`DEPARTURE ALERT: Train ${data.train_number} (${data.train_name}) should depart from ${data.platform_id}`, { autoClose: false, position: 'top-right', toastId: `dep-${data.train_number}` });
-    });
-    eventSource.onerror = (err) => console.error('SSE Connection Error:', err);
-    return () => eventSource.close();
-  }, []);
 
-  const handleApiCall = async (endpoint, body, successMsg) => {
+    es.addEventListener('departure_alert', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        toast.error(`DEPARTURE ALERT: Train ${data.train_number} (${data.train_name}) should depart from ${data.platform_id}`, { autoClose: false, position: 'top-right', toastId: `dep-${data.train_number}` });
+      } catch (e) { console.warn('Bad departure_alert payload', e); }
+    });
+
+    es.addEventListener('waiting_suggestion', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setAutoSuggestion(data);
+        toast.info(`Suggestion: Train ${data.trainNo} → ${data.suggestedPlatformIds.join(', ')}`);
+      } catch (e) { console.warn('Bad waiting_suggestion payload', e); }
+    });
+
+    es.addEventListener('waiting_suggestion_expired', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (autoSuggestion && data.suggestion_id === autoSuggestion.suggestion_id) {
+          setAutoSuggestion(null);
+          toast.warning('Suggestion expired');
+        }
+      } catch (e) { console.warn('Bad waiting_suggestion_expired payload', e); }
+    });
+
+    es.addEventListener('waiting_suggestion_accepted', async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        toast.success(`Suggestion accepted: Train ${data.trainNo} assigned to ${data.platforms.join(', ')}`);
+        setAutoSuggestion(null);
+        await fetchStationData();
+      } catch (e) { console.warn('Bad waiting_suggestion_accepted payload', e); }
+    });
+
+    es.onerror = (err) => console.error('SSE Connection Error:', err);
+    return () => es.close();
+  }, [fetchStationData, autoSuggestion]);
+
+  const handleAcceptAutoSuggestion = async () => {
+    if (!autoSuggestion) return;
+    try {
+      const response = await fetch(apiUrl('/api/accept-waiting-suggestion'), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ suggestion_id: autoSuggestion.suggestion_id })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || data.error || 'Failed to accept suggestion');
+      toast.success(data.message || 'Suggestion accepted');
+      setAutoSuggestion(null);
+      // Refresh station data asynchronously so UI is not blocked by network latency
+      fetchStationData().catch(() => {});
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleApiCall = useCallback(async (endpoint, body, successMsg, optimisticUpdate) => {
+    if (typeof optimisticUpdate === 'function') {
+      try {
+        optimisticUpdate();
+      } catch (optErr) {
+        console.warn('Optimistic update failed', optErr);
+      }
+    }
     try {
       const response = await fetch(apiUrl(`/api/${endpoint}`), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'An unknown error occurred.');
       toast.success(data.message || successMsg);
-      await fetchStationData();
+      fetchStationData().catch(() => {});
       return true;
     } catch (err) {
       console.error(`Error calling ${endpoint}:`, err);
       toast.error(err.message);
+      fetchStationData().catch(() => {});
       return false;
     }
-  };
+  }, [fetchStationData]);
 
   const promptForReassignment = (platformId, trainDetails) => {
     setReassignPrompt({ isOpen: true, platformId, trainDetails });
   };
 
-  const handleUnassignPlatform = useCallback((platformId) => handleApiCall('unassign-platform', { platformId }, `Unassigning train from ${platformId}...`), []);
-  const handleAssignPlatform = useCallback((trainNo, platformIds, actualArrival) => handleApiCall('assign-platform', { trainNo, platformIds, actualArrival }, `Assigning train ${trainNo}...`), []);
-  const handleAddToWaitingList = useCallback((trainNo) => handleApiCall('add-to-waiting-list', { trainNo }, `Adding ${trainNo} to waiting list...`), []);
-  const handleRemoveFromWaitingList = useCallback((trainNo) => handleApiCall('remove-from-waiting-list', { trainNo }, `Removing ${trainNo} from waiting list...`), []);
-  const handleDepartTrain = useCallback((platformId) => handleApiCall('depart-train', { platformId }, `Departing train from ${platformId}...`), []);
-  const handleToggleMaintenance = useCallback((platformId) => handleApiCall('toggle-maintenance', { platformId }, `Updating maintenance for ${platformId}...`), []);
-  const handleAddTrain = useCallback((trainData) => handleApiCall('add-train', trainData, `Adding train ${trainData['TRAIN NO']}...`), []);
-  const handleDeleteTrain = useCallback((trainNo) => handleApiCall('delete-train', { trainNo }, `Deleting train ${trainNo}...`), []);
+  const getTrainInfo = useCallback((trainNo) => {
+    const fromWaiting = waitingList.find(t => String(t.trainNo) === String(trainNo));
+    if (fromWaiting) return fromWaiting;
+    return arrivingTrains.find(t => String(t.trainNo) === String(trainNo));
+  }, [waitingList, arrivingTrains]);
+
+  const nowHHMM = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+  const handleUnassignPlatform = useCallback((platformId) => handleApiCall('unassign-platform', { platformId }, `Unassigning train from ${platformId}...`), [handleApiCall]);
+
+  const handleAssignPlatform = useCallback((trainNo, platformIds, actualArrival, incomingLine) => {
+    const arrivalStamp = actualArrival || nowHHMM();
+    const normalizedIds = Array.isArray(platformIds) ? platformIds : [platformIds];
+    const body = { trainNo, platformIds: normalizedIds, actualArrival: arrivalStamp };
+    if (incomingLine) body.incomingLine = incomingLine;
+    const optimisticUpdate = () => {
+      const meta = getTrainInfo(trainNo) || {};
+      const displayName = meta.name || `Train ${trainNo}`;
+      const derivedLine = incomingLine || meta.incoming_line || meta.incomingLine || '';
+      setPlatforms(prev => prev.map(p => (
+        normalizedIds.includes(p.id)
+          ? {
+              ...p,
+              isOccupied: true,
+              isUnderMaintenance: false,
+              trainDetails: {
+                ...(p.trainDetails || {}),
+                trainNo: String(trainNo),
+                name: displayName,
+                incomingLine: derivedLine || (p.trainDetails && p.trainDetails.incomingLine) || '',
+              },
+              actualArrival: arrivalStamp,
+              actualPlatformArrival: arrivalStamp,
+            }
+          : p
+      )));
+      setWaitingList(prev => prev.filter(t => String(t.trainNo) !== String(trainNo)));
+    };
+    return handleApiCall('assign-platform', body, `Assigning train ${trainNo}...`, optimisticUpdate);
+  }, [getTrainInfo, handleApiCall]);
+  const handleAssignFreightToPlatform = useCallback(({ platformId, incomingLine, trainName }) => {
+    const arrivalStamp = nowHHMM();
+    const body = {
+      platformIds: [platformId],
+      forceCreateFreight: true,
+      actualArrival: arrivalStamp,
+    };
+    if (incomingLine) body.incomingLine = incomingLine;
+    if (trainName) body.trainName = trainName;
+    const optimisticUpdate = () => {
+      setPlatforms(prev => prev.map(p => (
+        p.id === platformId
+          ? {
+              ...p,
+              isOccupied: true,
+              isUnderMaintenance: false,
+              trainDetails: {
+                ...(p.trainDetails || {}),
+                trainNo: trainName || 'Freight',
+                name: trainName || 'Freight Consist',
+                incomingLine: incomingLine || p.trainDetails?.incomingLine || '',
+              },
+              actualArrival: arrivalStamp,
+              actualPlatformArrival: arrivalStamp,
+            }
+          : p
+      )));
+    };
+    return handleApiCall('assign-platform', body, `Assigning freight to ${platformId}...`, optimisticUpdate);
+  }, [handleApiCall]);
+  const handleAssignFreightToTrack = useCallback(({ trackId, incomingLine, trainName }) => {
+    const arrivalStamp = nowHHMM();
+    const body = { trackId, actualArrival: arrivalStamp };
+    if (incomingLine) body.incomingLine = incomingLine;
+    if (trainName) body.trainName = trainName;
+    const optimisticUpdate = () => {
+      setPlatforms(prev => prev.map(p => (
+        p.id === trackId
+          ? {
+              ...p,
+              isOccupied: true,
+              trainDetails: {
+                ...(p.trainDetails || {}),
+                trainNo: trainName || 'Freight',
+                name: trainName || 'Freight Consist',
+                incomingLine: incomingLine || p.trainDetails?.incomingLine || '',
+                isFreightTrack: true,
+              },
+              actualArrival: arrivalStamp,
+              actualPlatformArrival: arrivalStamp,
+            }
+          : p
+      )));
+    };
+    return handleApiCall('assign-track', body, `Assigning freight to ${trackId}...`, optimisticUpdate);
+  }, [handleApiCall]);
+  const handleAddToWaitingList = useCallback((trainNo, incomingLine, actualArrival) => {
+    const body = { trainNo };
+    if (incomingLine) body.incomingLine = incomingLine;
+    if (actualArrival) body.actualArrival = actualArrival;
+    // Debug: log the body so we can confirm frontend is sending incomingLine
+    try { console.debug('AddToWaitingList body ->', body); } catch (e) {}
+    return handleApiCall('add-to-waiting-list', body, `Adding ${trainNo} to waiting list...`);
+  }, [handleApiCall]);
+  const handleRemoveFromWaitingList = useCallback((trainNo) => handleApiCall('remove-from-waiting-list', { trainNo }, `Removing ${trainNo} from waiting list...`), [handleApiCall]);
+  const handleDepartTrain = useCallback((platformId) => handleApiCall('depart-train', { platformId }, `Departing train from ${platformId}...`), [handleApiCall]);
+  const handleToggleMaintenance = useCallback((platformId) => {
+    const optimisticUpdate = () => {
+      setPlatforms(prev => prev.map(p => (p.id === platformId ? { ...p, isUnderMaintenance: !p.isUnderMaintenance } : p)));
+    };
+    return handleApiCall('toggle-maintenance', { platformId }, `Updating maintenance for ${platformId}...`, optimisticUpdate);
+  }, [handleApiCall]);
+  const handleAddTrain = useCallback((trainData) => handleApiCall('add-train', trainData, `Adding train ${trainData['TRAIN NO']}...`), [handleApiCall]);
+  const handleDeleteTrain = useCallback((trainNo) => handleApiCall('delete-train', { trainNo }, `Deleting train ${trainNo}...`), [handleApiCall]);
 
   const platformMap = new Map(platforms.map(p => [p.id, p]));
 
@@ -115,11 +292,6 @@ export default function MainApp() {
           </div>
 
           <WaitingList waitingList={waitingList} onFindPlatform={(train) => { setTrainForImmediateSuggestion(train); setActiveModal('suggestions'); }} onRemove={handleRemoveFromWaitingList} />
-
-          <Track number="1" trackData={platformMap.get('Track 1')} onUnassignPlatform={promptForReassignment} />
-          <Track number="2" trackData={platformMap.get('Track 2')} onUnassignPlatform={promptForReassignment} />
-          <Track number="3" trackData={platformMap.get('Track 3')} onUnassignPlatform={promptForReassignment} />
-          <Track number="4" trackData={platformMap.get('Track 4')} onUnassignPlatform={promptForReassignment} />
 
           <div className="grid grid-cols-2 gap-3">
             <Platform name="Platform 1" platformData={platformMap.get('Platform 1')} onUnassignPlatform={promptForReassignment} />
@@ -142,15 +314,12 @@ export default function MainApp() {
           <Platform name="Platform 6" platformData={platformMap.get('Platform 6')} onUnassignPlatform={promptForReassignment} />
           <Platform name="Platform 7" platformData={platformMap.get('Platform 7')} onUnassignPlatform={promptForReassignment} />
           <Platform name="Platform 8" platformData={platformMap.get('Platform 8')} onUnassignPlatform={promptForReassignment} />
-
-          <Track number="5" trackData={platformMap.get('Track 5')} onUnassignPlatform={promptForReassignment} />
-          <Track number="6" trackData={platformMap.get('Track 6')} onUnassignPlatform={promptForReassignment} />
-          <Track number="7" trackData={platformMap.get('Track 7')} onUnassignPlatform={promptForReassignment} />
-          <Track number="8" trackData={platformMap.get('Track 8')} onUnassignPlatform={promptForReassignment} />
-          <Track number="9" trackData={platformMap.get('Track 9')} onUnassignPlatform={promptForReassignment} />
-          <Track number="10" trackData={platformMap.get('Track 10')} onUnassignPlatform={promptForReassignment} />
-          <Track number="11" trackData={platformMap.get('Track 11')} onUnassignPlatform={promptForReassignment} />
-          <Track number="12" trackData={platformMap.get('Track 12')} onUnassignPlatform={promptForReassignment} />
+          {TRACK_GROUPS.map(([leftId, rightId]) => (
+            <div className="grid grid-cols-2 gap-3" key={`${leftId}-${rightId}`}>
+              <Track label={TRACK_LABELS[leftId] || leftId} trackData={platformMap.get(leftId)} onUnassignPlatform={promptForReassignment} />
+              <Track label={TRACK_LABELS[rightId] || rightId} trackData={platformMap.get(rightId)} onUnassignPlatform={promptForReassignment} />
+            </div>
+          ))}
         </div>
       </div>
       {/* --- Modals --- */}
@@ -162,6 +331,8 @@ export default function MainApp() {
         onAssignPlatform={handleAssignPlatform}
         trainToReassign={trainForImmediateSuggestion}
         onAddToWaitingList={handleAddToWaitingList}
+        onAssignFreightToPlatform={handleAssignFreightToPlatform}
+        onAssignFreightToTrack={handleAssignFreightToTrack}
       />
       <DepartingModal isOpen={activeModal === 'departing'} onClose={() => setActiveModal(null)} platforms={platforms} onDepartTrain={handleDepartTrain} />
       <MaintenanceModal isOpen={activeModal === 'maintenance'} onClose={() => setActiveModal(null)} platforms={platforms} onToggleMaintenance={handleToggleMaintenance} />
@@ -174,12 +345,29 @@ export default function MainApp() {
           const { platformId, trainDetails } = reassignPrompt;
           const success = await handleUnassignPlatform(platformId);
           if (success && trainDetails?.trainNo) {
-            await handleAddToWaitingList(trainDetails.trainNo);
+            const incomingLine = trainDetails?.incomingLine; // captured in Platform trainDetails if present
+            await handleAddToWaitingList(trainDetails.trainNo, incomingLine);
           }
           setReassignPrompt({ isOpen: false, platformId: null, trainDetails: null });
         }}
         onConfirmReassign={async () => { const { platformId, trainDetails } = reassignPrompt; const success = await handleUnassignPlatform(platformId); if (success) { setTrainForImmediateSuggestion(trainDetails); setActiveModal('suggestions'); } setReassignPrompt({ isOpen: false, platformId: null, trainDetails: null }); }}
       />
+      {/* Automated suggestion lightweight modal */}
+      {autoSuggestion && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md space-y-4">
+            <h2 className="text-lg font-semibold text-gray-800">Platform Suggestion</h2>
+            <p className="text-sm text-gray-700">
+              Train <span className="font-semibold">{autoSuggestion.trainNo}</span> – {autoSuggestion.trainName}<br />
+              Suggested Platform: <span className="font-semibold">{autoSuggestion.suggestedPlatformIds.join(', ')}</span>
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={() => setAutoSuggestion(null)} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100">Ignore</button>
+              <button onClick={handleAcceptAutoSuggestion} className="px-4 py-2 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700">Assign</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

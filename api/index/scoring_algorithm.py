@@ -12,6 +12,24 @@ class ScoringTrain:
         self.direction = direction
         self.historical_platform = historical_platform
         self.zone = zone
+
+
+def normalize_historical_platform(raw):
+    """Normalize various historical platform formats to canonical 'P<n>' form.
+    Accepts values like '1', 'P1', 'Platform 1', 'P1,P3' and returns 'P1' or None.
+    """
+    if not raw:
+        return None
+    s = str(raw).strip().upper()
+    # If multiple values present, take the first
+    s = s.split(',')[0].strip()
+    # Remove common prefixes like 'PLATFORM' or a leading 'P'
+    s = re.sub(r'^PLATFORM\s*', '', s)
+    s = re.sub(r'^P\s*', '', s)
+    s = s.strip()
+    if not s:
+        return None
+    return f"P{s}"
         
 NON_PLATFORM_TRACKS = {'T1', 'T2', 'T3', 'T4', 'T5', 'T6'}
 UP_TERMINATING = {'P1A', 'P2A'}
@@ -75,14 +93,15 @@ def calculate_platform_scores(incoming_train, available_platforms, incoming_line
             route_scores.append(score)
 
         if route_scores:
-            platform_scores[platform_id] = min(route_scores)
+            platform_scores[platform_id] = np.mean(route_scores)
 
     ranked_platforms = list(platform_scores.items())
 
     def sort_key(item):
         platform_id, score = item
 
-        priority_historical = 0 if f"P{incoming_train.historical_platform}" == platform_id else 1
+        hist_id = normalize_historical_platform(incoming_train.historical_platform)
+        priority_historical = 0 if (hist_id and hist_id == platform_id) else 1
 
         priority_special = 1
         if incoming_train.is_terminating:
@@ -114,10 +133,18 @@ def calculate_platform_scores(incoming_train, available_platforms, incoming_line
                 part = ', '.join(best_route.get('partial', []))
                 best_route_info = f": [{full or part or 'None'}]"
 
+        # Indicate whether this platform matched the train's historical platform
+        historical_platform = None
+        historical_match = False
+        historical_platform = normalize_historical_platform(incoming_train.historical_platform)
+        historical_match = True if (historical_platform and historical_platform == platform_id) else False
+
         final_suggestions.append({
             "platformId": platform_id,
             "score": round(score, 2),
-            "blockages": best_route_info
+            "blockages": best_route_info,
+            "historicalMatch": historical_match,
+            "historicalPlatform": historical_platform
         })
         
     return final_suggestions

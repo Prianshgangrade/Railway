@@ -1,0 +1,5 @@
+date,trainNo,trainName,scheduled_arrival,scheduled_departure,actual_arrival,actual_departure,actual_platform_arrival,suggestions,actual_platform,incoming_line,outgoing_line
+2025-11-15,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,23:38,,23:38,"1, 3, 5, 6, 7","1, 3",HWH UP,
+2025-11-15,13433,SMVT Bengaluru - Malda Town Amrit Bharat Express (PT),00:15,00:20,,,,"3, 1, 5",,TATA MD,
+2025-11-15,F1,Freight,,,22:33,22:33,22:33,,4,HWH MD,TATA MD
+2025-11-15,F2,Freight,,,22:59,22:59,22:59,,4,HWH MD,TATA MD

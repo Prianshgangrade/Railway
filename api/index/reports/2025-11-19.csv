@@ -1,0 +1,2 @@
+date,trainNo,trainName,scheduled_arrival,scheduled_departure,actual_arrival,actual_departure,actual_platform_arrival,suggestions,actual_platform,incoming_line,outgoing_line
+2025-11-19,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,00:21,00:20,00:21,"4, 3, 1, 5, 2, 6, 7","3, 1",HWH UP,TATA MD

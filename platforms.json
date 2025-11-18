@@ -19,8 +19,5 @@
   { "platform_id": "6", "size": "long", "direction": "DOWN", "is_freight": true, "is_terminating": false },
   { "platform_id": "7", "size": "long", "direction": "DOWN", "is_freight": true, "is_terminating": false },
   { "platform_id": "8", "size": "long", "direction": "DOWN", "is_freight": true, "is_terminating": false },
-  { "platform_id": "9", "size": "long", "direction": "DOWN", "is_freight": true, "is_terminating": false },
-  { "platform_id": "10", "size": "long", "direction": "DOWN", "is_freight": true, "is_terminating": false },
-  { "platform_id": "11", "size": "long", "direction": "DOWN", "is_freight": true, "is_terminating": false },
-  { "platform_id": "12", "size": "long", "direction": "DOWN", "is_freight": true, "is_terminating": false }
+  { "platform_id": "9", "size": "long", "direction": "DOWN", "is_freight": true, "is_terminating": false }
 ]

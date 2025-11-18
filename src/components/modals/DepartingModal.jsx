@@ -7,7 +7,16 @@ const DEFAULT_LINES = [
 ];
 
 export default function DepartingModal({ isOpen, onClose, platforms, onDepartTrain }) {
-  const occupiedPlatforms = platforms.filter(p => p.isOccupied && !p.isUnderMaintenance);
+  // Show only primary occupied platforms (where user assigned) or single-platform trains
+  const occupiedPlatforms = platforms.filter(p => {
+    if (!p.isOccupied || p.isUnderMaintenance) return false;
+    const td = p.trainDetails || {};
+    // If trainDetails has isPrimary flag, only show that platform; if no linked partner recorded,
+    // show it (single-platform train)
+    if (td.isPrimary) return true;
+    if (!td.linkedPlatformId) return true;
+    return false;
+  });
   const [selectedLineByPlatform, setSelectedLineByPlatform] = useState({});
   const [lineOptions, setLineOptions] = useState(DEFAULT_LINES);
 

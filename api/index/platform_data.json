@@ -107,42 +107,6 @@
       "direction": "DOWN",
       "is_terminating_only": false,
       "is_platform": false
-    },
-    {
-      "id": "T7",
-      "direction": "UP",
-      "is_terminating_only": false,
-      "is_platform": false
-    },
-    {
-      "id": "T8",
-      "direction": "UP",
-      "is_terminating_only": false,
-      "is_platform": false
-    },
-    {
-      "id": "T9",
-      "direction": "UP",
-      "is_terminating_only": false,
-      "is_platform": false
-    },
-    {
-      "id": "T10",
-      "direction": "UP",
-      "is_terminating_only": false,
-      "is_platform": false
-    },
-    {
-      "id": "T11",
-      "direction": "UP",
-      "is_terminating_only": false,
-      "is_platform": false
-    },
-    {
-      "id": "T12",
-      "direction": "UP",
-      "is_terminating_only": false,
-      "is_platform": false
     }
   ]
 }

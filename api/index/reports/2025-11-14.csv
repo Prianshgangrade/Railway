@@ -1,0 +1,20 @@
+date,trainNo,trainName,scheduled_arrival,scheduled_departure,actual_arrival,actual_departure,actual_platform_arrival,top3_suggestions,actual_platform,incoming_line,outgoing_line
+2025-11-14,12514,Silchar - Charlapalli Weekly SF Express (PT),02:38,02:48,,,,"Platform 1, Platform 5, Platform 6",,HWH MD,
+2025-11-14,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,19:31,20:36,19:31,"Platform 4, Platform 5, Platform 6","Platform 4, Platform 2",HWH MD,HIJ MD 1 (DN)
+2025-11-14,13433,SMVT Bengaluru - Malda Town Amrit Bharat Express (PT),00:15,00:20,17:07,17:08,17:07,"Platform 1, Platform 3, Platform 5","Platform 1, Platform 3",TATA MD,HWH MD
+2025-11-14,18005,Samaleswari Express (PT),00:15,00:20,,,,"Platform 2, Platform 5, Platform 6",,HWH MD,
+2025-11-14,18022,Khurda Road - Kharagpur Express*,00:30,,,,,"Platform 5, Platform 7, Platform 6",,MDN MD 2,
+2025-11-14,18024,NSCB Jn. Gomoh - Kharagpur Express (UnReserved)*,14:35,,,,,"Platform 5, Platform 6, Platform 1",,HWH MD,
+2025-11-14,18049,Shalimar - Badampahar Weekly Express,00:35,00:40,,,,"Platform 2, Platform 1, Platform 3",,HWH UP,
+2025-11-14,22642,Shalimar - Thiruvananthapuram Central SF Express (PT),01:35,01:40,,,,"Platform 1, Platform 3, Platform 5",,HWH UP,
+2025-11-14,F1,Freight,,,,20:36,19:20,,Track 10,,HWH DN
+2025-11-14,F10,Freight Consist,,,20:32,20:36,20:32,,Track 5,TATA DN,TATA MD
+2025-11-14,F11,Freight,,,20:36,20:36,20:36,,Track 4,TATA DN,HWH DN
+2025-11-14,F2,Freight,,,,19:40,19:25,,Track 9,,TATA DN
+2025-11-14,F3,Freight,,,,20:36,19:31,,Track 11,,HIJ MD 2 (UP)
+2025-11-14,F4,Freight,,,,19:39,19:34,,Track 7,,HWH MD
+2025-11-14,F5,Freight Consist,,,20:27,20:27,20:27,,Track 12,MDN MD 2,TATA UP
+2025-11-14,F6,Freight Arrival,,,,20:27,20:27,,Platform 5,HWH MD,TATA DN
+2025-11-14,F7,ftftfuy,,,20:29,20:29,20:29,,Track 12,HWH MD,TATA UP
+2025-11-14,F8,Freight Consist,,,20:29,20:36,20:29,,Track 8,MDN MD 2,HIJ MD 1 (DN)
+2025-11-14,F9,Freight Arrival,,,,20:36,20:30,,Platform 6,HWH UP,TATA DN

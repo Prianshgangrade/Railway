@@ -1,8 +1,18 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Modal from '../Modal';
 import { apiUrl } from '../../utils/api';
 
-export default function SuggestionModal({ isOpen, onClose, arrivingTrains, platforms, onAssignPlatform, trainToReassign, onAddToWaitingList }) {
+export default function SuggestionModal({
+  isOpen,
+  onClose,
+  arrivingTrains,
+  platforms,
+  onAssignPlatform,
+  trainToReassign,
+  onAddToWaitingList,
+  onAssignFreightToPlatform,
+  onAssignFreightToTrack,
+}) {
   const [selectedTrain, setSelectedTrain] = useState(null);
   const [incomingLines, setIncomingLines] = useState([]);
   const [selectedIncomingLine, setSelectedIncomingLine] = useState('');
@@ -10,9 +20,15 @@ export default function SuggestionModal({ isOpen, onClose, arrivingTrains, platf
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [view, setView] = useState('selection');
+  const [mode, setMode] = useState('scheduled');
   const [freightNeedsPlatform, setFreightNeedsPlatform] = useState(null);
   const [loggedArrivalTime, setLoggedArrivalTime] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [freightIncomingLine, setFreightIncomingLine] = useState('');
+  const [freightTarget, setFreightTarget] = useState('');
+  const [freightPlatformId, setFreightPlatformId] = useState('');
+  const [freightTrackId, setFreightTrackId] = useState('');
+  const [freightSubmitting, setFreightSubmitting] = useState(false);
 
   const resetState = useCallback(() => {
     setSelectedTrain(null);
@@ -21,9 +37,15 @@ export default function SuggestionModal({ isOpen, onClose, arrivingTrains, platf
     setError('');
     setIsLoading(false);
     setView('selection');
+    setMode('scheduled');
     setFreightNeedsPlatform(null);
     setLoggedArrivalTime('');
     setSearchTerm('');
+    setFreightIncomingLine('');
+    setFreightTarget('');
+    setFreightPlatformId('');
+    setFreightTrackId('');
+    setFreightSubmitting(false);
   }, []);
 
   const fetchIncomingLines = useCallback(async () => {
@@ -67,8 +89,13 @@ export default function SuggestionModal({ isOpen, onClose, arrivingTrains, platf
     if (isOpen) {
       if (incomingLines.length === 0) fetchIncomingLines();
       if (trainToReassign) {
-        const train = arrivingTrains.find(t => t.trainNo === trainToReassign.trainNo);
-        if (train) setSelectedTrain(train);
+        // When opening from waiting-list/reassign, prefer the waiting-list object itself
+        // so we retain backend fields like `incoming_line`. Fall back to master arriving
+        // train only for other metadata.
+        setSelectedTrain(trainToReassign);
+        const masterTrain = arrivingTrains.find(t => String(t.trainNo) === String(trainToReassign.trainNo));
+        const presetLine = trainToReassign.incoming_line || trainToReassign.incomingLine || (masterTrain && (masterTrain.incoming_line || masterTrain.incomingLine));
+        if (presetLine) setSelectedIncomingLine(presetLine);
       }
     } else {
       resetState();
@@ -76,14 +103,30 @@ export default function SuggestionModal({ isOpen, onClose, arrivingTrains, platf
   }, [isOpen, trainToReassign, arrivingTrains, fetchIncomingLines, incomingLines.length, resetState]);
 
   const handleTrainSelection = (trainNo) => {
-    const train = arrivingTrains.find(t => t.trainNo === trainNo);
+    const train = arrivingTrains.find(t => String(t.trainNo) === String(trainNo));
     setSelectedTrain(train);
     setFreightNeedsPlatform(null);
   };
 
   const handleGetSuggestions = () => {
     if (!selectedTrain) { setError('Please select a train first.'); return; }
-    if (!selectedIncomingLine) { setError('Please select the incoming line.'); return; }
+    const isWaitingTrain = !!selectedTrain?.enqueued_at; // waiting list entry
+    const isReassign = !!trainToReassign;
+    // For arriving (not waiting, not reassign) always allow changing line; require selection explicitly
+    if (!selectedIncomingLine) {
+      if (isWaitingTrain || isReassign) {
+        const knownLine = selectedIncomingLine || selectedTrain?.incoming_line || selectedTrain?.incomingLine || trainToReassign?.incoming_line || trainToReassign?.incomingLine;
+        if (knownLine) {
+          setSelectedIncomingLine(knownLine);
+        } else {
+          setError('Incoming line missing for this train.');
+          return;
+        }
+      } else {
+        setError('Please select the incoming line.');
+        return;
+      }
+    }
     if ((selectedTrain.name.includes('Freight') || selectedTrain.name.includes('Goods')) && freightNeedsPlatform === null) {
       setError('Please specify if the freight train needs a platform.');
       return;
@@ -93,21 +136,124 @@ export default function SuggestionModal({ isOpen, onClose, arrivingTrains, platf
 
   const handleAssign = (platformIds) => {
     const idsToAssign = Array.isArray(platformIds) ? platformIds : [platformIds];
-    onAssignPlatform(selectedTrain.trainNo, idsToAssign, loggedArrivalTime);
+    onAssignPlatform(selectedTrain.trainNo, idsToAssign, loggedArrivalTime, selectedIncomingLine || selectedTrain?.incoming_line || selectedTrain?.incomingLine || trainToReassign?.incoming_line || trainToReassign?.incomingLine);
     onClose();
   };
 
   const handleAddToWaitingList = () => {
-    if (selectedTrain) { onAddToWaitingList(selectedTrain.trainNo); onClose(); }
+    if (!selectedTrain) return;
+    const knownLine = selectedIncomingLine || selectedTrain?.incoming_line || selectedTrain?.incomingLine || trainToReassign?.incoming_line || trainToReassign?.incomingLine;
+    if (!knownLine) { setError('Please select the incoming line before moving to waiting list.'); return; }
+    // Use current time as actual arrival if not already captured
+    const actualArrivalTime = loggedArrivalTime || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    onAddToWaitingList(selectedTrain.trainNo, knownLine, actualArrivalTime);
+    onClose();
   };
 
   const filteredTrains = arrivingTrains.filter(train => train.name.toLowerCase().includes(searchTerm.toLowerCase()) || String(train.trainNo).toLowerCase().includes(searchTerm.toLowerCase()));
   const isFreight = selectedTrain && (selectedTrain.name.includes('Freight') || selectedTrain.name.includes('Goods'));
   const canRequest = !!selectedTrain && !!selectedIncomingLine && !(isFreight && freightNeedsPlatform === null);
+  const availablePlatforms = useMemo(() => (platforms || []).filter(p => String(p?.id || '').toLowerCase().startsWith('platform') && !p?.isOccupied && !p?.isUnderMaintenance), [platforms]);
+  const availableTracks = useMemo(() => (
+    (platforms || [])
+      .filter(p => String(p?.id || '').toLowerCase().startsWith('track') && !p?.isOccupied && !p?.isUnderMaintenance)
+      .filter(p => (p?.displayName) || ['track 1','track 2','track 3','track 4','track 5','track 6'].includes(String(p?.id || '').toLowerCase()))
+  ), [platforms]);
+  const getTrackLabel = useCallback((track) => (track?.displayName || track?.id || ''), []);
+
+  useEffect(() => {
+    if (mode === 'freight') {
+      setSelectedTrain(null);
+      setView('selection');
+    }
+  }, [mode]);
+
+  const handleModeChange = (nextMode) => {
+    setMode(nextMode);
+    setError('');
+    if (nextMode === 'scheduled') {
+      setFreightTarget('');
+      setFreightPlatformId('');
+      setFreightTrackId('');
+      setFreightIncomingLine('');
+    }
+  };
+
+  const handleFreightSubmit = async () => {
+    if (!freightIncomingLine) {
+      setError('Please select the incoming line for the freight consist.');
+      return;
+    }
+    if (!freightTarget) {
+      setError('Specify whether the freight needs a platform or can take a track.');
+      return;
+    }
+    const payloadBase = {
+      // trainName: `Freight ${freightTarget === 'track' ? 'Consist' : 'Arrival'}`,
+      incomingLine: freightIncomingLine,
+    };
+    setFreightSubmitting(true);
+    try {
+      let success = false;
+      if (freightTarget === 'platform') {
+        if (!freightPlatformId) {
+          setError('Choose an available platform for this freight train.');
+          setFreightSubmitting(false);
+          return;
+        }
+        if (!onAssignFreightToPlatform) {
+          setError('Freight platform assignment handler unavailable.');
+          setFreightSubmitting(false);
+          return;
+        }
+        success = await onAssignFreightToPlatform({
+          ...payloadBase,
+          platformId: freightPlatformId,
+        });
+      } else {
+        if (!freightTrackId) {
+          setError('Choose an available track for this freight train.');
+          setFreightSubmitting(false);
+          return;
+        }
+        if (!onAssignFreightToTrack) {
+          setError('Freight track assignment handler unavailable.');
+          setFreightSubmitting(false);
+          return;
+        }
+        success = await onAssignFreightToTrack({
+          ...payloadBase,
+          trackId: freightTrackId,
+        });
+      }
+      if (success) {
+        onClose();
+      }
+    } catch (assignErr) {
+      setError(assignErr.message || 'Unable to assign freight train.');
+    } finally {
+      setFreightSubmitting(false);
+    }
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="TRAIN LISTS">
-      {view === 'selection' && (
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => handleModeChange('scheduled')}
+          className={`flex-1 py-2 rounded-md border ${mode === 'scheduled' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
+        >
+          Scheduled Arrivals
+        </button>
+        <button
+          onClick={() => handleModeChange('freight')}
+          className={`flex-1 py-2 rounded-md border ${mode === 'freight' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
+        >
+          Freight Train
+        </button>
+      </div>
+
+      {mode === 'scheduled' && view === 'selection' && (
         <div className="space-y-4">
           <div>
             <label htmlFor="suggest-train-list" className="block text-sm font-medium text-gray-700 mb-2">1. Select Train for Assignment:</label>
@@ -122,14 +268,27 @@ export default function SuggestionModal({ isOpen, onClose, arrivingTrains, platf
 
           {selectedTrain && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">2. Select Incoming Line:</label>
-              <select value={selectedIncomingLine} onChange={e => setSelectedIncomingLine(e.target.value)} className="w-full p-2 border rounded-md">
-                <option value="" disabled>Select incoming line...</option>
-                {incomingLines.map(line => (
-                  <option key={line} value={line}>{line}</option>
-                ))}
-              </select>
-              {incomingLines.length === 0 && <p className="text-xs text-gray-500 mt-1">Loading lines...</p>}
+              {(() => {
+                const isWaitingTrain = !!selectedTrain?.enqueued_at;
+                const isReassign = !!trainToReassign;
+                const locked = isWaitingTrain || isReassign; // lock only for waiting/reassign
+                if (locked) {
+                    const displayLine = selectedIncomingLine || selectedTrain?.incoming_line || selectedTrain?.incomingLine || trainToReassign?.incomingLine;
+                    return <p className="text-xs text-gray-600">Incoming Line: <span className="font-semibold">{displayLine || 'N/A'}</span></p>;
+                }
+                return (
+                  <>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">2. Select / Change Incoming Line:</label>
+                    <select value={selectedIncomingLine} onChange={e => setSelectedIncomingLine(e.target.value)} className="w-full p-2 border rounded-md">
+                      <option value="" disabled>Select incoming line...</option>
+                      {incomingLines.map(line => (
+                        <option key={line} value={line}>{line}</option>
+                      ))}
+                    </select>
+                    {incomingLines.length === 0 && <p className="text-xs text-gray-500 mt-1">Loading lines...</p>}
+                  </>
+                );
+              })()}
             </div>
           )}
 
@@ -148,7 +307,7 @@ export default function SuggestionModal({ isOpen, onClose, arrivingTrains, platf
         </div>
       )}
 
-      {view === 'suggestion' && (
+      {mode === 'scheduled' && view === 'suggestion' && (
         <div className="space-y-4">
           <div className="p-3 bg-gray-100 rounded-md border">
             <p className="font-semibold">{selectedTrain?.trainNo} - {selectedTrain?.name}</p>
@@ -164,7 +323,7 @@ export default function SuggestionModal({ isOpen, onClose, arrivingTrains, platf
               <h4 className="text-lg font-semibold mb-2">2. Choose a Platform (sorted by best match):</h4>
               <div className="space-y-3">
                 {suggestions.map((suggestion, index) => {
-                  const { platformId, platformIds, score, blockages } = suggestion;
+                  const { platformId, platformIds, score, blockages, historicalMatch, historicalPlatform } = suggestion;
                   return (
                     <div key={index} className={`p-3 rounded-md border ${score >= 80 ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
                       <div className="flex justify-between items-center">
@@ -172,7 +331,7 @@ export default function SuggestionModal({ isOpen, onClose, arrivingTrains, platf
                         <button onClick={() => handleAssign(platformIds || platformId)} className="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 font-semibold">Assign</button>
                       </div>
                       <div className="text-sm mt-2 text-gray-600 flex flex-col gap-1">
-                        <span className="font-semibold">Score: {score}</span>
+                        <span className="font-semibold">Penalty Score: {score}{historicalMatch ? <span className="text-xs text-gray-700 ml-2"> • Hist: {historicalPlatform}</span> : null}</span>
                         {blockages && (
                           <div className="text-xs text-gray-700">
                             <span className="font-semibold">Potential Blockages</span>{' '}
@@ -203,6 +362,62 @@ export default function SuggestionModal({ isOpen, onClose, arrivingTrains, platf
               <button onClick={handleAddToWaitingList} className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-red-700 transition">Move to Waiting List</button>
             </div>
           )}
+        </div>
+      )}
+
+      {mode === 'freight' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Incoming Line</label>
+            <select value={freightIncomingLine} onChange={e => setFreightIncomingLine(e.target.value)} className="w-full p-2 border rounded-md">
+              <option value="" disabled>Select incoming line...</option>
+              {incomingLines.map(line => <option key={line} value={line}>{line}</option>)}
+            </select>
+            {incomingLines.length === 0 && <p className="text-xs text-gray-500 mt-1">Loading lines...</p>}
+          </div>
+
+          <div>
+            <p className="font-semibold text-gray-800">Does this freight need a platform?</p>
+            <div className="flex gap-4 mt-2">
+              <button onClick={() => { setFreightTarget('platform'); setError(''); }} className={`flex-1 py-2 rounded-md ${freightTarget === 'platform' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700'}`}>Needs Platform</button>
+              <button onClick={() => { setFreightTarget('track'); setError(''); }} className={`flex-1 py-2 rounded-md ${freightTarget === 'track' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700'}`}>Assign to Track</button>
+            </div>
+          </div>
+
+          {freightTarget === 'platform' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select Available Platform</label>
+              {availablePlatforms.length > 0 ? (
+                <select value={freightPlatformId} onChange={e => setFreightPlatformId(e.target.value)} className="w-full p-2 border rounded-md">
+                  <option value="" disabled>Select platform...</option>
+                  {availablePlatforms.map(p => <option key={p.id} value={p.id}>{p.id}</option>)}
+                </select>
+              ) : (
+                <p className="text-sm text-red-600">No free platforms available right now.</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">Only free, non-maintenance platforms are shown.</p>
+            </div>
+          )}
+
+          {freightTarget === 'track' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select Available Track</label>
+              {availableTracks.length > 0 ? (
+                <select value={freightTrackId} onChange={e => setFreightTrackId(e.target.value)} className="w-full p-2 border rounded-md">
+                  <option value="" disabled>Select track...</option>
+                  {availableTracks.map(p => <option key={p.id} value={p.id}>{getTrackLabel(p)}</option>)}
+                </select>
+              ) : (
+                <p className="text-sm text-red-600">No free tracks are currently available.</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">Tracks under maintenance or occupied are hidden.</p>
+            </div>
+          )}
+
+          <button onClick={handleFreightSubmit} disabled={freightSubmitting || (freightTarget === 'platform' ? availablePlatforms.length === 0 : availableTracks.length === 0)} className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400">
+            {freightSubmitting ? 'Assigning...' : 'Assign Freight'}
+          </button>
+          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
         </div>
       )}
     </Modal>
