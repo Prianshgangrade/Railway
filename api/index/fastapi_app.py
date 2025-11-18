@@ -871,15 +871,8 @@ async def assign_platform(body: dict, background_tasks: BackgroundTasks):
                 p['trainDetails']['actualPlatformArrival'] = actual_platform_arrival
                 p['actualPlatformArrival'] = actual_platform_arrival
                 break
-    # persist state asynchronously to reduce response latency; logging/report persist still in background
-    try:
-        background_tasks.add_task(state_collection.replace_one, {"_id": "current_station_state"}, state, upsert=True)
-    except Exception:
-        # fallback to synchronous if background scheduling fails
-        try:
-            state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
-        except Exception:
-            pass
+    # persist state synchronously, log and persist report in background
+    state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
     train_name_for_report = train_to_assign.get('name') or (train_data or {}).get('TRAIN NAME', '')
     background_tasks.add_task(
         log_action,
@@ -1110,7 +1103,7 @@ async def log_depart_line(body: dict, background_tasks: BackgroundTasks):
 
 
 @app.post("/api/toggle-maintenance")
-async def toggle_maintenance(body: dict, background_tasks: BackgroundTasks):
+async def toggle_maintenance(body: dict):
     platform_id = body.get('platformId')
     state = state_collection.find_one({"_id": "current_station_state"}) or {}
 
@@ -1123,18 +1116,8 @@ async def toggle_maintenance(body: dict, background_tasks: BackgroundTasks):
             status = "ON" if state['platforms'][i]['isUnderMaintenance'] else "OFF"
             break
 
-    # Log and persist state in background to reduce request latency
-    try:
-        background_tasks.add_task(log_action, f"MAINTENANCE: Maintenance for {platform_id} set to {status}.")
-        background_tasks.add_task(state_collection.replace_one, {"_id": "current_station_state"}, state, upsert=True)
-    except Exception:
-        # fallback synchronous write if scheduling fails
-        try:
-            log_action(f"MAINTENANCE: Maintenance for {platform_id} set to {status}.")
-            state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
-        except Exception:
-            pass
-
+    log_action(f"MAINTENANCE: Maintenance for {platform_id} set to {status}.")
+    state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
     return {"message": f"Maintenance status toggled for {platform_id}."}
 
 

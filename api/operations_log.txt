@@ -457,3 +457,11 @@
 2025-11-19 00:21:04 | ARRIVED & ASSIGNED: Train 12837 arrived at 00:21 and assigned to Platform 3, Platform 1. (platformArrival: 00:21)
 2025-11-19 00:27:20 | TRAIN ADDED: New train KGP added to the master schedule.
 2025-11-19 00:27:39 | TRAIN DELETED: Train KGP removed from the master schedule.
+2025-11-19 00:47:27 | DEPART LINE: Train 12837 departing from Platform 4 via TATA MD.
+2025-11-19 00:47:27 | CHECK_WAITING_QUEUE: waiting list empty
+2025-11-19 00:47:28 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 00:47.
+2025-11-19 00:47:36 | ARRIVED & ASSIGNED: Train 12837 arrived at 00:47 and assigned to Platform 4, Platform 2. (platformArrival: 00:47)
+2025-11-19 01:03:35 | DEPART LINE: Train 12837 departing from Platform 4 via TATA MD.
+2025-11-19 01:03:35 | CHECK_WAITING_QUEUE: waiting list empty
+2025-11-19 01:03:35 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 01:03.
+2025-11-19 01:03:42 | ARRIVED & ASSIGNED: Train 12837 arrived at 01:03 and assigned to Platform 4, Platform 2. (platformArrival: 01:03)

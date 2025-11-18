@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Header from './components/Header';
 import Track from './components/Track';
 import Platform from './components/Platform';
@@ -39,22 +39,28 @@ export default function MainApp() {
   const [reassignPrompt, setReassignPrompt] = useState({ isOpen: false, platformId: null, trainDetails: null });
   const [trainForImmediateSuggestion, setTrainForImmediateSuggestion] = useState(null);
   const [autoSuggestion, setAutoSuggestion] = useState(null); // automated suggestion from backend
+  const latestFetchIdRef = useRef(0);
 
   // Show all available trains for arrival; filtering will be handled by the search bar in SuggestionModal
 
   const fetchStationData = useCallback(async () => {
+    const fetchId = latestFetchIdRef.current + 1;
+    latestFetchIdRef.current = fetchId;
     try {
       const response = await fetch(apiUrl('/api/station-data'));
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       if (data.error) throw new Error(data.error);
+      if (fetchId !== latestFetchIdRef.current) return;
       setPlatforms(data.platforms || []);
       setArrivingTrains(data.arrivingTrains || []);
       setWaitingList(data.waitingList || []);
     } catch (err) {
       console.error('Error fetching station data:', err);
-      setError(err.message);
-      toast.error(`Failed to load station data: ${err.message}`);
+      if (fetchId === latestFetchIdRef.current) {
+        setError(err.message);
+        toast.error(`Failed to load station data: ${err.message}`);
+      }
     }
   }, []);
 
@@ -125,136 +131,52 @@ export default function MainApp() {
       if (!response.ok) throw new Error(data.detail || data.error || 'Failed to accept suggestion');
       toast.success(data.message || 'Suggestion accepted');
       setAutoSuggestion(null);
-      // Refresh station data asynchronously so UI is not blocked by network latency
-      fetchStationData().catch(() => {});
+      await fetchStationData();
     } catch (e) {
       toast.error(e.message);
     }
   };
 
-  const handleApiCall = useCallback(async (endpoint, body, successMsg, optimisticUpdate) => {
-    if (typeof optimisticUpdate === 'function') {
-      try {
-        optimisticUpdate();
-      } catch (optErr) {
-        console.warn('Optimistic update failed', optErr);
-      }
-    }
+  const handleApiCall = async (endpoint, body, successMsg) => {
     try {
       const response = await fetch(apiUrl(`/api/${endpoint}`), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'An unknown error occurred.');
       toast.success(data.message || successMsg);
-      fetchStationData().catch(() => {});
+      await fetchStationData();
       return true;
     } catch (err) {
       console.error(`Error calling ${endpoint}:`, err);
       toast.error(err.message);
-      fetchStationData().catch(() => {});
       return false;
     }
-  }, [fetchStationData]);
+  };
 
   const promptForReassignment = (platformId, trainDetails) => {
     setReassignPrompt({ isOpen: true, platformId, trainDetails });
   };
 
-  const getTrainInfo = useCallback((trainNo) => {
-    const fromWaiting = waitingList.find(t => String(t.trainNo) === String(trainNo));
-    if (fromWaiting) return fromWaiting;
-    return arrivingTrains.find(t => String(t.trainNo) === String(trainNo));
-  }, [waitingList, arrivingTrains]);
-
-  const nowHHMM = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
-  const handleUnassignPlatform = useCallback((platformId) => handleApiCall('unassign-platform', { platformId }, `Unassigning train from ${platformId}...`), [handleApiCall]);
-
+  const handleUnassignPlatform = useCallback((platformId) => handleApiCall('unassign-platform', { platformId }, `Unassigning train from ${platformId}...`), []);
   const handleAssignPlatform = useCallback((trainNo, platformIds, actualArrival, incomingLine) => {
-    const arrivalStamp = actualArrival || nowHHMM();
-    const normalizedIds = Array.isArray(platformIds) ? platformIds : [platformIds];
-    const body = { trainNo, platformIds: normalizedIds, actualArrival: arrivalStamp };
+    const body = { trainNo, platformIds, actualArrival };
     if (incomingLine) body.incomingLine = incomingLine;
-    const optimisticUpdate = () => {
-      const meta = getTrainInfo(trainNo) || {};
-      const displayName = meta.name || `Train ${trainNo}`;
-      const derivedLine = incomingLine || meta.incoming_line || meta.incomingLine || '';
-      setPlatforms(prev => prev.map(p => (
-        normalizedIds.includes(p.id)
-          ? {
-              ...p,
-              isOccupied: true,
-              isUnderMaintenance: false,
-              trainDetails: {
-                ...(p.trainDetails || {}),
-                trainNo: String(trainNo),
-                name: displayName,
-                incomingLine: derivedLine || (p.trainDetails && p.trainDetails.incomingLine) || '',
-              },
-              actualArrival: arrivalStamp,
-              actualPlatformArrival: arrivalStamp,
-            }
-          : p
-      )));
-      setWaitingList(prev => prev.filter(t => String(t.trainNo) !== String(trainNo)));
-    };
-    return handleApiCall('assign-platform', body, `Assigning train ${trainNo}...`, optimisticUpdate);
-  }, [getTrainInfo, handleApiCall]);
+    return handleApiCall('assign-platform', body, `Assigning train ${trainNo}...`);
+  }, []);
   const handleAssignFreightToPlatform = useCallback(({ platformId, incomingLine, trainName }) => {
-    const arrivalStamp = nowHHMM();
     const body = {
       platformIds: [platformId],
       forceCreateFreight: true,
-      actualArrival: arrivalStamp,
     };
     if (incomingLine) body.incomingLine = incomingLine;
     if (trainName) body.trainName = trainName;
-    const optimisticUpdate = () => {
-      setPlatforms(prev => prev.map(p => (
-        p.id === platformId
-          ? {
-              ...p,
-              isOccupied: true,
-              isUnderMaintenance: false,
-              trainDetails: {
-                ...(p.trainDetails || {}),
-                trainNo: trainName || 'Freight',
-                name: trainName || 'Freight Consist',
-                incomingLine: incomingLine || p.trainDetails?.incomingLine || '',
-              },
-              actualArrival: arrivalStamp,
-              actualPlatformArrival: arrivalStamp,
-            }
-          : p
-      )));
-    };
-    return handleApiCall('assign-platform', body, `Assigning freight to ${platformId}...`, optimisticUpdate);
-  }, [handleApiCall]);
+    return handleApiCall('assign-platform', body, `Assigning freight to ${platformId}...`);
+  }, []);
   const handleAssignFreightToTrack = useCallback(({ trackId, incomingLine, trainName }) => {
-    const arrivalStamp = nowHHMM();
-    const body = { trackId, actualArrival: arrivalStamp };
+    const body = { trackId };
     if (incomingLine) body.incomingLine = incomingLine;
     if (trainName) body.trainName = trainName;
-    const optimisticUpdate = () => {
-      setPlatforms(prev => prev.map(p => (
-        p.id === trackId
-          ? {
-              ...p,
-              isOccupied: true,
-              trainDetails: {
-                ...(p.trainDetails || {}),
-                trainNo: trainName || 'Freight',
-                name: trainName || 'Freight Consist',
-                incomingLine: incomingLine || p.trainDetails?.incomingLine || '',
-                isFreightTrack: true,
-              },
-              actualArrival: arrivalStamp,
-              actualPlatformArrival: arrivalStamp,
-            }
-          : p
-      )));
-    };
-    return handleApiCall('assign-track', body, `Assigning freight to ${trackId}...`, optimisticUpdate);
-  }, [handleApiCall]);
+    return handleApiCall('assign-track', body, `Assigning freight to ${trackId}...`);
+  }, []);
   const handleAddToWaitingList = useCallback((trainNo, incomingLine, actualArrival) => {
     const body = { trainNo };
     if (incomingLine) body.incomingLine = incomingLine;
@@ -262,17 +184,12 @@ export default function MainApp() {
     // Debug: log the body so we can confirm frontend is sending incomingLine
     try { console.debug('AddToWaitingList body ->', body); } catch (e) {}
     return handleApiCall('add-to-waiting-list', body, `Adding ${trainNo} to waiting list...`);
-  }, [handleApiCall]);
-  const handleRemoveFromWaitingList = useCallback((trainNo) => handleApiCall('remove-from-waiting-list', { trainNo }, `Removing ${trainNo} from waiting list...`), [handleApiCall]);
-  const handleDepartTrain = useCallback((platformId) => handleApiCall('depart-train', { platformId }, `Departing train from ${platformId}...`), [handleApiCall]);
-  const handleToggleMaintenance = useCallback((platformId) => {
-    const optimisticUpdate = () => {
-      setPlatforms(prev => prev.map(p => (p.id === platformId ? { ...p, isUnderMaintenance: !p.isUnderMaintenance } : p)));
-    };
-    return handleApiCall('toggle-maintenance', { platformId }, `Updating maintenance for ${platformId}...`, optimisticUpdate);
-  }, [handleApiCall]);
-  const handleAddTrain = useCallback((trainData) => handleApiCall('add-train', trainData, `Adding train ${trainData['TRAIN NO']}...`), [handleApiCall]);
-  const handleDeleteTrain = useCallback((trainNo) => handleApiCall('delete-train', { trainNo }, `Deleting train ${trainNo}...`), [handleApiCall]);
+  }, []);
+  const handleRemoveFromWaitingList = useCallback((trainNo) => handleApiCall('remove-from-waiting-list', { trainNo }, `Removing ${trainNo} from waiting list...`), []);
+  const handleDepartTrain = useCallback((platformId) => handleApiCall('depart-train', { platformId }, `Departing train from ${platformId}...`), []);
+  const handleToggleMaintenance = useCallback((platformId) => handleApiCall('toggle-maintenance', { platformId }, `Updating maintenance for ${platformId}...`), []);
+  const handleAddTrain = useCallback((trainData) => handleApiCall('add-train', trainData, `Adding train ${trainData['TRAIN NO']}...`), []);
+  const handleDeleteTrain = useCallback((trainNo) => handleApiCall('delete-train', { trainNo }, `Deleting train ${trainNo}...`), []);
 
   const platformMap = new Map(platforms.map(p => [p.id, p]));
 
