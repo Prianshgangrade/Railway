@@ -21,9 +21,7 @@ def normalize_historical_platform(raw):
     if not raw:
         return None
     s = str(raw).strip().upper()
-    # If multiple values present, take the first
     s = s.split(',')[0].strip()
-    # Remove common prefixes like 'PLATFORM' or a leading 'P'
     s = re.sub(r'^PLATFORM\s*', '', s)
     s = re.sub(r'^P\s*', '', s)
     s = s.strip()
@@ -43,14 +41,9 @@ def _tie_break_rank(direction: str, platform_id: str) -> int:
     else:
         bucket = platform_id
 
-    # Directional tie-break order; include all platforms that may appear
-    # Spec:
-    #  - UP:   P2-4 > P1-3 > P5 > P6 > P8 > P7
-    #  - DOWN: P8 > P7 > P6 > P5 > P2-4 > P1-3
     up_order = ['P2-4', 'P1-3', 'P5', 'P6', 'P8']
     down_order = ['P8', 'P7', 'P6', 'P5', 'P2-4', 'P1-3']
     order = up_order if str(direction).upper() == 'UP' else down_order
-    # Gracefully handle buckets not present in the ordering (e.g., P1A/P3A)
     try:
         return order.index(bucket)
     except ValueError:
@@ -133,7 +126,6 @@ def calculate_platform_scores(incoming_train, available_platforms, incoming_line
                 part = ', '.join(best_route.get('partial', []))
                 best_route_info = f": [{full or part or 'None'}]"
 
-        # Indicate whether this platform matched the train's historical platform
         historical_platform = None
         historical_match = False
         historical_platform = normalize_historical_platform(incoming_train.historical_platform)

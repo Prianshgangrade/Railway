@@ -311,7 +311,7 @@ export default function SuggestionModal({
         <div className="space-y-4">
           <div className="p-3 bg-gray-100 rounded-md border">
             <p className="font-semibold">{selectedTrain?.trainNo} - {selectedTrain?.name}</p>
-            <p className="text-sm font-bold text-blue-700">Assignment Time: {loggedArrivalTime}</p>
+            <p className="text-sm font-bold text-blue-700">Arrival Time: {loggedArrivalTime}</p>
             {selectedIncomingLine && <p className="text-xs text-gray-600">Incoming Line: {selectedIncomingLine}</p>}
           </div>
 
@@ -331,7 +331,7 @@ export default function SuggestionModal({
                         <button onClick={() => handleAssign(platformIds || platformId)} className="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 font-semibold">Assign</button>
                       </div>
                       <div className="text-sm mt-2 text-gray-600 flex flex-col gap-1">
-                        <span className="font-semibold">Penalty Score: {score}{historicalMatch ? <span className="text-xs text-gray-700 ml-2"> • Hist: {historicalPlatform}</span> : null}</span>
+                        <span className="font-semibold">Penalty Score: {score}{historicalMatch ? <span className="text-xs text-gray-700 ml-2"> • Historical Platform</span> : null}</span>
                         {blockages && (
                           <div className="text-xs text-gray-700">
                             <span className="font-semibold">Potential Blockages</span>{' '}
@@ -379,8 +379,8 @@ export default function SuggestionModal({
           <div>
             <p className="font-semibold text-gray-800">Does this freight need a platform?</p>
             <div className="flex gap-4 mt-2">
-              <button onClick={() => { setFreightTarget('platform'); setError(''); }} className={`flex-1 py-2 rounded-md ${freightTarget === 'platform' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700'}`}>Needs Platform</button>
-              <button onClick={() => { setFreightTarget('track'); setError(''); }} className={`flex-1 py-2 rounded-md ${freightTarget === 'track' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700'}`}>Assign to Track</button>
+              <button onClick={() => { setFreightTarget('platform'); setError(''); }} className={`flex-1 py-2 rounded-md ${freightTarget === 'platform' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700'}`}>YES</button>
+              <button onClick={() => { setFreightTarget('track'); setError(''); }} className={`flex-1 py-2 rounded-md ${freightTarget === 'track' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700'}`}>NO</button>
             </div>
           </div>
 

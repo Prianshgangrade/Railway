@@ -28,7 +28,7 @@ export default function Track({ label, trackData, onUnassignPlatform }) {
             <button onClick={() => onUnassignPlatform(trackData.id, trainDetails)} className="bg-red-500 text-white text-xs font-bold py-0.5 px-2 rounded-md hover:bg-red-600 transition-all flex-shrink-0">Unassign</button>
           </div>
           {actualArrival && (
-            <p className={`text-xs mt-0.5 font-semibold ${isOccupied ? 'text-green-200' : 'text-gray-600'}`}>Actual Arrival: {actualArrival}</p>
+            <p className={`text-xs mt-0.5 font-semibold ${isOccupied ? 'text-green-200' : 'text-gray-600'}`}></p>
           )}
         </div>
       ) : <div className="h-6"></div>}
