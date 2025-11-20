@@ -1,0 +1,7 @@
+date,trainNo,trainName,scheduled_arrival,scheduled_departure,actual_arrival,actual_departure,actual_platform_arrival,suggestions,actual_platform,incoming_line,outgoing_line
+2025-11-20,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,18:38,18:37,18:38,"4, 3, 5, 2, 6, 8, 7","4, 2",HWH UP,HWH DN
+2025-11-20,13433,SMVT Bengaluru - Malda Town Amrit Bharat Express (PT),00:15,00:20,17:13,11:50,11:43,"3, 1, 5, 6, 7, 8",5,TATA MD,HIJ MD 1 (DN)
+2025-11-20,18005,Samaleswari Express (PT),00:15,00:20,,,,"2, 4, 6, 7, 3, 8",,HIJ MD 1 (DN),
+2025-11-20,18022,Khurda Road - Kharagpur Express*,00:30,,17:19,18:24,11:49,"7, 6, 4, 2, 3, 8",7,HIJ MD 1 (DN),
+2025-11-20,F1,Freight,,,07:16,,07:16,,5,HIJ MD 2 (UP),
+2025-11-20,F2,Freight,,,11:48,18:24,11:48,,4,MDN MD 2,

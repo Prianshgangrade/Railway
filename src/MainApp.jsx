@@ -332,12 +332,35 @@ export default function MainApp() {
     () => setWaitingList(prev => prev.filter(train => !matchTrainNumber(train, trainNo)))
   ), [handleApiCall]);
 
-  const handleDepartTrain = useCallback((platformId) => handleApiCall(
-    'depart-train',
-    { platformId },
-    `Departing train from ${platformId}...`,
-    () => applyPlatformChanges(platformId, (platform) => ({ ...platform, isOccupied: false, trainDetails: null, actualArrival: null }))
-  ), [handleApiCall, applyPlatformChanges]);
+  const resolveLinkedDepartureIds = useCallback((platformId) => {
+    const primary = platformsRef.current.find(p => p?.id === platformId);
+    if (!primary || !primary.isOccupied || !primary.trainDetails) {
+      return [platformId];
+    }
+    const linkedId = primary.trainDetails.linkedPlatformId;
+    if (linkedId) {
+      return [platformId, linkedId];
+    }
+    const trainNo = primary.trainDetails.trainNo;
+    if (!trainNo) {
+      return [platformId];
+    }
+    const partner = platformsRef.current.find(p => p?.id !== platformId && p?.isOccupied && p?.trainDetails?.trainNo === trainNo);
+    if (partner) {
+      return [platformId, partner.id];
+    }
+    return [platformId];
+  }, []);
+
+  const handleDepartTrain = useCallback((platformId) => {
+    const idsToClear = resolveLinkedDepartureIds(platformId);
+    return handleApiCall(
+      'depart-train',
+      { platformId },
+      `Departing train from ${platformId}...`,
+      () => applyPlatformChanges(idsToClear, (platform) => ({ ...platform, isOccupied: false, trainDetails: null, actualArrival: null }))
+    );
+  }, [handleApiCall, applyPlatformChanges, resolveLinkedDepartureIds]);
 
   const handleToggleMaintenance = useCallback((platformId) => handleApiCall(
     'toggle-maintenance',
@@ -400,30 +423,30 @@ export default function MainApp() {
           <WaitingList waitingList={waitingList} onFindPlatform={(train) => { setTrainForImmediateSuggestion(train); setActiveModal('suggestions'); }} onRemove={handleRemoveFromWaitingList} />
 
           <div className="grid grid-cols-2 gap-3">
-            <Platform name="Platform 1" platformData={platformMap.get('Platform 1')} onUnassignPlatform={promptForReassignment} />
-            <Platform name="Platform 3" platformData={platformMap.get('Platform 3')} onUnassignPlatform={promptForReassignment} />
+            <Platform name="Platform 1" platformData={platformMap.get('Platform 1')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
+            <Platform name="Platform 3" platformData={platformMap.get('Platform 3')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Platform name="Platform 1A" platformData={platformMap.get('Platform 1A')} onUnassignPlatform={promptForReassignment} />
-            <Platform name="Platform 3A" platformData={platformMap.get('Platform 3A')} onUnassignPlatform={promptForReassignment} />
+            <Platform name="Platform 1A" platformData={platformMap.get('Platform 1A')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
+            <Platform name="Platform 3A" platformData={platformMap.get('Platform 3A')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Platform name="Platform 2A" platformData={platformMap.get('Platform 2A')} onUnassignPlatform={promptForReassignment} />
-            <Platform name="Platform 4A" platformData={platformMap.get('Platform 4A')} onUnassignPlatform={promptForReassignment} />
+            <Platform name="Platform 2A" platformData={platformMap.get('Platform 2A')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
+            <Platform name="Platform 4A" platformData={platformMap.get('Platform 4A')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Platform name="Platform 2" platformData={platformMap.get('Platform 2')} onUnassignPlatform={promptForReassignment} />
-            <Platform name="Platform 4" platformData={platformMap.get('Platform 4')} onUnassignPlatform={promptForReassignment} />
+            <Platform name="Platform 2" platformData={platformMap.get('Platform 2')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
+            <Platform name="Platform 4" platformData={platformMap.get('Platform 4')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
           </div>
 
-          <Platform name="Platform 5" platformData={platformMap.get('Platform 5')} onUnassignPlatform={promptForReassignment} />
-          <Platform name="Platform 6" platformData={platformMap.get('Platform 6')} onUnassignPlatform={promptForReassignment} />
-          <Platform name="Platform 7" platformData={platformMap.get('Platform 7')} onUnassignPlatform={promptForReassignment} />
-          <Platform name="Platform 8" platformData={platformMap.get('Platform 8')} onUnassignPlatform={promptForReassignment} />
+          <Platform name="Platform 5" platformData={platformMap.get('Platform 5')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
+          <Platform name="Platform 6" platformData={platformMap.get('Platform 6')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
+          <Platform name="Platform 7" platformData={platformMap.get('Platform 7')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
+          <Platform name="Platform 8" platformData={platformMap.get('Platform 8')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
           {TRACK_GROUPS.map(([leftId, rightId]) => (
             <div className="grid grid-cols-2 gap-3" key={`${leftId}-${rightId}`}>
-              <Track label={TRACK_LABELS[leftId] || leftId} trackData={platformMap.get(leftId)} onUnassignPlatform={promptForReassignment} />
-              <Track label={TRACK_LABELS[rightId] || rightId} trackData={platformMap.get(rightId)} onUnassignPlatform={promptForReassignment} />
+              <Track label={TRACK_LABELS[leftId] || leftId} trackData={platformMap.get(leftId)} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
+              <Track label={TRACK_LABELS[rightId] || rightId} trackData={platformMap.get(rightId)} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
             </div>
           ))}
         </div>

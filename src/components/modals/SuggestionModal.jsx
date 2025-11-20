@@ -330,8 +330,8 @@ export default function SuggestionModal({
                         <p className="font-bold text-lg">{platformId}</p>
                         <button onClick={() => handleAssign(platformIds || platformId)} className="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 font-semibold">Assign</button>
                       </div>
-                      <div className="text-sm mt-2 text-gray-600 flex flex-col gap-1">
-                        <span className="font-semibold">Penalty Score: {score}{historicalMatch ? <span className="text-xs text-gray-700 ml-2"> • Historical Platform</span> : null}</span>
+                      <div className="text-sm mt-2 text-gray-600 flex flex-col">
+                        <span className="font-semibold">{historicalMatch ? <span className="text-xs text-gray-700"> • Historical Platform</span> : null}</span>
                         {blockages && (
                           <div className="text-xs text-gray-700">
                             <span className="font-semibold">Potential Blockages</span>{' '}

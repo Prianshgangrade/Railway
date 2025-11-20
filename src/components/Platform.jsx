@@ -1,4 +1,4 @@
-export default function Platform({ name, platformData, onUnassignPlatform }) {
+export default function Platform({ name, platformData, onUnassignPlatform, onDepartTrain }) {
   if (!platformData) {
     return (
       <div className="bg-gray-200 px-3 py-2 rounded-lg shadow-sm border-l-4 border-gray-300 animate-pulse">
@@ -21,11 +21,14 @@ export default function Platform({ name, platformData, onUnassignPlatform }) {
       </div>
       {isOccupied && trainDetails ? (
         <div>
-          <div className="flex justify-between items-center mt-0.5">
+          <div className="flex justify-between items-center mt-0.5 gap-2">
             <div className={`text-sm ${isOccupied ? 'text-green-100' : 'text-gray-700'} flex-1 min-w-0 mr-2`}>
               <p className="font-medium truncate">{trainDetails.trainNo} - {trainDetails.name}</p>
             </div>
-            <button onClick={() => onUnassignPlatform(platformData.id, trainDetails)} className="bg-red-500 text-white text-xs font-bold py-0.5 px-2 rounded-md hover:bg-red-600 transition-all flex-shrink-0">Unassign</button>
+            <div className="flex flex-shrink-0 gap-1">
+              <button onClick={() => onDepartTrain?.(platformData.id)} className="bg-blue-600 text-white text-xs font-bold py-0.5 px-2 rounded-md hover:bg-blue-700 transition-all">Depart</button>
+              <button onClick={() => onUnassignPlatform(platformData.id, trainDetails)} className="bg-red-500 text-white text-xs font-bold py-0.5 px-2 rounded-md hover:bg-red-600 transition-all">Unassign</button>
+            </div>
           </div>
           {actualArrival && (
             <p className={`text-xs mt-0.5 font-semibold ${isOccupied ? 'text-green-200' : 'text-gray-600'}`}></p>
