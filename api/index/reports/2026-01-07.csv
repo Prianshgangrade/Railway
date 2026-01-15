@@ -1,0 +1,4 @@
+date,trainNo,trainName,scheduled_arrival,scheduled_departure,actual_arrival,actual_departure,actual_platform_arrival,suggestions,actual_platform,incoming_line,outgoing_line
+2026-01-07,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,13:09,,13:10,"5, 6, 2, 1",5,HWH MD,
+2026-01-07,13433,SMVT Bengaluru - Malda Town Amrit Bharat Express (PT),00:15,00:20,21:44,,21:44,"2, 8, 6, 7, 5, 1",8,TATA DN,
+2026-01-07,F1,Freight,,,13:09,13:09,13:09,,3,MDN DOWN Joint,HWH UP

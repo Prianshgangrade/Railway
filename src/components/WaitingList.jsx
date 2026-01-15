@@ -9,15 +9,18 @@ export default function WaitingList({ waitingList, onFindPlatform, onRemove }) {
           const enqueued = train.enqueued_at ? new Date(train.enqueued_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
           const incomingLine = train.incoming_line || train.incomingLine || 'N/A';
           return (
-            <div key={`${train.trainNo}-${train.enqueued_at || ''}`} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
-              <div>
+            <div key={`${train.trainNo}-${train.enqueued_at || ''}`} className="p-3 bg-white rounded-lg shadow-sm">
+              <div className="mb-3">
                 <p className="font-bold text-gray-800">{train.trainNo} - {train.name}</p>
                 <p className="text-sm text-gray-500">Actual Arrival: {arrival}{enqueued && ` • Queued: ${enqueued}`}</p>
                 <p className="text-xs text-gray-600">Incoming Line: <span className="font-semibold">{incomingLine}</span></p>
               </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => onFindPlatform(train)} className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">Find Platform</button>
-              </div>
+              <button
+                onClick={() => onFindPlatform(train)}
+                className="w-full bg-blue-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Find Platform
+              </button>
             </div>
           );
         })}

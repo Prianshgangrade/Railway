@@ -1,0 +1,2 @@
+date,trainNo,trainName,scheduled_arrival,scheduled_departure,actual_arrival,actual_departure,actual_platform_arrival,suggestions,actual_platform,incoming_line,outgoing_line,Remarks
+2026-01-14,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,15:52,,15:52,"5, 8, 6, 2, 1",5,HWH MD,,

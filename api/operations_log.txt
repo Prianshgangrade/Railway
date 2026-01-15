@@ -556,3 +556,114 @@
 2025-11-20 18:37:52 | CHECK_WAITING_QUEUE: waiting list empty
 2025-11-20 18:37:52 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 18:37.
 2025-11-20 18:38:07 | ARRIVED & ASSIGNED: Train 12837 arrived at 18:38 and assigned to Platform 4, Platform 2. (platformArrival: 18:38)
+2025-12-29 23:33:43 | DEPART LINE: Train 18043 departing from Platform 2 via ADRA Joint.
+2025-12-29 23:33:43 | CHECK_WAITING_QUEUE: waiting list empty
+2025-12-29 23:33:43 | DEPARTED: Train 18043 departed from Platform 2, Platform 4 at 23:33.
+2025-12-29 23:33:53 | ARRIVED & ASSIGNED: Train 12837 arrived at 23:33 and assigned to Platform 4, Platform 2. (platformArrival: 23:33)
+2025-12-29 23:35:01 | CHECK_WAITING_QUEUE: waiting list empty
+2025-12-29 23:35:01 | DEPARTED: Train 38819 departed from Platform 6 at 23:35.
+2025-12-29 23:42:13 | DEPART LINE: Train 12837 departing from Platform 4 via HWH DN.
+2025-12-29 23:42:13 | CHECK_WAITING_QUEUE: waiting list empty
+2025-12-29 23:42:13 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 23:42.
+2025-12-30 00:32:48 | UNASSIGNED: Train F8 unassigned from Track 4 and returned to arrival list.
+2025-12-30 00:33:11 | ARRIVED & ASSIGNED: Train 12837 arrived at 00:33 and assigned to Platform 4, Platform 2. (platformArrival: 00:33)
+2025-12-30 00:33:14 | UNASSIGNED: Train 12837 unassigned from Platform 4, Platform 2 and returned to arrival list.
+2025-12-30 00:33:14 | WAITING: Train 12837 enqueued at 2025-12-29T19:03:14.399603 (actualArrival: 00:13) (incoming: HWH UP).
+2025-12-30 00:33:41 | ARRIVED & ASSIGNED: Train 13433 arrived at 00:33 and assigned to Platform 5. (platformArrival: 00:33)
+2025-12-30 00:33:44 | UNASSIGNED: Train 13433 unassigned from Platform 5 and returned to arrival list.
+2025-12-30 00:33:45 | WAITING: Train 13433 enqueued at 2025-12-29T19:03:45.225358 (actualArrival: 00:15) (incoming: TATA MD).
+2025-12-30 00:33:59 | ARRIVED & ASSIGNED: Train 12863 arrived at 00:33 and assigned to Platform 3, Platform 1. (platformArrival: 00:33)
+2025-12-30 00:34:03 | UNASSIGNED: Train 12863 unassigned from Platform 3, Platform 1 and returned to arrival list.
+2025-12-30 00:34:03 | WAITING: Train 12863 enqueued at 2025-12-29T19:04:03.886395 (actualArrival: 00:30) (incoming: HWH MD).
+2025-12-30 00:50:37 | ARRIVED & ASSIGNED: Train 12837 arrived at 00:50 and assigned to Platform 4, Platform 2. (platformArrival: 00:50)
+2025-12-30 19:00:26 | ARRIVED & ASSIGNED: Train 18086 arrived at 19:00 and assigned to Platform 3. (platformArrival: 19:00)
+2025-12-30 19:00:36 | DEPART LINE: Train 18086 departing from Platform 3 via TATA UP.
+2025-12-30 19:00:36 | CHECK_WAITING_QUEUE: evaluating train 13433 incoming_line='TATA MD' free_platforms=['P1', 'P1A', 'P2A', 'P3', 'P3A', 'P5', 'P6', 'P7', 'P8', 'T4']
+2025-12-30 19:00:36 | CHECK_WAITING_QUEUE: no feasible platform from scoring for train 13433 (incoming: TATA MD)
+2025-12-30 19:00:36 | CHECK_WAITING_QUEUE: evaluating train 12863 incoming_line='HWH MD' free_platforms=['P1', 'P1A', 'P2A', 'P3', 'P3A', 'P5', 'P6', 'P7', 'P8', 'T4']
+2025-12-30 19:00:36 | CHECK_WAITING_QUEUE: suggesting Platform 1 for train 12863
+2025-12-30 19:00:36 | DEPARTED: Train 18086 departed from Platform 3 at 19:00.
+2025-12-31 18:41:29 | DEPART LINE: Train 12837 departing from Platform 4 via TATA DN.
+2025-12-31 18:41:30 | CHECK_WAITING_QUEUE: evaluating train 13433 incoming_line='TATA MD' free_platforms=['P1', 'P1A', 'P2', 'P2A', 'P3', 'P3A', 'P4', 'P5', 'P6', 'P7', 'P8', 'T4']
+2025-12-31 18:41:30 | CHECK_WAITING_QUEUE: no feasible platform from scoring for train 13433 (incoming: TATA MD)
+2025-12-31 18:41:30 | CHECK_WAITING_QUEUE: evaluating train 12863 incoming_line='HWH MD' free_platforms=['P1', 'P1A', 'P2', 'P2A', 'P3', 'P3A', 'P4', 'P5', 'P6', 'P7', 'P8', 'T4']
+2025-12-31 18:41:30 | CHECK_WAITING_QUEUE: suggesting Platform 2 for train 12863
+2025-12-31 18:41:30 | DEPARTED: Train 12837 departed from Platform 4, Platform 2 at 18:41.
+2025-12-31 18:41:42 | ARRIVED & ASSIGNED: Train 12837 arrived at 18:41 and assigned to Platform 1, Platform 3. (platformArrival: 18:41)
+2026-01-03 13:35:09 | FREIGHT TRACK ASSIGN: Train F1 assigned to Cuttuck 3 (Track 3) (incoming MDN DOWN Joint).
+2026-01-03 13:35:27 | MAINTENANCE: Maintenance for Platform 1 set to ON.
+2026-01-03 13:35:31 | MAINTENANCE: Maintenance for Platform 1 set to OFF.
+2026-01-03 14:02:27 | ARRIVED & ASSIGNED: Train 12837 arrived at 14:02 and assigned to Platform 1, Platform 3. (platformArrival: 14:02)
+2026-01-03 14:02:49 | DEPART LINE: Train 12837 departing from Platform 1 via TATA DN.
+2026-01-03 14:02:49 | CHECK_WAITING_QUEUE: waiting list empty
+2026-01-03 14:02:49 | DEPARTED: Train 12837 departed from Platform 1, Platform 3 at 14:02.
+2026-01-03 14:03:00 | ARRIVED & ASSIGNED: Train 12837 arrived at 14:02 and assigned to Platform 2, Platform 4. (platformArrival: 14:03)
+2026-01-03 14:03:30 | UNASSIGNED: Train 12837 unassigned from Platform 4, Platform 2 and returned to arrival list.
+2026-01-03 14:03:30 | WAITING: Train 12837 enqueued at 2026-01-03T08:33:30.795285 (actualArrival: 00:13) (incoming: HWH MD).
+2026-01-03 14:03:40 | DEPART LINE: Train F1 departing from Track 3 via TATA DN.
+2026-01-03 14:03:40 | CHECK_WAITING_QUEUE: evaluating train 12837 incoming_line='HWH MD' free_platforms=['P1', 'P1A', 'P2', 'P2A', 'P3', 'P3A', 'P4', 'P4A', 'P5', 'P6', 'P7', 'P8', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']
+2026-01-03 14:03:40 | CHECK_WAITING_QUEUE: suggesting Platform 5 for train 12837
+2026-01-03 14:03:40 | DEPARTED: Train F1 departed from Track 3 at 14:03.
+2026-01-03 14:16:14 | ARRIVED & ASSIGNED: Train 12837 arrived at 14:16 and assigned to Platform 1, Platform 3. (platformArrival: 14:16)
+2026-01-03 14:16:24 | DEPART LINE: Train 12837 departing from Platform 3 via TATA DN.
+2026-01-03 14:16:24 | CHECK_WAITING_QUEUE: waiting list empty
+2026-01-03 14:16:24 | DEPARTED: Train 12837 departed from Platform 3, Platform 1 at 14:16.
+2026-01-03 14:21:56 | ARRIVED & ASSIGNED: Train 12837 arrived at 14:21 and assigned to Platform 1, Platform 3. (platformArrival: 14:21)
+2026-01-03 14:21:59 | UNASSIGNED: Train 12837 unassigned from Platform 1, Platform 3 and returned to arrival list.
+2026-01-03 14:21:59 | WAITING: Train 12837 enqueued at 2026-01-03T08:51:59.700749 (actualArrival: 00:13) (incoming: HWH MD).
+2026-01-03 14:22:09 | ARRIVED & ASSIGNED: Train 13433 arrived at 14:22 and assigned to Platform 2, Platform 4. (platformArrival: 14:22)
+2026-01-03 14:22:14 | DEPART LINE: Train 13433 departing from Platform 2 via HWH DN.
+2026-01-03 14:22:15 | DEPARTED: Train 13433 departed from Platform 2, Platform 4 at 14:22.
+2026-01-03 14:22:21 | ARRIVED & ASSIGNED: Train 12837 arrived at 14:22 and assigned to Platform 1, Platform 3. (platformArrival: 14:22)
+2026-01-07 12:44:06 | UNASSIGNED: Train 12837 unassigned from Platform 1, Platform 3 and returned to arrival list.
+2026-01-07 13:08:55 | ARRIVED & ASSIGNED: Train 12837 arrived at 13:08 and assigned to Platform 5. (platformArrival: 13:08)
+2026-01-07 13:09:01 | UNASSIGNED: Train 12837 unassigned from Platform 5 and returned to arrival list.
+2026-01-07 13:09:13 | ARRIVED & ASSIGNED: Train 12837 arrived at 13:09 and assigned to Platform 5. (platformArrival: 13:09)
+2026-01-07 13:09:15 | UNASSIGNED: Train 12837 unassigned from Platform 5 and returned to arrival list.
+2026-01-07 13:09:34 | FREIGHT TRACK ASSIGN: Train F1 assigned to Cuttuck 3 (Track 3) (incoming MDN DOWN Joint).
+2026-01-07 13:09:39 | DEPART LINE: Train F1 departing from Track 3 via HWH UP.
+2026-01-07 13:09:39 | DEPARTED: Train F1 departed from Track 3 at 13:09.
+2026-01-07 13:09:52 | ARRIVED & ASSIGNED: Train 12837 arrived at 13:09 and assigned to Platform 1, Platform 3. (platformArrival: 13:09)
+2026-01-07 13:09:55 | UNASSIGNED: Train 12837 unassigned from Platform 3, Platform 1 and returned to arrival list.
+2026-01-07 13:09:56 | WAITING: Train 12837 enqueued at 2026-01-07T07:39:56.004800 (actualArrival: 00:13) (incoming: HWH MD).
+2026-01-07 13:10:02 | ARRIVED & ASSIGNED: Train 12837 arrived at 13:09 and assigned to Platform 5. (platformArrival: 13:10)
+2026-01-07 21:44:06 | UNASSIGNED: Train 12837 unassigned from Platform 5 and returned to arrival list.
+2026-01-07 21:44:07 | WAITING: Train 12837 enqueued at 2026-01-07T16:14:07.416652 (actualArrival: 00:13) (incoming: HWH MD).
+2026-01-07 21:44:19 | ARRIVED & ASSIGNED: Train 13433 arrived at 21:44 and assigned to Platform 8. (platformArrival: 21:44)
+2026-01-07 21:46:54 | UNASSIGNED: Train 13433 unassigned from Platform 8 and returned to arrival list.
+2026-01-11 01:45:46 | ARRIVED & ASSIGNED: Train 13433 arrived at 01:45 and assigned to Platform 2, Platform 4. (platformArrival: 01:45)
+2026-01-11 01:45:54 | UNASSIGNED: Train 13433 unassigned from Platform 2, Platform 4 and returned to arrival list.
+2026-01-11 01:45:57 | ARRIVED & ASSIGNED: Train 13433 arrived at 01:45 and assigned to Platform 8. (platformArrival: 01:45)
+2026-01-11 01:47:02 | ARRIVED & ASSIGNED: Train 12863 arrived at 01:47 and assigned to Platform 5. (platformArrival: 01:47)
+2026-01-11 01:53:03 | DEPART LINE: Train 13433 departing from Platform 8 via HWH UP.
+2026-01-11 01:53:03 | DEPARTED: Train 13433 departed from Platform 8 at 01:53.
+2026-01-11 01:53:07 | DEPART LINE: Train 12863 departing from Platform 5 via HWH MD.
+2026-01-11 01:53:07 | DEPARTED: Train 12863 departed from Platform 5 at 01:53.
+2026-01-11 01:53:17 | ARRIVED & ASSIGNED: Train 12863 arrived at 01:53 and assigned to Platform 5. (platformArrival: 01:53)
+2026-01-11 01:54:13 | ARRIVED & ASSIGNED: Train 22202 arrived at 01:54 and assigned to Platform 8. (platformArrival: 01:54)
+2026-01-11 01:55:34 | UNASSIGNED: Train 22202 unassigned from Platform 8 and returned to arrival list.
+2026-01-11 01:55:36 | ARRIVED & ASSIGNED: Train 22202 arrived at 01:55 and assigned to Platform 2, Platform 4. (platformArrival: 01:55)
+2026-01-11 01:56:14 | ARRIVED & ASSIGNED: Train 22905 arrived at 01:56 and assigned to Platform 6. (platformArrival: 01:56)
+2026-01-11 01:56:33 | DEPART LINE: Train 22905 departing from Platform 6 via HWH DN.
+2026-01-11 01:56:34 | DEPARTED: Train 22905 departed from Platform 6 at 01:56.
+2026-01-11 01:59:25 | ARRIVED & ASSIGNED: Train 18047 arrived at 01:59 and assigned to Platform 1, Platform 3. (platformArrival: 01:59)
+2026-01-11 01:59:52 | UNASSIGNED: Train 18047 unassigned from Platform 1, Platform 3 and returned to arrival list.
+2026-01-11 01:59:55 | ARRIVED & ASSIGNED: Train 18047 arrived at 01:59 and assigned to Platform 6. (platformArrival: 01:59)
+2026-01-11 02:00:19 | DEPART LINE: Train 18047 departing from Platform 6 via ADRA Joint.
+2026-01-11 02:00:19 | DEPARTED: Train 18047 departed from Platform 6 at 02:00.
+2026-01-11 02:00:23 | DEPART LINE: Train 12863 departing from Platform 5 via East Coast UP Joint.
+2026-01-11 02:00:24 | DEPARTED: Train 12863 departed from Platform 5 at 02:00.
+2026-01-11 02:00:27 | DEPART LINE: Train 22202 departing from Platform 4 via HWH DN.
+2026-01-11 02:00:28 | DEPARTED: Train 22202 departed from Platform 4, Platform 2 at 02:00.
+2026-01-12 23:01:59 | ARRIVED & ASSIGNED: Train 13433 arrived at 23:01 and assigned to Platform 2, Platform 4. (platformArrival: 23:01)
+2026-01-12 23:02:02 | UNASSIGNED: Train 13433 unassigned from Platform 4, Platform 2 and returned to arrival list.
+2026-01-12 23:02:02 | WAITING: Train 13433 enqueued at 2026-01-12T17:32:02.679100 (actualArrival: 00:15) (incoming: TATA DN).
+2026-01-12 23:14:21 | ARRIVED & ASSIGNED: Train 18005 arrived at 23:14 and assigned to Platform 2, Platform 4. (platformArrival: 23:14)
+2026-01-12 23:14:23 | UNASSIGNED: Train 18005 unassigned from Platform 4, Platform 2 and returned to arrival list.
+2026-01-12 23:14:24 | WAITING: Train 18005 enqueued at 2026-01-12T17:44:24.062424 (actualArrival: 00:15) (incoming: TATA DN).
+2026-01-12 23:22:13 | ARRIVED & ASSIGNED: Train 12837 arrived at 23:22 and assigned to Platform 1, Platform 3. (platformArrival: 23:22)
+2026-01-12 23:22:16 | UNASSIGNED: Train 12837 unassigned from Platform 3, Platform 1 and returned to arrival list.
+2026-01-12 23:22:16 | Moved to WAITING: Train 12837 at 2026-01-12T23:22:16.627652+05:30 (actualArrival: 00:13) (incoming: HWH MD).
+2026-01-14 15:52:49 | ARRIVED & ASSIGNED: Train 12837 arrived at 15:52 and assigned to Platform 5. (platformArrival: 15:52)
+2026-01-14 15:53:33 | MAINTENANCE: Maintenance for Platform 1 set to ON.
+2026-01-14 15:53:36 | MAINTENANCE: Maintenance for Platform 1 set to OFF.

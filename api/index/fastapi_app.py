@@ -43,21 +43,291 @@ state_collection = db['station_state']
 logs_collection = db['operations_log']
 reports_collection = db['daily_reports']
 counters_collection = db['daily_counters']
+suggestions_cache_collection = db['suggestions_cache']
 
 API_DIR = os.path.dirname(__file__)
 BLOCKAGE_MATRIX_FILE = os.path.join(API_DIR, 'Track Connections.xlsx - Tracks.csv')
 BLOCKAGE_MATRIX = {}
 INCOMING_LINES = []
 
+# Incoming lines dropdown topology order (as provided by ops).
+# The UI will display lines in the order returned by `/api/incoming-lines`.
+TOPOLOGY_INCOMING_LINES = [
+    'MDN DN Joint',
+    'MDN UP Joint',
+    'TATA DN',
+    'East Coast DOWN Joint',
+    'ADRA Joint',
+    'TATA UP',
+    'East Coast UP Joint',
+    'HIJ Freight',
+    'HWH DN',
+    'HWH MID',
+    'HWH UP',
+]
+
+
+def order_lines_by_topology(lines: list[str]) -> list[str]:
+    """Return `lines` ordered by TOPOLOGY_INCOMING_LINES, appending unknowns.
+
+    Matching is case-insensitive and trims whitespace. Known topology labels are
+    returned in their canonical spelling from TOPOLOGY_INCOMING_LINES.
+    """
+    if not lines:
+        return []
+
+    def _norm(s: str) -> str:
+        return re.sub(r"\s+", " ", str(s or '').strip()).lower()
+
+    available_norm = {}
+    for raw in lines:
+        n = _norm(raw)
+        if not n:
+            continue
+        # keep first occurrence (preserve original list stability)
+        available_norm.setdefault(n, str(raw).strip())
+
+    ordered: list[str] = []
+    used = set()
+    for topo in TOPOLOGY_INCOMING_LINES:
+        n = _norm(topo)
+        if n in available_norm and n not in used:
+            ordered.append(topo)
+            used.add(n)
+
+    # Append anything not in topology list (in the order it appeared).
+    for raw in lines:
+        n = _norm(raw)
+        if not n or n in used:
+            continue
+        ordered.append(str(raw).strip())
+        used.add(n)
+
+    return ordered
+
+
+def resolve_incoming_line_for_blockage_matrix(incoming_line: str | None) -> str:
+    """Resolve UI incoming-line label to an existing BLOCKAGE_MATRIX key.
+
+    The scoring algorithm does an exact dict lookup: `blockage_matrix.get(incoming_line)`.
+    If the UI label differs from the matrix key (e.g., 'HWH MID' vs 'HWH MD',
+    'DOWN' vs 'DN'), no routes are found and suggestions come back empty.
+
+    This resolver keeps UI labels unchanged, but maps them to a best-match
+    matrix key for scoring.
+    """
+    raw = str(incoming_line or '').strip()
+    if not raw:
+        return ''
+    if raw in BLOCKAGE_MATRIX:
+        return raw
+
+    def _norm(s: str) -> str:
+        return re.sub(r"\s+", " ", str(s or '').strip()).lower()
+
+    # Build a normalized lookup table of matrix keys.
+    norm_to_key: dict[str, str] = {}
+    try:
+        for k in (BLOCKAGE_MATRIX or {}).keys():
+            ks = str(k or '').strip()
+            if not ks:
+                continue
+            norm_to_key.setdefault(_norm(ks), ks)
+    except Exception:
+        norm_to_key = {}
+
+    n = _norm(raw)
+
+    _alias_map = {
+        'mdn dn joint': 'MDN MD 1',
+        'mdn up joint': 'MDN MD 2',
+        'east coast down joint': 'HIJ MD 1 (DN)',
+        'east coast up joint': 'HIJ MD 2 (UP)',
+        'adra joint': 'TATA MD',
+    }
+    aliased = _alias_map.get(n)
+    if aliased:
+        if aliased in BLOCKAGE_MATRIX:
+            return aliased
+        an = _norm(aliased)
+        if an in norm_to_key:
+            return norm_to_key[an]
+
+    if n in norm_to_key:
+        return norm_to_key[n]
+
+    def _swap_word(s: str, src: str, dst: str) -> str:
+        return re.sub(rf"\b{re.escape(src)}\b", dst, s, flags=re.IGNORECASE)
+
+    # Try a small set of safe token aliases used in ops naming.
+    candidates = {
+        raw,
+        _swap_word(raw, 'MID', 'MD'),
+        _swap_word(raw, 'MD', 'MID'),
+        _swap_word(raw, 'DOWN', 'DN'),
+        _swap_word(raw, 'DN', 'DOWN'),
+    }
+    for cand in list(candidates):
+        candidates.add(re.sub(r"\s+", " ", str(cand).strip()))
+
+    for cand in candidates:
+        if cand in BLOCKAGE_MATRIX:
+            return cand
+        cn = _norm(cand)
+        if cn in norm_to_key:
+            return norm_to_key[cn]
+
+    return raw
+
+
+def _dedupe_preserve_order(values: list[str]) -> list[str]:
+    seen = set()
+    out = []
+    for v in values:
+        s = str(v).strip()
+        if not s or s in seen:
+            continue
+        seen.add(s)
+        out.append(s)
+    return out
+
+
+def _prefer_lines_matching_matrix(values: list[str]) -> list[str]:
+    """If blockage matrix is loaded, prefer lines that exist in it."""
+    cleaned = _dedupe_preserve_order([str(v).strip() for v in (values or [])])
+    if not cleaned or not BLOCKAGE_MATRIX:
+        return cleaned
+    allowed = set(BLOCKAGE_MATRIX.keys())
+    filtered = [v for v in cleaned if v in allowed]
+    return filtered if filtered else cleaned
+
+
+def _find_track_connections_collection_name() -> str | None:
+    """Locate the Mongo collection that stores the blockage matrix rows.
+
+    In your DB this is typically named similar to:
+    'Track Connections.xlsx - Tracks.csv' or 'Track Connections.xlsx - Tracks'.
+    """
+    try:
+        names = db.list_collection_names()
+    except Exception:
+        return None
+
+    preferred = [
+        'Track Connections.xlsx - Tracks.csv',
+        'Track Connections.xlsx - Tracks',
+        'Track Connections',
+        'track_connections',
+        'trackConnections',
+    ]
+    for name in preferred:
+        if name in names:
+            return name
+
+    # Best-effort fuzzy match
+    for name in names:
+        if 'Track Connections' in name and 'Track' in name:
+            return name
+    return None
+
+
+def load_incoming_lines_from_mongo() -> list[str]:
+    """Load the incoming line labels from Mongo.
+
+    Supported shapes:
+    A) Track-connections/blockage collection with one doc per line and a field 'INCOMING'.
+    B) Fallback collection 'incoming_lines' (older shape) with either a config doc or one-doc-per-line.
+    """
+    # Shape A: track connections collection
+    try:
+        coll_name = _find_track_connections_collection_name()
+        if coll_name:
+            coll = db.get_collection(coll_name)
+            for field in ('INCOMING', 'incoming', 'Incoming'):
+                vals = coll.distinct(field)
+                if vals:
+                    return _prefer_lines_matching_matrix([str(v) for v in vals])
+    except Exception:
+        pass
+
+    # Shape B: older dedicated collection
+    try:
+        coll = db.get_collection('incoming_lines')
+
+        doc = coll.find_one({'_id': 'incoming_lines'}, {'_id': 0}) or {}
+        for key in ('lines', 'incomingLines', 'incoming_lines', 'values'):
+            val = doc.get(key)
+            if isinstance(val, list) and val:
+                return _prefer_lines_matching_matrix([str(v) for v in val])
+
+        for field in ('name', 'line'):
+            vals = coll.distinct(field)
+            if vals:
+                return _prefer_lines_matching_matrix([str(v) for v in vals])
+    except Exception:
+        pass
+
+    return []
+
+
+def load_blockage_matrix_from_mongo() -> tuple[dict, list[str]]:
+    """Load blockage matrix and incoming line list from Mongo track-connections collection."""
+    coll_name = _find_track_connections_collection_name()
+    if not coll_name:
+        return {}, []
+
+    try:
+        coll = db.get_collection(coll_name)
+        docs = list(coll.find({}, {'_id': 0}))
+    except Exception:
+        return {}, []
+
+    matrix: dict = {}
+    lines: list[str] = []
+    for doc in docs:
+        if not isinstance(doc, dict):
+            continue
+        incoming = doc.get('INCOMING') or doc.get('incoming') or doc.get('Incoming') or doc.get('incoming_line') or doc.get('incomingLine')
+        if not incoming:
+            continue
+        incoming_line = str(incoming).strip()
+        if not incoming_line:
+            continue
+        lines.append(incoming_line)
+        row = {}
+        for key, val in doc.items():
+            header = str(key or '').strip()
+            if not header:
+                continue
+            if header.upper() in {'INCOMING', 'INCOMING_LINE', 'INCOMINGLINE'}:
+                continue
+            cell = str(val or '').strip()
+            if not cell:
+                continue
+            row[header] = parse_blockage_cell(cell)
+        matrix[incoming_line] = row
+
+    lines = _dedupe_preserve_order(lines)
+    return matrix, lines
+
 TRACK_LABELS = {
-    'Track 1': 'Cuttuck 1',
-    'Track 2': 'Cuttuck 2',
-    'Track 3': 'Cuttuck 3',
-    'Track 4': 'Midnapore 1',
-    'Track 5': 'Midnapore 2',
-    'Track 6': 'Midnapore 3',
+    'Track 1': 'Cuttack 2',
+    'Track 2': 'Cuttack 5',
+    'Track 3': 'Cuttack 6',
+    'Track 4': 'Midnapore 9',
+    'Track 5': 'Midnapore 10',
+    'Track 6': 'Midnapore 11',
 }
 ALLOWED_TRACK_IDS = set(TRACK_LABELS.keys())
+
+# Business rule helpers (keep scoring_algorithm unchanged)
+SHORT_SINGLE_PLATFORM_IDS = {
+    'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8',
+    'P1A', 'P2A', 'P3A', 'P4A',
+}
+
+# Long trains can be suggested on these as single platforms.
+LONG_SINGLE_PLATFORM_IDS = {'P5', 'P6', 'P7', 'P8'}
 
 # --- Train metadata cache (cuts round trips to Mongo for every suggestion/assignment) ---
 TRAIN_CACHE: dict[str, dict] = {}
@@ -114,15 +384,6 @@ def get_train_record(train_no: str | None, force_db: bool = False) -> dict:
 sse_broadcaster: queue.Queue[str] = queue.Queue()
 active_timers: dict[str, threading.Timer] = {}
 timers_lock = threading.Lock()
-
-# Suggestions registry (in-memory, ephemeral)
-import uuid
-suggestions: dict[str, dict] = {}
-suggestions_lock = threading.Lock()
-
-# Default suggestion config
-SUGGESTION_EXPIRY_SECONDS = int(os.getenv('SUGGESTION_EXPIRY_SECONDS', '30'))
-SUGGESTION_CHECK_K = int(os.getenv('SUGGESTION_CHECK_K', '3'))
 
 # Coalesced CSV write scheduling (avoid churn while keeping eventual consistency)
 csv_timers: dict[str, threading.Timer] = {}
@@ -314,10 +575,41 @@ def schedule_csv_write(date_str: str):
 
 
 def persist_report_update(train_no: str, update_fields: dict):
-    """Upsert daily report and schedule CSV generation for today's date in the background."""
+    """Update the latest daily report entry and schedule CSV generation.
+
+    Notes:
+    - We keep *multiple* entries per train per day (each assignment creates a new entry).
+    - This helper updates the most recent entry for the train/day (used for depart/outgoing-line/unassign).
+    """
     try:
         upsert_daily_report(train_no, update_fields)
         schedule_csv_write(_today_str())
+    except Exception:
+        pass
+
+
+def persist_report_entry(train_no: str, entry_fields: dict):
+    """Append a new daily report entry and schedule CSV generation.
+
+    Used for ASSIGN / REASSIGN events where a new CSV row is required.
+    """
+    try:
+        append_daily_report_entry(train_no, entry_fields)
+        schedule_csv_write(_today_str())
+    except Exception:
+        pass
+
+
+def persist_report_update_if_exists(train_no: str, update_fields: dict):
+    """Update the latest report entry only if one already exists.
+
+    This is used for non-state-changing actions like computing suggestions, where
+    we do not want to create a standalone report row.
+    """
+    try:
+        updated = update_latest_daily_report_if_exists(train_no, update_fields)
+        if updated:
+            schedule_csv_write(_today_str())
     except Exception:
         pass
 
@@ -335,134 +627,149 @@ def get_next_freight_tag(date_str: str | None = None) -> str:
     return f"F{counter_val}"
 
 
-def _expire_suggestion(suggestion_id: str):
-    with suggestions_lock:
-        if suggestion_id in suggestions:
-            # notify clients that suggestion expired
-            try:
-                sse_broadcaster.put(f"event: waiting_suggestion_expired\ndata: {json.dumps({'suggestion_id': suggestion_id})}\n\n")
-            except Exception:
-                pass
-            suggestions.pop(suggestion_id, None)
-
-
-def emit_suggestion(suggestion: dict):
-    """Store suggestion in registry and emit SSE to clients."""
-    suggestion_id = uuid.uuid4().hex
-    suggestion['suggestion_id'] = suggestion_id
-    suggestion['emitted_at'] = datetime.utcnow().isoformat()
-    suggestion['expires_at'] = (datetime.utcnow() + timedelta(seconds=SUGGESTION_EXPIRY_SECONDS)).isoformat()
-    with suggestions_lock:
-        suggestions[suggestion_id] = suggestion
-    # schedule expiry
-    try:
-        t = threading.Timer(SUGGESTION_EXPIRY_SECONDS, _expire_suggestion, args=(suggestion_id,))
-        t.daemon = True
-        t.start()
-    except Exception:
-        pass
-    # emit SSE
-    try:
-        sse_broadcaster.put(f"event: waiting_suggestion\ndata: {json.dumps(suggestion)}\n\n")
-    except Exception:
-        pass
-
-
-def check_waiting_queue(state: dict | None = None, freed_platforms: list | None = None, top_k: int | None = None):
-    """Check top of waiting queue for feasible assignments and emit suggestions.
-    Fetch latest state if not provided. Returns first suggestion dict or None."""
-    try:
-        if state is None:
-            state = state_collection.find_one({"_id": "current_station_state"}) or {}
-        top_k = top_k or SUGGESTION_CHECK_K
-        wl = state.get('waitingList', []) or []
-        if not wl:
-            log_action("CHECK_WAITING_QUEUE: waiting list empty")
-            return None
-        # Available platforms (IDs like 'Platform 1')
-        full_ids = [p['id'] for p in state.get('platforms', []) if not p.get('isOccupied') and not p.get('isUnderMaintenance')]
-        if not full_ids:
-            log_action("CHECK_WAITING_QUEUE: no available platforms")
-            return None
-        # Convert to simplified IDs ('P1','P2',...) for scoring
-        available_platforms = set()
-        for fid in full_ids:
-            parts = fid.split(' ')
-            if len(parts) == 2:
-                available_platforms.add(("P" if parts[0] == "Platform" else "T") + parts[1])
-
-        for candidate in wl[:top_k]:
-            train_no = str(candidate.get('trainNo'))
-            train_data = get_train_record(train_no)
-            incoming_line = candidate.get('incoming_line') or ''
-            log_action(f"CHECK_WAITING_QUEUE: evaluating train {train_no} incoming_line='{incoming_line}' free_platforms={sorted(list(available_platforms))}")
-            if not incoming_line:
-                log_action(f"CHECK_WAITING_QUEUE: skipping train {train_no} no incoming_line stored")
-                continue
-            incoming_train = ScoringTrain(
-                train_id=train_data.get('TRAIN NO'),
-                train_name=train_data.get('TRAIN NAME'),
-                train_type='Freight' if ('Goods' in train_data.get('TRAIN NAME', '') or 'Freight' in train_data.get('TRAIN NAME', '')) else 'Passenger',
-                is_terminating=train_data.get('ISTERMINATING', False),
-                length=str(train_data.get('LENGTH', 'Long')).strip().lower(),
-                needs_platform=True,
-                direction=train_data.get('DIRECTION'),
-                historical_platform=str(train_data.get('PLATFORM NO', '')).split(',')[0].strip(),
-                zone=train_data.get('ZONE', 'SER')
-            )
-            ranked = calculate_platform_scores(incoming_train, available_platforms, incoming_line, BLOCKAGE_MATRIX)
-            if not ranked:
-                log_action(f"CHECK_WAITING_QUEUE: no feasible platform from scoring for train {train_no} (incoming: {incoming_line})")
-                continue
-            best = ranked[0]
-            pf_id = best.get('platformId')
-            display_pf = f"Platform {pf_id.replace('P','')}" if pf_id and pf_id.startswith('P') else f"Track {pf_id.replace('T','')}"
-            suggested_platforms = [display_pf]
-            is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
-            if is_long and display_pf.startswith('Platform'):
-                partner = find_partner_platform_id(display_pf)
-                if partner:
-                    partner_entry = next((p for p in state.get('platforms', []) if p.get('id') == partner), None)
-                    if partner_entry and not partner_entry.get('isOccupied') and not partner_entry.get('isUnderMaintenance'):
-                        suggested_platforms.append(partner)
-            suggestion = {
-                'trainNo': train_no,
-                'trainName': train_data.get('TRAIN NAME', ''),
-                'suggestedPlatformIds': suggested_platforms,
-                'score': best.get('score'),
-                'enqueued_at': candidate.get('enqueued_at')
-            }
-            log_action(f"CHECK_WAITING_QUEUE: suggesting {display_pf} for train {train_no}")
-            emit_suggestion(suggestion)
-            return suggestion
-        # If loop completes without a suggestion
-        log_action("CHECK_WAITING_QUEUE: no suggestion emitted for top candidates; none feasible")
-    except Exception as e:
-        log_action(f"CHECK_WAITING_QUEUE ERROR: {e}")
-        return None
-    return None
-
-
 def upsert_daily_report(train_no, update_fields, date_str=None):
     if not train_no:
         return
     date_key = date_str or _today_str()
+
+    # Update only the most recent entry for this train/day.
+    # If none exists yet (older data / edge cases), create a baseline entry.
+    query = {"date": date_key, "trainNo": str(train_no)}
+    latest = None
+    try:
+        latest = reports_collection.find_one(query, sort=[('event_time', -1), ('_id', -1)])
+    except Exception:
+        latest = reports_collection.find_one(query)
+
+    if latest and latest.get('_id') is not None:
+        reports_collection.update_one(
+            {"_id": latest['_id']},
+            {"$set": {**update_fields, "date": date_key, "trainNo": str(train_no)}},
+            upsert=False,
+        )
+        return
+
+    # No existing entry; create one so updates aren't lost.
+    doc = {**update_fields, "date": date_key, "trainNo": str(train_no)}
+    doc.setdefault('event_time', datetime.utcnow().isoformat())
+    reports_collection.insert_one(doc)
+
+
+def update_latest_daily_report_if_exists(train_no, update_fields, date_str=None):
+    """Update the latest entry for the train/day; no insert if missing."""
+    if not train_no:
+        return False
+    date_key = date_str or _today_str()
+    query = {"date": date_key, "trainNo": str(train_no)}
+    latest = None
+    try:
+        latest = reports_collection.find_one(query, sort=[('event_time', -1), ('_id', -1)])
+    except Exception:
+        latest = reports_collection.find_one(query)
+    if not latest or latest.get('_id') is None:
+        return False
     reports_collection.update_one(
-        {"date": date_key, "trainNo": str(train_no)},
-        {"$set": {**update_fields, "date": date_key, "trainNo": str(train_no)}},
-        upsert=True,
+        {"_id": latest['_id']},
+        {"$set": {**(update_fields or {}), "date": date_key, "trainNo": str(train_no)}},
+        upsert=False,
     )
+    return True
+
+
+def persist_suggestions_snapshot(train_no: str, suggestion_fields: dict):
+    """Persist suggestions for a train without creating a standalone report row.
+
+    - If a report entry already exists, update the latest entry.
+    - Otherwise, cache it for the next assignment/reassignment entry.
+    """
+    if not train_no:
+        return
+    date_key = _today_str()
+    fields = suggestion_fields or {}
+    try:
+        updated = update_latest_daily_report_if_exists(train_no, fields, date_key)
+    except Exception:
+        updated = False
+
+    if not updated:
+        try:
+            suggestions_cache_collection.update_one(
+                {"date": date_key, "trainNo": str(train_no)},
+                {
+                    "$set": {
+                        **fields,
+                        "date": date_key,
+                        "trainNo": str(train_no),
+                        "updated_at": datetime.utcnow().isoformat(),
+                    }
+                },
+                upsert=True,
+            )
+        except Exception:
+            pass
+
+
+def persist_assignment_report_entry(train_no: str, entry_fields: dict):
+    """Insert a new assignment/reassignment report entry.
+
+    If suggestions were computed before assignment, merge cached suggestions into
+    this entry so the CSV row includes them.
+    """
+    if not train_no:
+        return
+    date_key = _today_str()
+    merged = dict(entry_fields or {})
+    try:
+        cached = suggestions_cache_collection.find_one({"date": date_key, "trainNo": str(train_no)}, {"_id": 0})
+    except Exception:
+        cached = None
+    if cached:
+        # Only set if not already provided by caller
+        if 'suggestions' not in merged and cached.get('suggestions'):
+            merged['suggestions'] = cached.get('suggestions')
+        if 'incoming_line' not in merged and cached.get('incoming_line'):
+            merged['incoming_line'] = cached.get('incoming_line')
+
+    append_daily_report_entry(train_no, merged, date_key)
+
+    # Clear cache after successful insert so next assignment starts fresh
+    try:
+        suggestions_cache_collection.delete_one({"date": date_key, "trainNo": str(train_no)})
+    except Exception:
+        pass
+
+    try:
+        schedule_csv_write(date_key)
+    except Exception:
+        pass
+
+
+def append_daily_report_entry(train_no, entry_fields, date_str=None):
+    """Insert a new report entry (new CSV row) for this train/day."""
+    if not train_no:
+        return
+    date_key = date_str or _today_str()
+    doc = {**(entry_fields or {}), "date": date_key, "trainNo": str(train_no)}
+    doc.setdefault('event_time', datetime.utcnow().isoformat())
+    # For assignment entries we keep Remarks empty unless explicitly provided.
+    if 'Remarks' not in doc:
+        doc['Remarks'] = ''
+    reports_collection.insert_one(doc)
 
 
 def write_csv_for_date(date_str):
     try:
-        rows = list(reports_collection.find({"date": date_str}, {"_id": 0}).sort("trainNo", 1))
+        rows = list(
+            reports_collection
+            .find({"date": date_str}, {"_id": 0})
+            .sort([("trainNo", 1), ("event_time", 1)])
+        )
         csv_path = os.path.join(API_DIR, 'reports', f"{date_str}.csv")
         os.makedirs(os.path.dirname(csv_path), exist_ok=True)
         headers = [
             'date', 'trainNo', 'trainName', 'scheduled_arrival', 'scheduled_departure',
             'actual_arrival', 'actual_departure', 'actual_platform_arrival', 'suggestions', 'actual_platform',
-            'incoming_line', 'outgoing_line'
+            'incoming_line', 'outgoing_line', 'Remarks' 
         ]
         with open(csv_path, 'w', newline='', encoding='utf-8') as f:
             import csv as _csv
@@ -488,6 +795,7 @@ def write_csv_for_date(date_str):
                     'actual_platform': normalized_actual_platform,
                     'incoming_line': r.get('incoming_line', ''),
                     'outgoing_line': r.get('outgoing_line', ''),
+                    'Remarks': r.get('Remarks', ''),
                 })
     except Exception:
         pass
@@ -519,9 +827,10 @@ def enforce_track_layout(state: dict) -> dict:
                     waiting_nos.add(train_no)
                 changed = True
                 continue
-            if entry.get('displayName') != TRACK_LABELS[pid]:
+            friendly = TRACK_LABELS.get(pid)
+            if friendly and entry.get('displayName') != friendly:
                 entry = dict(entry)
-                entry['displayName'] = TRACK_LABELS[pid]
+                entry['displayName'] = friendly
                 changed = True
         normalized.append(entry)
     if changed:
@@ -534,15 +843,113 @@ def enforce_track_layout(state: dict) -> dict:
     return state
 
 
+def _default_platforms() -> list[dict]:
+    """Fallback platform list if Mongo "platforms" master is missing."""
+    platform_ids = [
+        'Platform 1', 'Platform 2', 'Platform 3', 'Platform 4',
+        'Platform 1A', 'Platform 2A', 'Platform 3A', 'Platform 4A',
+        'Platform 5', 'Platform 6', 'Platform 7', 'Platform 8',
+    ]
+    track_ids = sorted(list(ALLOWED_TRACK_IDS))
+    ids = platform_ids + track_ids
+    return [
+        {
+            'id': pid,
+            'isOccupied': False,
+            'trainDetails': None,
+            'isUnderMaintenance': False,
+            'actualArrival': None,
+        }
+        for pid in ids
+    ]
+
+
+def _build_initial_platforms_from_master() -> list[dict]:
+    """Build initial platforms list from Mongo platforms master; fall back to defaults."""
+    try:
+        platforms_master_raw = list(platforms_collection.find({}, {'_id': 0}))
+        if len(platforms_master_raw) == 1 and isinstance(platforms_master_raw[0], dict) and 'tracks' in platforms_master_raw[0]:
+            platforms_master = platforms_master_raw[0].get('tracks') or []
+        else:
+            platforms_master = platforms_master_raw
+
+        initial_platforms: list[dict] = []
+        for track_data in platforms_master:
+            if not isinstance(track_data, dict):
+                continue
+            is_platform = bool(track_data.get('is_platform', False))
+            raw_id = str(track_data.get('id', '') or '')
+            if not raw_id:
+                continue
+            item_id = raw_id.replace('P', '').replace('T', '')
+            initial_platforms.append({
+                'id': f"Platform {item_id}" if is_platform else f"Track {item_id}",
+                'isOccupied': False,
+                'trainDetails': None,
+                'isUnderMaintenance': False,
+                'actualArrival': None
+            })
+
+        # Keep only tracks we actually support in UI (Track 1–6)
+        if initial_platforms:
+            initial_platforms = [
+                p for p in initial_platforms
+                if not str(p.get('id', '')).startswith('Track') or p.get('id') in ALLOWED_TRACK_IDS
+            ]
+        return initial_platforms or _default_platforms()
+    except Exception:
+        return _default_platforms()
+
+
+def _ensure_state_platforms_present(state: dict | None = None) -> dict:
+    """Ensure station_state has a non-empty platforms list (repairs accidental empty array)."""
+    if state is None:
+        state = state_collection.find_one({"_id": "current_station_state"}) or {}
+    if state.get('platforms'):
+        return state
+
+    platforms_list = _build_initial_platforms_from_master()
+    state['platforms'] = platforms_list
+    try:
+        state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
+    except Exception:
+        pass
+    return state
+
+
 # ---------- FastAPI lifecycle ----------
 
 @app.on_event("startup")
 async def startup_event():
     global BLOCKAGE_MATRIX, INCOMING_LINES
-    BLOCKAGE_MATRIX, INCOMING_LINES = load_blockage_matrix()
+    # Prefer MongoDB for blockage matrix + incoming lines when available.
+    mongo_matrix, mongo_lines = load_blockage_matrix_from_mongo()
+    if mongo_matrix and mongo_lines:
+        BLOCKAGE_MATRIX, INCOMING_LINES = mongo_matrix, mongo_lines
+    else:
+        BLOCKAGE_MATRIX, INCOMING_LINES = load_blockage_matrix()
+        # If only the line list exists in Mongo, use it for dropdowns.
+        try:
+            mongo_only_lines = load_incoming_lines_from_mongo()
+            if mongo_only_lines:
+                INCOMING_LINES = mongo_only_lines
+        except Exception:
+            pass
     # Ensure helpful indexes exist (idempotent)
+    # NOTE: Reports now allow multiple entries per train per day (reassign creates a new row),
+    # so we must NOT keep the old unique (date, trainNo) index.
     try:
-        reports_collection.create_index([('date', 1), ('trainNo', 1)], unique=True)
+        info = reports_collection.index_information() or {}
+        for idx_name, spec in info.items():
+            try:
+                if not spec.get('unique'):
+                    continue
+                keys = spec.get('key') or []
+                if keys == [('date', 1), ('trainNo', 1)]:
+                    reports_collection.drop_index(idx_name)
+            except Exception:
+                pass
+        reports_collection.create_index([('date', 1), ('trainNo', 1), ('event_time', 1)])
     except Exception:
         pass
     try:
@@ -592,6 +999,12 @@ async def startup_event():
         except Exception:
             pass
 
+    # Repair if state exists but platforms list is empty
+    try:
+        _ensure_state_platforms_present()
+    except Exception:
+        pass
+
 
 # ---------- Routes ----------
 
@@ -631,7 +1044,7 @@ async def stream():
 
 @app.get("/api/station-data")
 async def get_station_data():
-    state = state_collection.find_one({"_id": "current_station_state"}) or {}
+    state = _ensure_state_platforms_present()
     if state and '_id' in state:
         state['_id'] = str(state['_id'])
     # Sync arriving trains from master
@@ -714,7 +1127,38 @@ async def platform_suggestions(body: SuggestRequest, background_tasks: Backgroun
     available_platforms = get_available_platforms(frontend_platforms)
     frontend_platforms = frontend_platforms or []
     is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
-    ranked = calculate_platform_scores(incoming_train, available_platforms, incoming_line, BLOCKAGE_MATRIX)
+
+    # Enforce business rules (keep scoring_algorithm unchanged):
+    # - Short trains: can use any single platform (1–8 + 1A–4A).
+    # - Long trains: paired options (1+3 or 2+4) OR single platforms 5–8.
+    if is_long:
+        long_candidates = {pid for pid in available_platforms if pid in LONG_SINGLE_PLATFORM_IDS}
+        if 'P1' in available_platforms and 'P3' in available_platforms:
+            long_candidates.add('P1')
+        if 'P2' in available_platforms and 'P4' in available_platforms:
+            long_candidates.add('P2')
+        available_platforms = long_candidates
+    else:
+        available_platforms = {pid for pid in available_platforms if pid in SHORT_SINGLE_PLATFORM_IDS}
+
+    # HIJ Freight is a special incoming line that should not depend on blockage matrix.
+    # If the matrix lacks a row for it, we still want to suggest available platforms.
+    incoming_norm = re.sub(r"\s+", " ", str(incoming_line or '').strip()).lower()
+    if incoming_norm == 'hij freight':
+        def _sort_pf(pid: str):
+            s = str(pid or '')
+            m = re.match(r'^([PT])(\d+)([A-Za-z]*)$', s)
+            if not m:
+                return (9, 9999, s)
+            kind = 0 if m.group(1) == 'P' else 1
+            num = int(m.group(2))
+            suf = m.group(3) or ''
+            return (kind, num, suf)
+
+        ranked = [{'platformId': pid, 'score': 0.0} for pid in sorted(available_platforms, key=_sort_pf)]
+    else:
+        scoring_incoming_line = resolve_incoming_line_for_blockage_matrix(incoming_line)
+        ranked = calculate_platform_scores(incoming_train, available_platforms, scoring_incoming_line, BLOCKAGE_MATRIX)
 
     final = []
     for suggestion in ranked:
@@ -733,20 +1177,19 @@ async def platform_suggestions(body: SuggestRequest, background_tasks: Backgroun
             'platformId': display_id,
             'score': suggestion['score'],
             'platformIds': combined_ids,
-            'blockages': suggestion.get('blockages', {}),
+            'blockages': None if not is_long else suggestion.get('blockages', {}),
             'historicalMatch': suggestion.get('historicalMatch', False),
             'historicalPlatform': suggestion.get('historicalPlatform')
         })
 
     all_suggestions = [s['platformId'] for s in final]
     normalized_suggestions = normalize_platform_labels(all_suggestions)
+    # IMPORTANT: generating suggestions should not create its own report row.
+    # If an assignment entry exists, update it; otherwise cache for the next assignment.
     background_tasks.add_task(
-        persist_report_update,
+        persist_suggestions_snapshot,
         train_no,
         {
-            'trainName': train_data.get('TRAIN NAME', ''),
-            'scheduled_arrival': train_data.get('ARRIVAL AT KGP', ''),
-            'scheduled_departure': train_data.get('DEPARTURE FROM KGP', ''),
             'incoming_line': incoming_line,
             'suggestions': normalized_suggestions,
         },
@@ -757,7 +1200,9 @@ async def platform_suggestions(body: SuggestRequest, background_tasks: Backgroun
 
 @app.get("/api/incoming-lines")
 async def get_incoming_lines():
-    return INCOMING_LINES
+    # IMPORTANT: The UI dropdown should use the hardcoded topology list only.
+    # We intentionally ignore Mongo/CSV here to keep the order deterministic.
+    return list(TOPOLOGY_INCOMING_LINES)
 
 
 # Note: Pydantic v2 removed __root__ on BaseModel; for free-form bodies we just use `dict` directly
@@ -811,7 +1256,9 @@ async def add_to_waiting_list(body: dict, background_tasks: BackgroundTasks):
     if not train_to_wait:
         raise HTTPException(status_code=404, detail=f"Train {train_no} not found in arriving trains.")
     # prepare waiting entry with enqueue timestamp and actualArrival if provided
-    enqueued_at = datetime.utcnow().isoformat()
+    # Use local timezone time (not UTC) so logs match the operator clock.
+    # Keep ISO format (24-hour) and include offset like +05:30.
+    enqueued_at = datetime.now().astimezone().isoformat()
     actual_arrival = body.get('actualArrival') or train_to_wait.get('scheduled_arrival') or None
     incoming_line = body.get('incomingLine') or ''
     waiting_entry = {
@@ -826,7 +1273,7 @@ async def add_to_waiting_list(body: dict, background_tasks: BackgroundTasks):
     wl.sort(key=lambda x: (x.get('actualArrival') or '99:99', x.get('enqueued_at') or ''))
     state['waitingList'] = wl
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
-    background_tasks.add_task(log_action, f"WAITING: Train {train_no} enqueued at {enqueued_at} (actualArrival: {actual_arrival}) (incoming: {incoming_line}).")
+    background_tasks.add_task(log_action, f"Moved to WAITING: Train {train_no} at {enqueued_at} (actualArrival: {actual_arrival}) (incoming: {incoming_line}).")
     return {"message": f"Train {train_no} added to the waiting list."}
 
 
@@ -956,8 +1403,10 @@ async def assign_platform(body: dict, background_tasks: BackgroundTasks):
         log_action,
         f"ARRIVED & ASSIGNED: Train {train_no} arrived at {actual_arrival} and assigned to {', '.join(platform_ids)}. (platformArrival: {actual_platform_arrival})"
     )
+    # ASSIGN/REASSIGN should create a NEW report entry (new CSV row).
+    # Merge any cached suggestions from earlier "Get Platform Suggestions".
     background_tasks.add_task(
-        persist_report_update,
+        persist_assignment_report_entry,
         train_no,
         {
             'trainName': train_name_for_report,
@@ -966,7 +1415,8 @@ async def assign_platform(body: dict, background_tasks: BackgroundTasks):
             'actual_arrival': actual_arrival,
             'actual_platform': ', '.join(normalize_platform_labels(platform_ids)),
             'actual_platform_arrival': actual_platform_arrival,
-            'incoming_line': train_to_assign.get('incoming_line') or provided_incoming_line or ''
+            'incoming_line': train_to_assign.get('incoming_line') or provided_incoming_line or '',
+            'Remarks': '',
         },
     )
     return {"message": f"Train {train_no} assigned to {', '.join(platform_ids)}."}
@@ -1014,15 +1464,17 @@ async def assign_track(body: dict, background_tasks: BackgroundTasks):
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
     friendly_name = TRACK_LABELS.get(track_id, track_id)
     background_tasks.add_task(log_action, f"FREIGHT TRACK ASSIGN: Train {train_no} assigned to {friendly_name} ({track_id}) (incoming {incoming_line}).")
+    # Track assignment should also create a NEW report entry (new CSV row)
     background_tasks.add_task(
-        persist_report_update,
+        persist_assignment_report_entry,
         train_no,
         {
             'trainName': train_name,
             'actual_arrival': arrival_timestamp,
             'actual_platform': normalize_platform_label(track_id),
             'actual_platform_arrival': arrival_timestamp,
-            'incoming_line': incoming_line
+            'incoming_line': incoming_line,
+            'Remarks': '',
         }
     )
     return {"message": f"Freight train {train_no} assigned to {track_id}.", "trainNo": str(train_no)}
@@ -1070,6 +1522,11 @@ async def unassign_platform(body: dict, background_tasks: BackgroundTasks):
     # Persist state synchronously for immediate reflection; log in background
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
     background_tasks.add_task(log_action, f"UNASSIGNED: Train {train_details['trainNo']} unassigned from {', '.join(cleared_platforms)} and returned to arrival list.")
+    # Requirement: when unassigned, write "unassigned" into Remarks on the current/latest row.
+    try:
+        background_tasks.add_task(persist_report_update, train_details['trainNo'], {'Remarks': 'unassigned'})
+    except Exception:
+        pass
     # (No auto-suggestion trigger on unassign per updated requirement.)
     return {"message": f"Train {train_details['trainNo']} unassigned from {', '.join(cleared_platforms)}."}
 
@@ -1136,11 +1593,6 @@ async def depart_train(body: dict, background_tasks: BackgroundTasks):
     )
     background_tasks.add_task(persist_report_update, train_details['trainNo'], {'actual_departure': departure_time})
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
-    # After freeing platforms, check waiting queue for suggestions
-    try:
-        check_waiting_queue(None, freed_platforms=cleared_platforms)
-    except Exception:
-        pass
     return {"message": f"Train {train_details['trainNo']} departed from {', '.join(cleared_platforms)}."}
 
 
@@ -1185,121 +1637,55 @@ async def toggle_maintenance(body: dict):
     return {"message": f"Maintenance status toggled for {platform_id}."}
 
 
-@app.post("/api/accept-waiting-suggestion")
-async def accept_waiting_suggestion(body: dict, background_tasks: BackgroundTasks):
-    suggestion_id = body.get('suggestion_id') or body.get('suggestionId')
-    if not suggestion_id:
-        raise HTTPException(status_code=400, detail="suggestion_id required")
-    with suggestions_lock:
-        suggestion = suggestions.get(suggestion_id)
-    if not suggestion:
-        raise HTTPException(status_code=404, detail="Suggestion not found or expired")
-    train_no = suggestion.get('trainNo')
-    suggested_platforms = suggestion.get('suggestedPlatformIds', [])
-    # Re-fetch state and verify platform(s) are free
-    state = state_collection.find_one({"_id": "current_station_state"}) or {}
-    # Determine if train requires partner platform (long train)
-    train_data = get_train_record(str(train_no))
-    is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
-
-    # Expand suggested platforms with partner if long and only a single head platform suggested
-    expanded_platforms = list(suggested_platforms)
-    if is_long and len(expanded_platforms) == 1:
-        partner = find_partner_platform_id(expanded_platforms[0])
-        if partner:
-            expanded_platforms.append(partner)
-
-    # Verify availability for all platforms to be assigned
-    for sp in expanded_platforms:
-        p = next((p for p in state.get('platforms', []) if p.get('id') == sp), None)
-        if not p:
-            raise HTTPException(status_code=404, detail=f"Suggested platform {sp} not found in state")
-        if p.get('isOccupied') or p.get('isUnderMaintenance'):
-            # If partner was auto-added for long train and is not available, reject as per assign-platform behavior
-            raise HTTPException(status_code=409, detail=f"Suggested platform {sp} is no longer available")
-    # Find train in waiting list
-    wl = state.get('waitingList', []) or []
-    train_to_assign = next((t for t in wl if str(t.get('trainNo')) == str(train_no)), None)
-    if not train_to_assign:
-        raise HTTPException(status_code=404, detail="Train not in waiting list")
-    # Remove from waiting list
-    state['waitingList'] = [t for t in wl if str(t.get('trainNo')) != str(train_no)]
-    # Use HH:MM format for platform arrival
-    actual_platform_arrival = datetime.now().strftime('%H:%M')
-    # Assign to suggested platforms
-    # Store incoming line on train details
-    incoming_line_val = train_to_assign.get('incoming_line')
-
-    # Compute HH:MM stop gap to schedule departure alerts (optional, parity with assign-platform)
-    stoppage_seconds = 0
-    try:
-        stoppage_seconds = time_difference_seconds(train_data.get('ARRIVAL AT KGP'), train_data.get('DEPARTURE FROM KGP'))
-    except Exception:
-        stoppage_seconds = 0
-
-    # If assigning two platforms, set linkedPlatformId for both
-    linked_map = {expanded_platforms[0]: expanded_platforms[1], expanded_platforms[1]: expanded_platforms[0]} if len(expanded_platforms) > 1 else {}
-
-    for platform_id in expanded_platforms:
-        for i, p in enumerate(state.get('platforms', [])):
-            if p.get('id') == platform_id:
-                # Mark the first suggested platform as primary (the head/platform requested)
-                is_primary = (platform_id == expanded_platforms[0])
-                train_details = {"trainNo": train_no, "name": suggestion.get('trainName'), 'actualPlatformArrival': actual_platform_arrival}
-                if incoming_line_val:
-                    train_details['incomingLine'] = incoming_line_val
-                if platform_id in linked_map:
-                    train_details['linkedPlatformId'] = linked_map[platform_id]
-                if is_primary:
-                    train_details['isPrimary'] = True
-                state['platforms'][i]['isOccupied'] = True
-                state['platforms'][i]['trainDetails'] = train_details
-                state['platforms'][i]['actualArrival'] = train_to_assign.get('actualArrival')
-                state['platforms'][i]['actualPlatformArrival'] = actual_platform_arrival
-                if stoppage_seconds > 0:
-                    try:
-                        timer = threading.Timer(stoppage_seconds, lambda: sse_broadcaster.put(
-                            f"event: departure_alert\ndata: {json.dumps({'train_number': train_no, 'train_name': train_data.get('TRAIN NAME'), 'platform_id': platform_id})}\n\n"
-                        ))
-                        with timers_lock:
-                            active_timers[platform_id] = timer
-                        timer.start()
-                    except Exception:
-                        pass
-                break
-    # persist state synchronously
-    state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
-    # remove suggestion from registry
-    with suggestions_lock:
-        suggestions.pop(suggestion_id, None)
-    # emit SSE event to notify clients
-    try:
-        sse_broadcaster.put(f"event: waiting_suggestion_accepted\ndata: {json.dumps({'suggestion_id': suggestion_id, 'trainNo': train_no, 'platforms': expanded_platforms, 'assigned_at': actual_platform_arrival})}\n\n")
-    except Exception:
-        pass
-    # persist report update and schedule csv write in background
-    try:
-        normalized_platforms = ', '.join(normalize_platform_labels(expanded_platforms))
-        background_tasks.add_task(persist_report_update, train_no, {'actual_platform_arrival': actual_platform_arrival, 'actual_platform': normalized_platforms})
-    except Exception:
-        pass
-    background_tasks.add_task(log_action, f"SUGGESTION ACCEPTED: Train {train_no} assigned to {', '.join(expanded_platforms)} via suggestion {suggestion_id} at {actual_platform_arrival}.")
-    # (Do not chain another suggestion automatically.)
-    return {"message": f"Train {train_no} assigned to {', '.join(expanded_platforms)}."}
-
-
 @app.get("/api/report/download")
-async def download_report(date: str | None = None):
-    date_str = date or _today_str()
+async def download_report(
+    date: str | None = None,
+    startDate: str | None = None,
+    endDate: str | None = None,
+):
+    """Download a CSV report.
+
+    - Single date: `?date=YYYY-MM-DD` (backward compatible)
+    - Date range: `?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` (inclusive)
+
+    Returns one combined CSV; includes a `date` column.
+    """
+
+    def _is_ymd(s: str) -> bool:
+        return bool(re.match(r"^\d{4}-\d{2}-\d{2}$", s or ''))
+
+    use_range = bool(startDate or endDate)
+    if use_range:
+        start = startDate or endDate
+        end = endDate or startDate
+        if not start or not end:
+            raise HTTPException(status_code=400, detail="startDate and endDate are required for range download.")
+        if not _is_ymd(start) or not _is_ymd(end):
+            raise HTTPException(status_code=400, detail="Dates must be in YYYY-MM-DD format.")
+        if start > end:
+            start, end = end, start
+        query = {"date": {"$gte": start, "$lte": end}}
+        filename = f"{start}_to_{end}.csv"
+    else:
+        date_str = date or _today_str()
+        if not _is_ymd(date_str):
+            raise HTTPException(status_code=400, detail="date must be in YYYY-MM-DD format.")
+        query = {"date": date_str}
+        filename = f"{date_str}.csv"
+
     try:
-        rows = list(reports_collection.find({"date": date_str}, {"_id": 0}).sort("trainNo", 1))
+        rows = list(
+            reports_collection
+            .find(query, {"_id": 0})
+            .sort([("date", 1), ("trainNo", 1), ("event_time", 1)])
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to read reports: {e}")
 
     headers_list = [
         'date', 'trainNo', 'trainName', 'scheduled_arrival', 'scheduled_departure',
         'actual_arrival', 'actual_departure', 'actual_platform_arrival', 'suggestions', 'actual_platform',
-        'incoming_line', 'outgoing_line'
+        'incoming_line', 'outgoing_line', 'Remarks'
     ]
 
     def generate():
@@ -1322,6 +1708,7 @@ async def download_report(date: str | None = None):
                 normalized_actual_platform or '',
                 r.get('incoming_line', '') or '',
                 r.get('outgoing_line', '') or '',
+                r.get('Remarks', '') or '',
             ]
             safe = []
             for v in values:
@@ -1333,7 +1720,7 @@ async def download_report(date: str | None = None):
 
     headers = {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': f'attachment; filename="{date_str}.csv"'
+        'Content-Disposition': f'attachment; filename="{filename}"'
     }
     return StreamingResponse(generate(), headers=headers)
 

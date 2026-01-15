@@ -14,12 +14,12 @@ import { apiUrl, eventSourceUrl } from './utils/api';
 import { toast } from 'react-toastify';
 
 const TRACK_LABELS = {
-  'Track 1': 'Cuttuck 1',
-  'Track 2': 'Cuttuck 2',
-  'Track 3': 'Cuttuck 3',
-  'Track 4': 'Midnapore 1',
-  'Track 5': 'Midnapore 2',
-  'Track 6': 'Midnapore 3',
+  'Track 1': 'Cuttack 2',
+  'Track 2': 'Cuttack 5',
+  'Track 3': 'Cuttack 6',
+  'Track 4': 'Midnapore 9',
+  'Track 5': 'Midnapore 10',
+  'Track 6': 'Midnapore 11',
 };
 const TRACK_GROUPS = [
   ['Track 1', 'Track 4'],
@@ -32,18 +32,17 @@ const extractTrainNo = (entity) => normalizeTrainNo(entity?.trainNo ?? entity?.t
 const matchTrainNumber = (entity, target) => extractTrainNo(entity) === normalizeTrainNo(target);
 const toIdArray = (value) => (Array.isArray(value) ? value : [value]).filter(Boolean);
 
-// Modals extracted into separate components to preserve behavior and UI.
 
 export default function MainApp() {
   const [platforms, setPlatforms] = useState([]);
   const [arrivingTrains, setArrivingTrains] = useState([]);
   const [waitingList, setWaitingList] = useState([]);
   const [activeModal, setActiveModal] = useState(null);
+  const [departingOnlyPlatformId, setDepartingOnlyPlatformId] = useState(null);
   const [error, setError] = useState(null);
   const [logs, setLogs] = useState([]);
   const [reassignPrompt, setReassignPrompt] = useState({ isOpen: false, platformId: null, trainDetails: null });
   const [trainForImmediateSuggestion, setTrainForImmediateSuggestion] = useState(null);
-  const [autoSuggestion, setAutoSuggestion] = useState(null); // automated suggestion from backend
   const latestFetchIdRef = useRef(0);
   const platformsRef = useRef(platforms);
   const arrivingTrainsRef = useRef(arrivingTrains);
@@ -102,52 +101,9 @@ export default function MainApp() {
       } catch (e) { console.warn('Bad departure_alert payload', e); }
     });
 
-    es.addEventListener('waiting_suggestion', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setAutoSuggestion(data);
-        toast.info(`Suggestion: Train ${data.trainNo} → ${data.suggestedPlatformIds.join(', ')}`);
-      } catch (e) { console.warn('Bad waiting_suggestion payload', e); }
-    });
-
-    es.addEventListener('waiting_suggestion_expired', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (autoSuggestion && data.suggestion_id === autoSuggestion.suggestion_id) {
-          setAutoSuggestion(null);
-          toast.warning('Suggestion expired');
-        }
-      } catch (e) { console.warn('Bad waiting_suggestion_expired payload', e); }
-    });
-
-    es.addEventListener('waiting_suggestion_accepted', async (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        toast.success(`Suggestion accepted: Train ${data.trainNo} assigned to ${data.platforms.join(', ')}`);
-        setAutoSuggestion(null);
-        await fetchStationData();
-      } catch (e) { console.warn('Bad waiting_suggestion_accepted payload', e); }
-    });
-
     es.onerror = (err) => console.error('SSE Connection Error:', err);
     return () => es.close();
-  }, [fetchStationData, autoSuggestion]);
-
-  const handleAcceptAutoSuggestion = async () => {
-    if (!autoSuggestion) return;
-    try {
-      const response = await fetch(apiUrl('/api/accept-waiting-suggestion'), {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ suggestion_id: autoSuggestion.suggestion_id })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || data.error || 'Failed to accept suggestion');
-      toast.success(data.message || 'Suggestion accepted');
-      setAutoSuggestion(null);
-      await fetchStationData();
-    } catch (e) {
-      toast.error(e.message);
-    }
-  };
+  }, [fetchStationData]);
 
   const lookupTrainByNumber = useCallback((trainNo) => {
     const target = normalizeTrainNo(trainNo);
@@ -403,52 +359,94 @@ export default function MainApp() {
     () => setArrivingTrains(prev => prev.filter(train => !matchTrainNumber(train, trainNo)))
   ), [handleApiCall]);
 
+  const openDepartingModalAll = useCallback(() => {
+    setDepartingOnlyPlatformId(null);
+    setActiveModal('departing');
+  }, []);
+
+  const openDepartingModalForPlatform = useCallback((platformId) => {
+    setDepartingOnlyPlatformId(platformId);
+    setActiveModal('departing');
+  }, []);
+
   const platformMap = new Map(platforms.map(p => [p.id, p]));
 
   return (
     <div className="bg-gray-100 min-h-screen text-gray-800" style={{ fontFamily: "'Inter', sans-serif" }}>
       <div className="container mx-auto p-4 md:p-8">
         <Header />
-        <div className="w-full max-w-4xl mx-auto p-6 space-y-3 bg-gray-200 rounded-xl shadow-lg">
+        <div className="w-full mx-auto">
+          <div className="flex flex-col gap-4 md:flex-row md:gap-14 md:items-start">
+            {/* Left: Platforms (75%) */}
+            <div className="relative md:flex-[3] md:px-10">
+              {/* Side labels live in the outer whitespace (desktop only) */}
+              <div className="hidden md:flex absolute left-0 top-0 bottom-0 items-center pointer-events-none select-none">
+                <div
+                  className="text-black text-2xl font-bold tracking-widest"
+                  style={{ writingMode: 'vertical-rl', textOrientation: 'upright' }}
+                >
+                  TATA
+                </div>
+              </div>
+              {/* TATA marks the boundary between platforms (75%) and waiting list (25%) */}
+              <div className="hidden md:flex absolute right-0 top-0 bottom-0 items-center pointer-events-none select-none">
+                <div
+                  className="text-black text-2xl font-bold tracking-widest"
+                  style={{ writingMode: 'vertical-rl', textOrientation: 'upright' }}
+                >
+                  HWH
+                </div>
+              </div>
+
+              <div className="w-full p-4 md:p-5 space-y-2 bg-gray-200 rounded-xl shadow-lg">
           <div className="mb-6">
             <nav className="flex gap-0 justify-center bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               <button onClick={() => setActiveModal('suggestions')} className="flex-1 px-4 py-3 bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors border-r border-gray-200 font-semibold">Arriving trains</button>
-              <button onClick={() => setActiveModal('departing')} className="flex-1 px-4 py-3 bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors border-r border-gray-200 font-semibold">Departing trains</button>
+              <button onClick={openDepartingModalAll} className="flex-1 px-4 py-3 bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors border-r border-gray-200 font-semibold">Departing trains</button>
               <button onClick={() => setActiveModal('maintenance')} className="flex-1 px-4 py-3 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 transition-colors border-r border-gray-200 font-semibold">Maintenance</button>
               <button onClick={() => setActiveModal('misc')} className="flex-1 px-4 py-3 bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors border-r border-gray-200 font-semibold">Miscellaneous</button>
               <button onClick={() => setActiveModal('logs')} className="flex-1 px-4 py-3 bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors font-semibold">View Logs</button>
             </nav>
           </div>
 
-          <WaitingList waitingList={waitingList} onFindPlatform={(train) => { setTrainForImmediateSuggestion(train); setActiveModal('suggestions'); }} onRemove={handleRemoveFromWaitingList} />
+          <Platform name="Platform 8" platformData={platformMap.get('Platform 8')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+          <Platform name="Platform 7" platformData={platformMap.get('Platform 7')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+          <Platform name="Platform 6" platformData={platformMap.get('Platform 6')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+          <Platform name="Platform 5" platformData={platformMap.get('Platform 5')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />       
+        
+          <div className="grid grid-cols-2 gap-2">
+            <Platform name="Platform 4" platformData={platformMap.get('Platform 4')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+            <Platform name="Platform 2" platformData={platformMap.get('Platform 2')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+          </div>
+            <div className="grid grid-cols-2 gap-2">
+            <Platform name="Platform 4A" platformData={platformMap.get('Platform 4A')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+            <Platform name="Platform 2A" platformData={platformMap.get('Platform 2A')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+          </div>
+             <div className="grid grid-cols-2 gap-2">
+            <Platform name="Platform 3A" platformData={platformMap.get('Platform 3A')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+            <Platform name="Platform 1A" platformData={platformMap.get('Platform 1A')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Platform name="Platform 3" platformData={platformMap.get('Platform 3')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+            <Platform name="Platform 1" platformData={platformMap.get('Platform 1')} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Platform name="Platform 1" platformData={platformMap.get('Platform 1')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-            <Platform name="Platform 3" platformData={platformMap.get('Platform 3')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Platform name="Platform 1A" platformData={platformMap.get('Platform 1A')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-            <Platform name="Platform 3A" platformData={platformMap.get('Platform 3A')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Platform name="Platform 2A" platformData={platformMap.get('Platform 2A')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-            <Platform name="Platform 4A" platformData={platformMap.get('Platform 4A')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Platform name="Platform 2" platformData={platformMap.get('Platform 2')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-            <Platform name="Platform 4" platformData={platformMap.get('Platform 4')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-          </div>
-
-          <Platform name="Platform 5" platformData={platformMap.get('Platform 5')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-          <Platform name="Platform 6" platformData={platformMap.get('Platform 6')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-          <Platform name="Platform 7" platformData={platformMap.get('Platform 7')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-          <Platform name="Platform 8" platformData={platformMap.get('Platform 8')} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
           {TRACK_GROUPS.map(([leftId, rightId]) => (
-            <div className="grid grid-cols-2 gap-3" key={`${leftId}-${rightId}`}>
-              <Track label={TRACK_LABELS[leftId] || leftId} trackData={platformMap.get(leftId)} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
-              <Track label={TRACK_LABELS[rightId] || rightId} trackData={platformMap.get(rightId)} onUnassignPlatform={promptForReassignment} onDepartTrain={handleDepartTrain} />
+            <div className="grid grid-cols-2 gap-2" key={`${leftId}-${rightId}`}>
+              <Track label={TRACK_LABELS[leftId] || leftId} trackData={platformMap.get(leftId)} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
+              <Track label={TRACK_LABELS[rightId] || rightId} trackData={platformMap.get(rightId)} onUnassignPlatform={promptForReassignment} onDepartTrain={openDepartingModalForPlatform} />
             </div>
           ))}
+              </div>
+            </div>
+
+            {/* Right: Waiting list (25%) */}
+            <div className="md:flex-[1]">
+              <div className="w-full p-4 md:p-5 space-y-2 bg-gray-200 rounded-xl shadow-lg">
+                <WaitingList waitingList={waitingList} onFindPlatform={(train) => { setTrainForImmediateSuggestion(train); setActiveModal('suggestions'); }} onRemove={handleRemoveFromWaitingList} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       {/* --- Modals --- */}
@@ -463,7 +461,13 @@ export default function MainApp() {
         onAssignFreightToPlatform={handleAssignFreightToPlatform}
         onAssignFreightToTrack={handleAssignFreightToTrack}
       />
-      <DepartingModal isOpen={activeModal === 'departing'} onClose={() => setActiveModal(null)} platforms={platforms} onDepartTrain={handleDepartTrain} />
+      <DepartingModal
+        isOpen={activeModal === 'departing'}
+        onClose={() => { setActiveModal(null); setDepartingOnlyPlatformId(null); }}
+        platforms={platforms}
+        onDepartTrain={handleDepartTrain}
+        onlyPlatformId={departingOnlyPlatformId}
+      />
       <MaintenanceModal isOpen={activeModal === 'maintenance'} onClose={() => setActiveModal(null)} platforms={platforms} onToggleMaintenance={handleToggleMaintenance} />
       <MiscModal isOpen={activeModal === 'misc'} onClose={() => setActiveModal(null)} arrivingTrains={arrivingTrains} onAddTrain={handleAddTrain} onDeleteTrain={handleDeleteTrain} />
       <LogModal isOpen={activeModal === 'logs'} onClose={() => setActiveModal(null)} logs={logs} />
@@ -481,22 +485,6 @@ export default function MainApp() {
         }}
         onConfirmReassign={async () => { const { platformId, trainDetails } = reassignPrompt; const success = await handleUnassignPlatform(platformId); if (success) { setTrainForImmediateSuggestion(trainDetails); setActiveModal('suggestions'); } setReassignPrompt({ isOpen: false, platformId: null, trainDetails: null }); }}
       />
-      {/* Automated suggestion lightweight modal */}
-      {autoSuggestion && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md space-y-4">
-            <h2 className="text-lg font-semibold text-gray-800">Platform Suggestion</h2>
-            <p className="text-sm text-gray-700">
-              Train <span className="font-semibold">{autoSuggestion.trainNo}</span> – {autoSuggestion.trainName}<br />
-              Suggested Platform: <span className="font-semibold">{autoSuggestion.suggestedPlatformIds.join(', ')}</span>
-            </p>
-            <div className="flex justify-end gap-3 pt-2">
-              <button onClick={() => setAutoSuggestion(null)} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100">Ignore</button>
-              <button onClick={handleAcceptAutoSuggestion} className="px-4 py-2 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700">Assign</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

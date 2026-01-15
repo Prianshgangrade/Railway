@@ -6,17 +6,19 @@ const DEFAULT_LINES = [
   'HWH UP', 'HWH MID', 'HWH DN', 'MDN UP', 'MDN MID', 'MDN DN', 'TATA UP', 'TATA DN', 'BHC UP', 'BHC DN'
 ];
 
-export default function DepartingModal({ isOpen, onClose, platforms, onDepartTrain }) {
-  // Show only primary occupied platforms (where user assigned) or single-platform trains
-  const occupiedPlatforms = platforms.filter(p => {
-    if (!p.isOccupied || p.isUnderMaintenance) return false;
-    const td = p.trainDetails || {};
-    // If trainDetails has isPrimary flag, only show that platform; if no linked partner recorded,
-    // show it (single-platform train)
-    if (td.isPrimary) return true;
-    if (!td.linkedPlatformId) return true;
-    return false;
-  });
+export default function DepartingModal({ isOpen, onClose, platforms, onDepartTrain, onlyPlatformId = null }) {
+  // Default: show only primary occupied platforms (where user assigned) or single-platform trains.
+  // But if the modal is opened for a specific platform (per-card Depart), show that platform
+  // even if it's the secondary linked platform.
+  const occupiedPlatforms = platforms
+    .filter(p => p && p.isOccupied && !p.isUnderMaintenance)
+    .filter(p => {
+      if (onlyPlatformId) return p.id === onlyPlatformId;
+      const td = p.trainDetails || {};
+      if (td.isPrimary) return true;
+      if (!td.linkedPlatformId) return true;
+      return false;
+    });
   const [selectedLineByPlatform, setSelectedLineByPlatform] = useState({});
   const [lineOptions, setLineOptions] = useState(DEFAULT_LINES);
 
@@ -32,7 +34,13 @@ export default function DepartingModal({ isOpen, onClose, platforms, onDepartTra
     }
   }, []);
 
-  useEffect(() => { if (isOpen) loadLines(); }, [isOpen, loadLines]);
+  useEffect(() => {
+    if (isOpen) {
+      // Reset selection each time the modal is opened (and when opened for a different platform)
+      setSelectedLineByPlatform({});
+      loadLines();
+    }
+  }, [isOpen, onlyPlatformId, loadLines]);
 
   const handleLogAndDepart = async (platformId) => {
     const chosen = selectedLineByPlatform[platformId] || '';

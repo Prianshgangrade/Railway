@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import Modal from '../Modal';
-import { reportDownloadUrl } from '../../utils/api';
+import { reportDownloadUrlRange } from '../../utils/api';
 
 export default function LogModal({ isOpen, onClose, logs }) {
-  const [date, setDate] = useState(new Date().toISOString().slice(0,10));
+  const today = new Date().toISOString().slice(0,10);
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Operational Logs">
       <div className="space-y-2">
         <div className="flex items-center gap-3 mb-3">
-          <label className="text-sm font-medium">Select date:</label>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="p-2 border rounded-md" />
-          <button onClick={() => window.open(reportDownloadUrl(date), '_blank')} className="ml-2 bg-blue-600 text-white px-3 py-2 rounded-md">Download CSV</button>
+          <label className="text-sm font-medium">Start date:</label>
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="p-2 border rounded-md" />
+          <label className="text-sm font-medium">End date:</label>
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="p-2 border rounded-md" />
+          <button onClick={() => window.open(reportDownloadUrlRange(startDate, endDate), '_blank')} className="ml-2 bg-blue-600 text-white px-3 py-2 rounded-md">Download CSV</button>
         </div>
         <div className="space-y-2 max-h-[54vh] overflow-y-auto">
         {logs.length > 0 ? (

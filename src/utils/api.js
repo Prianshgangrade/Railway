@@ -6,3 +6,10 @@ export const reportDownloadUrl = (dateStr) => {
 	const d = dateStr || new Date().toISOString().slice(0,10);
 	return `${API_BASE}/api/report/download?date=${encodeURIComponent(d)}`;
 };
+
+export const reportDownloadUrlRange = (startDate, endDate) => {
+	const today = new Date().toISOString().slice(0, 10);
+	const start = startDate || today;
+	const end = endDate || start;
+	return `${API_BASE}/api/report/download?startDate=${encodeURIComponent(start)}&endDate=${encodeURIComponent(end)}`;
+};

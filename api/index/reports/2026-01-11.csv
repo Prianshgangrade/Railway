@@ -1,0 +1,12 @@
+date,trainNo,trainName,scheduled_arrival,scheduled_departure,actual_arrival,actual_departure,actual_platform_arrival,suggestions,actual_platform,incoming_line,outgoing_line,Remarks
+2026-01-11,12863,Howrah - SMVT Bengaluru SF Express (PT),00:30,00:35,,,,"5, 6, 2, 1",,HWH MD,,
+2026-01-11,12863,Howrah - SMVT Bengaluru SF Express (PT),00:30,00:35,01:47,01:53,01:47,"5, 8, 6, 2, 1",5,HWH MD,HWH MD,
+2026-01-11,12863,Howrah - SMVT Bengaluru SF Express (PT),00:30,00:35,01:53,02:00,01:53,,5,HWH MD,East Coast UP Joint,
+2026-01-11,13433,SMVT Bengaluru - Malda Town Amrit Bharat Express (PT),00:15,00:20,,,,"2, 8, 6, 7, 5, 1",,TATA DN,,
+2026-01-11,13433,SMVT Bengaluru - Malda Town Amrit Bharat Express (PT),00:15,00:20,01:45,,01:45,"8, 6, 7, 5, 1","2, 4",TATA DN,,unassigned
+2026-01-11,13433,SMVT Bengaluru - Malda Town Amrit Bharat Express (PT),00:15,00:20,01:45,01:53,01:45,,8,TATA DN,HWH UP,
+2026-01-11,18047,Shalimar - Vasco-da-Gama Amaravati Express (PT),00:58,01:03,01:59,,01:59,"8, 6","1, 3",HWH MD,,unassigned
+2026-01-11,18047,Shalimar - Vasco-da-Gama Amaravati Express (PT),00:58,01:03,01:59,02:00,01:59,,6,HWH MD,ADRA Joint,
+2026-01-11,22202,Puri - Sealdah Duronto Express,01:00,01:05,01:54,,01:54,"8, 2, 6, 7, 1",8,TATA DN,,unassigned
+2026-01-11,22202,Puri - Sealdah Duronto Express,01:00,01:05,01:55,02:00,01:55,,"2, 4",TATA DN,HWH DN,
+2026-01-11,22905,Okha - Shalimar Weekly SF Express,01:27,01:32,01:56,01:56,01:56,,6,TATA DN,HWH DN,

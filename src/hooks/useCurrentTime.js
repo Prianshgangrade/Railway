@@ -14,6 +14,8 @@ export const FormattedTime = ({ dateObj }) => {
   return dateObj.toLocaleString('en-IN', {
     dateStyle: 'full',
     timeStyle: 'medium',
-    timeZone: 'Asia/Kolkata'
+    timeZone: 'Asia/Kolkata',
+    hour12: false,
+    hourCycle: 'h23',
   });
 };

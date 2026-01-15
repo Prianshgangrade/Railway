@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '../Modal';
 import { apiUrl } from '../../utils/api';
 
@@ -18,6 +18,7 @@ export default function SuggestionModal({
   const [selectedIncomingLine, setSelectedIncomingLine] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasFetchedSuggestions, setHasFetchedSuggestions] = useState(false);
   const [error, setError] = useState('');
   const [view, setView] = useState('selection');
   const [mode, setMode] = useState('scheduled');
@@ -29,6 +30,7 @@ export default function SuggestionModal({
   const [freightPlatformId, setFreightPlatformId] = useState('');
   const [freightTrackId, setFreightTrackId] = useState('');
   const [freightSubmitting, setFreightSubmitting] = useState(false);
+  const lastAutoFetchKeyRef = useRef(null);
 
   const resetState = useCallback(() => {
     setSelectedTrain(null);
@@ -36,6 +38,7 @@ export default function SuggestionModal({
     setSuggestions([]);
     setError('');
     setIsLoading(false);
+    setHasFetchedSuggestions(false);
     setView('selection');
     setMode('scheduled');
     setFreightNeedsPlatform(null);
@@ -46,6 +49,7 @@ export default function SuggestionModal({
     setFreightPlatformId('');
     setFreightTrackId('');
     setFreightSubmitting(false);
+    lastAutoFetchKeyRef.current = null;
   }, []);
 
   const fetchIncomingLines = useCallback(async () => {
@@ -61,6 +65,7 @@ export default function SuggestionModal({
 
   const fetchSuggestionsForTrain = useCallback(async (train, needsPlatform, incomingLine) => {
     setIsLoading(true);
+    setHasFetchedSuggestions(false);
     setError('');
     const arrivalTimeToLog = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     setLoggedArrivalTime(arrivalTimeToLog);
@@ -82,8 +87,23 @@ export default function SuggestionModal({
       setSuggestions([]);
     } finally {
       setIsLoading(false);
+      setHasFetchedSuggestions(true);
     }
   }, [platforms]);
+
+  const resolveIncomingLineForTrain = useCallback((train, masterTrain) => {
+    return (
+      train?.incoming_line ||
+      train?.incomingLine ||
+      masterTrain?.incoming_line ||
+      masterTrain?.incomingLine ||
+      ''
+    );
+  }, []);
+
+  const resolveAutoFetchKey = useCallback((trainNo, incomingLine, needsPlatform) => {
+    return `${String(trainNo ?? '')}|${String(incomingLine ?? '')}|${String(needsPlatform ?? '')}`;
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -94,13 +114,13 @@ export default function SuggestionModal({
         // train only for other metadata.
         setSelectedTrain(trainToReassign);
         const masterTrain = arrivingTrains.find(t => String(t.trainNo) === String(trainToReassign.trainNo));
-        const presetLine = trainToReassign.incoming_line || trainToReassign.incomingLine || (masterTrain && (masterTrain.incoming_line || masterTrain.incomingLine));
+        const presetLine = resolveIncomingLineForTrain(trainToReassign, masterTrain);
         if (presetLine) setSelectedIncomingLine(presetLine);
       }
     } else {
       resetState();
     }
-  }, [isOpen, trainToReassign, arrivingTrains, fetchIncomingLines, incomingLines.length, resetState]);
+  }, [isOpen, trainToReassign, arrivingTrains, fetchIncomingLines, incomingLines.length, resetState, resolveIncomingLineForTrain]);
 
   const handleTrainSelection = (trainNo) => {
     const train = arrivingTrains.find(t => String(t.trainNo) === String(trainNo));
@@ -152,6 +172,16 @@ export default function SuggestionModal({
 
   const filteredTrains = arrivingTrains.filter(train => train.name.toLowerCase().includes(searchTerm.toLowerCase()) || String(train.trainNo).toLowerCase().includes(searchTerm.toLowerCase()));
   const isFreight = selectedTrain && (selectedTrain.name.includes('Freight') || selectedTrain.name.includes('Goods'));
+  const isReassignFlow = !!trainToReassign && mode === 'scheduled';
+  const reassignIsFreight = useMemo(() => {
+    const name = String((selectedTrain?.name ?? trainToReassign?.name) || '');
+    return name.includes('Freight') || name.includes('Goods');
+  }, [selectedTrain, trainToReassign]);
+  const forceSuggestionView = isReassignFlow && !reassignIsFreight;
+  const isShortTrain = useMemo(() => {
+    const size = selectedTrain?.size || selectedTrain?.SIZE || selectedTrain?.length || selectedTrain?.LENGTH;
+    return String(size || '').trim().toLowerCase() === 'short';
+  }, [selectedTrain]);
   const canRequest = !!selectedTrain && !!selectedIncomingLine && !(isFreight && freightNeedsPlatform === null);
   const availablePlatforms = useMemo(() => (platforms || []).filter(p => String(p?.id || '').toLowerCase().startsWith('platform') && !p?.isOccupied && !p?.isUnderMaintenance), [platforms]);
   const availableTracks = useMemo(() => (
@@ -167,6 +197,46 @@ export default function SuggestionModal({
       setView('selection');
     }
   }, [mode]);
+
+  // Reassign flow: skip the manual "Get Platform Suggestions" step.
+  // As soon as required inputs are available, jump to suggestion view and auto-fetch.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (mode !== 'scheduled') return;
+    if (!trainToReassign) return;
+    if (!selectedTrain) return;
+
+    const masterTrain = arrivingTrains.find(t => String(t.trainNo) === String(selectedTrain.trainNo));
+    const incomingLine = selectedIncomingLine || resolveIncomingLineForTrain(selectedTrain, masterTrain);
+    if (!incomingLine) return;
+
+    const needsPlatform = isFreight ? freightNeedsPlatform : null;
+    if (isFreight && needsPlatform === null) {
+      // Freight reassign requires an explicit choice (platform vs track-only).
+      // Once user chooses, this same effect will auto-fetch.
+      return;
+    }
+
+    const key = resolveAutoFetchKey(selectedTrain.trainNo, incomingLine, needsPlatform);
+    if (lastAutoFetchKeyRef.current === key) return;
+    lastAutoFetchKeyRef.current = key;
+
+    setSelectedIncomingLine(incomingLine);
+    setView('suggestion');
+    fetchSuggestionsForTrain(selectedTrain, needsPlatform, incomingLine);
+  }, [
+    isOpen,
+    mode,
+    trainToReassign,
+    selectedTrain,
+    selectedIncomingLine,
+    isFreight,
+    freightNeedsPlatform,
+    arrivingTrains,
+    fetchSuggestionsForTrain,
+    resolveIncomingLineForTrain,
+    resolveAutoFetchKey,
+  ]);
 
   const handleModeChange = (nextMode) => {
     setMode(nextMode);
@@ -253,7 +323,7 @@ export default function SuggestionModal({
         </button>
       </div>
 
-      {mode === 'scheduled' && view === 'selection' && (
+      {mode === 'scheduled' && view === 'selection' && !forceSuggestionView && (
         <div className="space-y-4">
           <div>
             <label htmlFor="suggest-train-list" className="block text-sm font-medium text-gray-700 mb-2">1. Select Train for Assignment:</label>
@@ -307,20 +377,22 @@ export default function SuggestionModal({
         </div>
       )}
 
-      {mode === 'scheduled' && view === 'suggestion' && (
+      {mode === 'scheduled' && (view === 'suggestion' || forceSuggestionView) && (
         <div className="space-y-4">
           <div className="p-3 bg-gray-100 rounded-md border">
             <p className="font-semibold">{selectedTrain?.trainNo} - {selectedTrain?.name}</p>
-            <p className="text-sm font-bold text-blue-700">Arrival Time: {loggedArrivalTime}</p>
+            <p className="text-sm font-bold text-blue-700">Arrival Time: {loggedArrivalTime || '—'}</p>
             {selectedIncomingLine && <p className="text-xs text-gray-600">Incoming Line: {selectedIncomingLine}</p>}
           </div>
 
-          {isLoading && <div className="text-center text-gray-500">Recalculating...</div>}
+          {(isLoading || (forceSuggestionView && !hasFetchedSuggestions && !error)) && (
+            <div className="text-center text-gray-500">Loading suggestions...</div>
+          )}
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
           {suggestions.length > 0 ? (
             <div className="mt-4">
-              <h4 className="text-lg font-semibold mb-2">2. Choose a Platform (sorted by best match):</h4>
+              <h4 className="text-lg font-semibold mb-2">2. Choose a Platform :</h4>
               <div className="space-y-3">
                 {suggestions.map((suggestion, index) => {
                   const { platformId, platformIds, score, blockages, historicalMatch, historicalPlatform } = suggestion;
@@ -331,8 +403,8 @@ export default function SuggestionModal({
                         <button onClick={() => handleAssign(platformIds || platformId)} className="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 font-semibold">Assign</button>
                       </div>
                       <div className="text-sm mt-2 text-gray-600 flex flex-col">
-                        <span className="font-semibold">{historicalMatch ? <span className="text-xs text-gray-700"> • Historical Platform</span> : null}</span>
-                        {blockages && (
+                        <span className="font-semibold">{historicalMatch ? <span className="text-xs text-gray-700">  Historical Platform</span> : null}</span>
+                        {!isShortTrain && blockages && (
                           <div className="text-xs text-gray-700">
                             <span className="font-semibold">Potential Blockages</span>{' '}
                             {typeof blockages === 'object' ? (
@@ -349,7 +421,7 @@ export default function SuggestionModal({
               </div>
             </div>
           ) : (
-            !isLoading && (
+            !isLoading && hasFetchedSuggestions && (
               <div className="text-center p-4 bg-yellow-50 border-yellow-200 border rounded-md">
                 <p className="font-semibold text-yellow-800">No Suitable Platforms/Tracks Found</p>
                 <p className="text-sm text-yellow-700">All suitable options may be occupied or under maintenance.</p>
@@ -357,7 +429,7 @@ export default function SuggestionModal({
             )
           )}
 
-          {!isLoading && selectedTrain && (
+          {!isLoading && hasFetchedSuggestions && selectedTrain && (
             <div className="mt-4 border-t pt-4">
               <button onClick={handleAddToWaitingList} className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-red-700 transition">Move to Waiting List</button>
             </div>

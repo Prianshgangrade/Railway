@@ -1,8 +1,8 @@
 export default function Platform({ name, platformData, onUnassignPlatform, onDepartTrain }) {
   if (!platformData) {
     return (
-      <div className="bg-gray-200 px-3 py-2 rounded-lg shadow-sm border-l-4 border-gray-300 animate-pulse">
-        <h4 className="font-bold text-md text-gray-500">{name}</h4>
+      <div className="bg-gray-200 px-2.5 py-1.5 rounded-lg shadow-sm border-l-4 border-gray-300 animate-pulse">
+        <h4 className="font-bold text-sm text-gray-500">{name}</h4>
         <p className="text-xs text-gray-400">No data</p>
       </div>
     );
@@ -14,9 +14,9 @@ export default function Platform({ name, platformData, onUnassignPlatform, onDep
   const statusBgColor = isUnderMaintenance ? 'bg-yellow-200 text-yellow-800' : isOccupied ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-800';
 
   return (
-    <div className={`px-3 py-2 rounded-lg shadow-sm border-l-4 ${cardStyle} transition-all`}>
-      <div className="flex justify-between items-center mb-0.5">
-        <h4 className={`font-bold text-md ${isOccupied ? 'text-white' : 'text-gray-800'}`}>{name}</h4>
+    <div className={`px-2.5 py-1.5 rounded-lg shadow-sm border-l-4 ${cardStyle} transition-all`}>
+      <div className="flex justify-between items-center mb-0.5 gap-2">
+        <h4 className={`font-bold text-sm ${isOccupied ? 'text-white' : 'text-gray-800'}`}>{name}</h4>
         <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusBgColor}`}>{statusText}</span>
       </div>
       {isOccupied && trainDetails ? (
@@ -34,7 +34,7 @@ export default function Platform({ name, platformData, onUnassignPlatform, onDep
             <p className={`text-xs mt-0.5 font-semibold ${isOccupied ? 'text-green-200' : 'text-gray-600'}`}></p>
           )}
         </div>
-      ) : <div className="h-6"></div>}
+      ) : <div className="h-5"></div>}
       <div className={`text-xs mt-1 flex justify-end ${isOccupied ? 'text-purple-200' : 'text-purple-700'}`}>
         {isTerminating && <span className="font-semibold">Terminating</span>}
       </div>

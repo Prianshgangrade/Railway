@@ -1,8 +1,8 @@
 export default function Track({ label, trackData, onUnassignPlatform, onDepartTrain }) {
   if (!trackData) {
     return (
-      <div className="bg-gray-200 px-3 py-2 rounded-lg shadow-sm border-l-4 border-gray-400">
-        <h4 className="font-bold text-md text-gray-600">{label}</h4>
+      <div className="bg-gray-200 px-2.5 py-1.5 rounded-lg shadow-sm border-l-4 border-gray-400">
+        <h4 className="font-bold text-sm text-gray-600">{label}</h4>
         <div className="h-4 mt-0.5"></div>
       </div>
     );
@@ -14,9 +14,9 @@ export default function Track({ label, trackData, onUnassignPlatform, onDepartTr
   const statusBgColor = isUnderMaintenance ? 'bg-yellow-200 text-yellow-800' : isOccupied ? 'bg-green-200 text-green-800' : 'bg-gray-300 text-gray-800';
 
   return (
-    <div className={`px-3 py-2 rounded-lg shadow-sm border-l-4 ${cardStyle} transition-all`}>
-      <div className="flex justify-between items-center mb-0.5">
-        <h4 className={`font-bold text-md ${isOccupied ? 'text-white' : 'text-gray-800'}`}>{label}</h4>
+    <div className={`px-2.5 py-1.5 rounded-lg shadow-sm border-l-4 ${cardStyle} transition-all`}>
+      <div className="flex justify-between items-center mb-0.5 gap-2">
+        <h4 className={`font-bold text-sm ${isOccupied ? 'text-white' : 'text-gray-800'}`}>{label}</h4>
         <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusBgColor}`}>{statusText}</span>
       </div>
       {isOccupied && trainDetails ? (
@@ -34,7 +34,7 @@ export default function Track({ label, trackData, onUnassignPlatform, onDepartTr
             <p className={`text-xs mt-0.5 font-semibold ${isOccupied ? 'text-green-200' : 'text-gray-600'}`}></p>
           )}
         </div>
-      ) : <div className="h-6"></div>}
+      ) : <div className="h-5"></div>}
     </div>
   );
 }
