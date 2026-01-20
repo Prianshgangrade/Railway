@@ -14,7 +14,7 @@ export default function LogModal({ isOpen, onClose, logs }) {
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="p-2 border rounded-md" />
           <label className="text-sm font-medium">End date:</label>
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="p-2 border rounded-md" />
-          <button onClick={() => window.open(reportDownloadUrlRange(startDate, endDate), '_blank')} className="ml-2 bg-blue-600 text-white px-3 py-2 rounded-md">Download CSV</button>
+          <button onClick={() => window.open(reportDownloadUrlRange(startDate, endDate), '_blank')} className="ml-2 bg-blue-600 text-white px-3 py-2 rounded-md">Download LOGS</button>
         </div>
         <div className="space-y-2 max-h-[54vh] overflow-y-auto">
         {logs.length > 0 ? (

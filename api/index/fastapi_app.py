@@ -680,7 +680,7 @@ def persist_suggestions_snapshot(train_no: str, suggestion_fields: dict):
     """Persist suggestions for a train without creating a standalone report row.
 
     - If a report entry already exists, update the latest entry.
-    - Otherwise, cache it for the next assignment/reassignment entry.
+    - Also cache it for the next assignment/reassignment entry.
     """
     if not train_no:
         return
@@ -691,20 +691,28 @@ def persist_suggestions_snapshot(train_no: str, suggestion_fields: dict):
     except Exception:
         updated = False
 
-    if not updated:
+    # Always upsert the cache so the next assignment row can merge suggestions,
+    # even when a report entry already exists (e.g., train moved to waiting list and reassigned).
+    try:
+        suggestions_cache_collection.update_one(
+            {"date": date_key, "trainNo": str(train_no)},
+            {
+                "$set": {
+                    **fields,
+                    "date": date_key,
+                    "trainNo": str(train_no),
+                    "updated_at": datetime.utcnow().isoformat(),
+                }
+            },
+            upsert=True,
+        )
+    except Exception:
+        pass
+
+    # If we updated the latest report entry too, schedule CSV generation.
+    if updated:
         try:
-            suggestions_cache_collection.update_one(
-                {"date": date_key, "trainNo": str(train_no)},
-                {
-                    "$set": {
-                        **fields,
-                        "date": date_key,
-                        "trainNo": str(train_no),
-                        "updated_at": datetime.utcnow().isoformat(),
-                    }
-                },
-                upsert=True,
-            )
+            schedule_csv_write(date_key)
         except Exception:
             pass
 
@@ -742,6 +750,24 @@ def persist_assignment_report_entry(train_no: str, entry_fields: dict):
         schedule_csv_write(date_key)
     except Exception:
         pass
+
+
+def get_latest_report_entry_for_today(train_no: str) -> dict | None:
+    """Fetch the latest report entry for a train for today (if any)."""
+    if not train_no:
+        return None
+    date_key = _today_str()
+    query = {"date": date_key, "trainNo": str(train_no)}
+    try:
+        return reports_collection.find_one(query, {"_id": 0}, sort=[('event_time', -1), ('_id', -1)])
+    except Exception:
+        try:
+            doc = reports_collection.find_one(query, sort=[('event_time', -1), ('_id', -1)])
+            if doc and '_id' in doc:
+                doc.pop('_id', None)
+            return doc
+        except Exception:
+            return None
 
 
 def append_daily_report_entry(train_no, entry_fields, date_str=None):
@@ -820,7 +846,7 @@ def enforce_track_layout(state: dict) -> dict:
                     waiting.append({
                         'trainNo': train_no,
                         'name': train_details.get('name'),
-                        'enqueued_at': datetime.utcnow().isoformat(),
+                        'enqueued_at': datetime.now().astimezone().isoformat(),
                         'actualArrival': entry.get('actualArrival'),
                         'incoming_line': train_details.get('incomingLine') or train_details.get('incoming_line') or ''
                     })
@@ -835,6 +861,18 @@ def enforce_track_layout(state: dict) -> dict:
         normalized.append(entry)
     if changed:
         state['platforms'] = normalized
+        # Keep waiting list FCFS ordered by enqueued_at
+        try:
+            def _wl_key(item: dict):
+                enq = item.get('enqueued_at') or ''
+                try:
+                    dt = datetime.fromisoformat(enq)
+                    return (dt.timestamp(), str(item.get('trainNo') or ''))
+                except Exception:
+                    return (enq, str(item.get('trainNo') or ''))
+            waiting.sort(key=_wl_key)
+        except Exception:
+            pass
         state['waitingList'] = waiting
         try:
             state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
@@ -1255,6 +1293,14 @@ async def add_to_waiting_list(body: dict, background_tasks: BackgroundTasks):
     train_to_wait = next((t for t in state.get('arrivingTrains', []) if str(t['trainNo']) == str(train_no)), None)
     if not train_to_wait:
         raise HTTPException(status_code=404, detail=f"Train {train_no} not found in arriving trains.")
+
+    # For richer logging/report updates, try to capture the last known assigned platform from the report.
+    latest_report = get_latest_report_entry_for_today(str(train_no))
+    previous_platform = ''
+    try:
+        previous_platform = (latest_report or {}).get('actual_platform') or ''
+    except Exception:
+        previous_platform = ''
     # prepare waiting entry with enqueue timestamp and actualArrival if provided
     # Use local timezone time (not UTC) so logs match the operator clock.
     # Keep ISO format (24-hour) and include offset like +05:30.
@@ -1269,11 +1315,27 @@ async def add_to_waiting_list(body: dict, background_tasks: BackgroundTasks):
         'incoming_line': incoming_line,
     }
     wl.append(waiting_entry)
-    # FCFS: primary sort by actualArrival (HH:MM); tie-break by enqueued_at
-    wl.sort(key=lambda x: (x.get('actualArrival') or '99:99', x.get('enqueued_at') or ''))
+    # FCFS: whoever entered the waiting list first stays on top
+    def _wl_key(item: dict):
+        enq = item.get('enqueued_at') or ''
+        try:
+            dt = datetime.fromisoformat(enq)
+            return (dt.timestamp(), str(item.get('trainNo') or ''))
+        except Exception:
+            return (enq, str(item.get('trainNo') or ''))
+
+    wl.sort(key=_wl_key)
     state['waitingList'] = wl
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
-    background_tasks.add_task(log_action, f"Moved to WAITING: Train {train_no} at {enqueued_at} (actualArrival: {actual_arrival}) (incoming: {incoming_line}).")
+
+    # Update the latest existing report row (do NOT create a new row) to mark this move.
+    background_tasks.add_task(persist_report_update_if_exists, str(train_no), {'Remarks': 'waiting list'})
+
+    prev_pf_part = f" (previousPlatform: {previous_platform})" if previous_platform else ""
+    background_tasks.add_task(
+        log_action,
+        f"WAITING LIST: Train {train_no} moved to waiting list at {enqueued_at} (actualArrival: {actual_arrival}) (incoming: {incoming_line}).{prev_pf_part}"
+    )
     return {"message": f"Train {train_no} added to the waiting list."}
 
 
@@ -1309,6 +1371,8 @@ async def assign_platform(body: dict, background_tasks: BackgroundTasks):
 
     state = state_collection.find_one({"_id": "current_station_state"}) or {}
 
+    assignment_time_hhmm = datetime.now().strftime('%H:%M')
+
     # Prefer waiting list
     wl_match = next((t for t in state.get('waitingList', []) if t.get('trainNo') == train_no), None)
     generated_freight = False
@@ -1342,6 +1406,18 @@ async def assign_platform(body: dict, background_tasks: BackgroundTasks):
 
     if provided_incoming_line and not train_to_assign.get('incoming_line'):
         train_to_assign['incoming_line'] = provided_incoming_line
+
+    # If assigning from waiting list, CSV should record a NEW actual arrival time for the new row.
+    # Keep UI/state `actualArrival` populated for display, but ensure report uses the new value.
+    actual_arrival_for_state = actual_arrival or assignment_time_hhmm
+    actual_arrival_for_report = assignment_time_hhmm if from_wait else actual_arrival_for_state
+
+    latest_report = get_latest_report_entry_for_today(str(train_no))
+    previous_platform = ''
+    try:
+        previous_platform = (latest_report or {}).get('actual_platform') or ''
+    except Exception:
+        previous_platform = ''
     stoppage_seconds = time_difference_seconds(train_data.get('ARRIVAL AT KGP'), train_data.get('DEPARTURE FROM KGP'))
 
     is_long = str(train_data.get('LENGTH', '')).strip().lower() == 'long'
@@ -1374,7 +1450,7 @@ async def assign_platform(body: dict, background_tasks: BackgroundTasks):
                     train_details['isPrimary'] = True
                 state['platforms'][i]['isOccupied'] = True
                 state['platforms'][i]['trainDetails'] = train_details
-                state['platforms'][i]['actualArrival'] = actual_arrival
+                state['platforms'][i]['actualArrival'] = actual_arrival_for_state
                 if stoppage_seconds > 0:
                     timer = threading.Timer(stoppage_seconds, lambda: sse_broadcaster.put(
                         f"event: departure_alert\ndata: {json.dumps({'train_number': train_no, 'train_name': train_data.get('TRAIN NAME'), 'platform_id': platform_id})}\n\n"
@@ -1386,10 +1462,11 @@ async def assign_platform(body: dict, background_tasks: BackgroundTasks):
 
     if from_wait:
         state['waitingList'] = [t for t in state.get('waitingList', []) if t['trainNo'] != train_no]
+        background_tasks.add_task(log_action, f"WAITING LIST: Train {train_no} removed from waiting list (assigned to platform).")
 
     # record actual platform arrival timestamp
     # Record platform berth time in HH:MM for consistency with other timestamps
-    actual_platform_arrival = datetime.now().strftime('%H:%M')
+    actual_platform_arrival = assignment_time_hhmm
     for platform_id in platform_ids:
         for p in state.get('platforms', []):
             if p.get('id') == platform_id and p.get('isOccupied') and p.get('trainDetails') and p['trainDetails'].get('trainNo') == train_no:
@@ -1399,10 +1476,18 @@ async def assign_platform(body: dict, background_tasks: BackgroundTasks):
     # persist state synchronously, log and persist report in background
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
     train_name_for_report = train_to_assign.get('name') or (train_data or {}).get('TRAIN NAME', '')
-    background_tasks.add_task(
-        log_action,
-        f"ARRIVED & ASSIGNED: Train {train_no} arrived at {actual_arrival} and assigned to {', '.join(platform_ids)}. (platformArrival: {actual_platform_arrival})"
-    )
+
+    if from_wait:
+        prev_pf_part = f" (previousPlatform: {previous_platform})" if previous_platform else ""
+        background_tasks.add_task(
+            log_action,
+            f"ASSIGNED FROM WAITING LIST: Train {train_no} assigned to {', '.join(platform_ids)} at {actual_platform_arrival} (newActualArrival: {actual_arrival_for_report}).{prev_pf_part}"
+        )
+    else:
+        background_tasks.add_task(
+            log_action,
+            f"ARRIVED & ASSIGNED: Train {train_no} arrived at {actual_arrival_for_state} and assigned to {', '.join(platform_ids)}. (platformArrival: {actual_platform_arrival})"
+        )
     # ASSIGN/REASSIGN should create a NEW report entry (new CSV row).
     # Merge any cached suggestions from earlier "Get Platform Suggestions".
     background_tasks.add_task(
@@ -1412,7 +1497,7 @@ async def assign_platform(body: dict, background_tasks: BackgroundTasks):
             'trainName': train_name_for_report,
             'scheduled_arrival': (train_data or {}).get('ARRIVAL AT KGP', ''),
             'scheduled_departure': (train_data or {}).get('DEPARTURE FROM KGP', ''),
-            'actual_arrival': actual_arrival,
+            'actual_arrival': actual_arrival_for_report,
             'actual_platform': ', '.join(normalize_platform_labels(platform_ids)),
             'actual_platform_arrival': actual_platform_arrival,
             'incoming_line': train_to_assign.get('incoming_line') or provided_incoming_line or '',
@@ -1522,9 +1607,36 @@ async def unassign_platform(body: dict, background_tasks: BackgroundTasks):
     # Persist state synchronously for immediate reflection; log in background
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
     background_tasks.add_task(log_action, f"UNASSIGNED: Train {train_details['trainNo']} unassigned from {', '.join(cleared_platforms)} and returned to arrival list.")
-    # Requirement: when unassigned, write "unassigned" into Remarks on the current/latest row.
+    # Requirement: when unassigned, write "unassign" into Remarks on the current/latest row.
     try:
-        background_tasks.add_task(persist_report_update, train_details['trainNo'], {'Remarks': 'unassigned'})
+        # IMPORTANT: do not create a new baseline row here; only update the latest existing row.
+        background_tasks.add_task(persist_report_update_if_exists, train_details['trainNo'], {'Remarks': 'unassigned'})
+    except Exception:
+        pass
+
+    # If suggestions already exist on the latest report row, carry them forward so the next
+    # assignment row can include them even if the operator doesn't recompute suggestions.
+    try:
+        latest_report = get_latest_report_entry_for_today(str(train_details['trainNo'])) or {}
+        suggestions_field = latest_report.get('suggestions')
+        if not suggestions_field:
+            suggestions_field = latest_report.get('top3_suggestions')
+        incoming_line_for_cache = latest_report.get('incoming_line') or ''
+        if suggestions_field:
+            date_key = _today_str()
+            suggestions_cache_collection.update_one(
+                {"date": date_key, "trainNo": str(train_details['trainNo'])},
+                {
+                    "$set": {
+                        "date": date_key,
+                        "trainNo": str(train_details['trainNo']),
+                        "suggestions": suggestions_field,
+                        "incoming_line": incoming_line_for_cache,
+                        "updated_at": datetime.utcnow().isoformat(),
+                    }
+                },
+                upsert=True,
+            )
     except Exception:
         pass
     # (No auto-suggestion trigger on unassign per updated requirement.)
@@ -1534,6 +1646,7 @@ async def unassign_platform(body: dict, background_tasks: BackgroundTasks):
 @app.post("/api/depart-train")
 async def depart_train(body: dict, background_tasks: BackgroundTasks):
     platform_id = body.get('platformId')
+    line = body.get('line') or body.get('outgoingLine') or body.get('outgoing_line')
     state = state_collection.find_one({"_id": "current_station_state"}) or {}
 
     def _clear_platform(state, pid):
@@ -1587,11 +1700,24 @@ async def depart_train(body: dict, background_tasks: BackgroundTasks):
                     cleared_platforms.append(partner_guess)
 
     departure_time = datetime.now().strftime('%H:%M')
-    background_tasks.add_task(
-        log_action,
-        f"DEPARTED: Train {train_details['trainNo']} departed from {', '.join(cleared_platforms)} at {departure_time}."
-    )
-    background_tasks.add_task(persist_report_update, train_details['trainNo'], {'actual_departure': departure_time})
+
+    # IMPORTANT: do not create a new baseline row on depart; update the latest assignment row.
+    update_fields = {'actual_departure': departure_time}
+    if line:
+        update_fields['outgoing_line'] = line
+    background_tasks.add_task(persist_report_update_if_exists, train_details['trainNo'], update_fields)
+
+    # Single combined departure log (includes departure line if provided)
+    if line:
+        background_tasks.add_task(
+            log_action,
+            f"Train {train_details['trainNo']} departed from {platform_id} at {departure_time} via {line}."
+        )
+    else:
+        background_tasks.add_task(
+            log_action,
+            f"Train {train_details['trainNo']} departed from {platform_id} at {departure_time}."
+        )
     state_collection.replace_one({"_id": "current_station_state"}, state, upsert=True)
     return {"message": f"Train {train_details['trainNo']} departed from {', '.join(cleared_platforms)}."}
 
@@ -1611,9 +1737,9 @@ async def log_depart_line(body: dict, background_tasks: BackgroundTasks):
                 break
     except Exception:
         pass
-    background_tasks.add_task(log_action, f"DEPART LINE: Train {train_no or ''} departing from {platform_id} via {line}.")
     if train_no:
-        background_tasks.add_task(persist_report_update, train_no, {'outgoing_line': line})
+        # IMPORTANT: do not create a new baseline row here; update the latest existing row.
+        background_tasks.add_task(persist_report_update_if_exists, train_no, {'outgoing_line': line})
     # (No suggestion trigger here.)
     return {"message": "Departure line logged."}
 

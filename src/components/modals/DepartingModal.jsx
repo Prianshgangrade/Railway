@@ -45,17 +45,7 @@ export default function DepartingModal({ isOpen, onClose, platforms, onDepartTra
   const handleLogAndDepart = async (platformId) => {
     const chosen = selectedLineByPlatform[platformId] || '';
     if (!chosen) return; // simple guard; could show a toast if needed
-    try {
-      await fetch(apiUrl('/api/log-depart-line'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ platformId, line: chosen })
-      });
-    } catch (e) {
-      // Best-effort: even if logging fails, proceed with departure to not block ops
-      console.error('Failed to log depart line', e);
-    }
-    onDepartTrain(platformId);
+    onDepartTrain(platformId, chosen);
   };
 
   return (

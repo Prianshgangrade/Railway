@@ -308,11 +308,11 @@ export default function MainApp() {
     return [platformId];
   }, []);
 
-  const handleDepartTrain = useCallback((platformId) => {
+  const handleDepartTrain = useCallback((platformId, line) => {
     const idsToClear = resolveLinkedDepartureIds(platformId);
     return handleApiCall(
       'depart-train',
-      { platformId },
+      { platformId, line },
       `Departing train from ${platformId}...`,
       () => applyPlatformChanges(idsToClear, (platform) => ({ ...platform, isOccupied: false, trainDetails: null, actualArrival: null }))
     );

@@ -465,9 +465,9 @@ export default function SuggestionModal({
                   {availablePlatforms.map(p => <option key={p.id} value={p.id}>{p.id}</option>)}
                 </select>
               ) : (
-                <p className="text-sm text-red-600">No free platforms available right now.</p>
+                <p className="text-sm text-red-600">No platforms available right now.</p>
               )}
-              <p className="text-xs text-gray-500 mt-1">Only free, non-maintenance platforms are shown.</p>
+              {/* <p className="text-xs text-gray-500 mt-1">Only free, non-maintenance platforms are shown.</p> */}
             </div>
           )}
 
@@ -480,9 +480,9 @@ export default function SuggestionModal({
                   {availableTracks.map(p => <option key={p.id} value={p.id}>{getTrackLabel(p)}</option>)}
                 </select>
               ) : (
-                <p className="text-sm text-red-600">No free tracks are currently available.</p>
+                <p className="text-sm text-red-600">No tracks are currently available.</p>
               )}
-              <p className="text-xs text-gray-500 mt-1">Tracks under maintenance or occupied are hidden.</p>
+              <p className="text-xs text-gray-500 mt-1">Tracks under maintenance or occupied.</p>
             </div>
           )}
 

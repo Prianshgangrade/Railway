@@ -1,0 +1,18 @@
+date,trainNo,trainName,scheduled_arrival,scheduled_departure,actual_arrival,actual_departure,actual_platform_arrival,suggestions,actual_platform,incoming_line,outgoing_line,Remarks
+2026-01-19,12254,Anga Express (PT),00:55,01:03,15:40,,15:40,"5, 2, 6, 8, 7","1, 3",HWH UP,,unassign
+2026-01-19,12254,Anga Express (PT),00:55,01:03,15:40,,15:40,"5, 2, 6, 8, 7","2, 4",HWH UP,,unassign
+2026-01-19,12254,Anga Express (PT),00:55,01:03,16:31,,16:31,,5,HWH UP,,
+2026-01-19,12837,,,,,,,"5, 8, 6, 2, 1",,HWH MID,,unassigned
+2026-01-19,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,13:12,,13:12,"5, 8, 6, 2, 1",5,HWH MD,,unassigned
+2026-01-19,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,13:12,13:13,13:12,"5, 8, 6, 2, 1","2, 4",HWH MID,TATA UP,
+2026-01-19,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,14:50,09:21,09:21,"1, 5, 2, 6, 8, 7",8,HWH UP,TATA DN,
+2026-01-19,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,15:00,09:35,09:30,"1, 5, 2, 6, 8, 7",5,HWH UP,HWH UP,
+2026-01-19,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,15:37,,15:37,"5, 8, 6, 2","1, 3",HWH MD,,unassign
+2026-01-19,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,15:37,15:38,15:37,,5,HWH MD,TATA UP,
+2026-01-19,13433,SMVT Bengaluru - Malda Town Amrit Bharat Express (PT),00:15,00:20,14:52,09:23,09:22,"2, 8, 6, 7, 5, 1","1, 3",TATA DN,HWH DN,
+2026-01-19,18005,Samaleswari Express (PT),00:15,00:20,12:31,07:01,07:01,"1, 6, 7, 8","2, 4",ADRA Joint,HWH MID,
+2026-01-19,18086,Ranchi - Kharagpur MEMU Express (UnReserved)*,23:45,,13:09,13:09,13:09,"8, 7, 6, 5, 4, 2, 1, 3",1,MDN UP Joint,HWH MID,
+2026-01-19,18086,Ranchi - Kharagpur MEMU Express (UnReserved)*,23:45,,16:19,,16:19,,1,TATA DN,,
+2026-01-19,22202,Puri - Sealdah Duronto Express,01:00,01:05,13:08,13:08,13:08,"8, 2, 6, 7, 1","1, 3",TATA DN,HWH MID,
+2026-01-19,38727,Howrah - Kharagpur Local*,00:30,,12:36,,07:07,"1, 2, 8, 7, 6","2, 4",HWH UP,,unassigned
+2026-01-19,38727,Howrah - Kharagpur Local*,00:30,,12:46,07:19,07:16,,"1, 3",HWH UP,TATA UP,
