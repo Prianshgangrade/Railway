@@ -739,3 +739,20 @@
 2026-01-20 19:39:39 | DEPARTED: Train 13433 departed from Platform 7 at 19:39.
 2026-01-20 19:46:22 | Train 12837 departed from Platform 5 at 19:46 via TATA UP.
 2026-01-20 19:46:47 | Train 18086 departed from Platform 4 at 19:46 via HWH DN.
+2026-01-21 16:07:40 | ARRIVED & ASSIGNED: Train 13433 arrived at 16:07 and assigned to Platform 2, Platform 4. (platformArrival: 16:07)
+2026-01-21 16:07:42 | UNASSIGNED: Train 13433 unassigned from Platform 4, Platform 2 and returned to arrival list.
+2026-01-21 16:07:43 | WAITING LIST: Train 13433 moved to waiting list at 2026-01-21T16:07:42.903839+05:30 (actualArrival: 00:15) (incoming: TATA DN). (previousPlatform: 2, 4)
+2026-02-02 14:22:47 | System initialized: Station state created from master data.
+2026-02-02 14:22:47 | System initialized: Station state created from master data.
+2026-02-02 14:22:47 | System initialized: Station state created from master data.
+2026-02-02 14:22:47 | System initialized: Station state created from master data.
+2026-02-02 14:22:47 | ARRIVED & ASSIGNED: Train 12345 arrived at 10:05 and assigned to Platform 1. (platformArrival: 14:22)
+2026-02-02 14:24:09 | System initialized: Station state created from master data.
+2026-02-02 14:24:09 | System initialized: Station state created from master data.
+2026-02-02 14:24:09 | System initialized: Station state created from master data.
+2026-02-02 14:24:09 | System initialized: Station state created from master data.
+2026-02-02 14:24:09 | ARRIVED & ASSIGNED: Train 12345 arrived at 10:05 and assigned to Platform 1. (platformArrival: 14:24)
+2026-02-03 16:03:27 | ARRIVED & ASSIGNED: Train 38702 arrived at 16:03 and assigned to Platform 7. (platformArrival: 16:03)
+2026-02-03 16:03:40 | ARRIVED & ASSIGNED: Train 38702 arrived at 16:03 and assigned to Platform 6. (platformArrival: 16:03)
+2026-02-03 16:03:46 | Train 38702 departed from Platform 7 at 16:03 via MDN DN Joint.
+2026-02-03 16:03:51 | Train 38702 departed from Platform 6 at 16:03 via East Coast DOWN Joint.

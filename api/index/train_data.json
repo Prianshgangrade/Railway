@@ -4436,7 +4436,7 @@
         "ISTERMINATING":true,
         "PLATFORM NO":"",
         "DAYS":"SMTWTFS",
-        "LENGTH":"long",
+        "LENGTH":"short",
         "ORIGIN FROM STATION":"",
         "DEPARTURE FROM ORIGIN":"",
         "TERMINAL":"",

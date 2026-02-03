@@ -34,9 +34,9 @@ UP_TERMINATING = {'P1A', 'P2A'}
 DOWN_TERMINATING = {'P3A', 'P4A'}
 
 def _tie_break_rank(direction: str, platform_id: str) -> int:
-    if platform_id in {'P1', 'P3'}:
+    if platform_id in {'P1', 'P3', 'P1A', 'P3A'}:
         bucket = 'P1-3'
-    elif platform_id in {'P2', 'P4'}:
+    elif platform_id in {'P2', 'P4', 'P2A', 'P4A'}:
         bucket = 'P2-4'
     else:
         bucket = platform_id
@@ -70,8 +70,8 @@ def calculate_platform_scores(incoming_train, available_platforms, incoming_line
             continue
 
         matrix_column = platform_id
-        if platform_id in {'P1', 'P3'}: matrix_column = 'P1-3'
-        if platform_id in {'P2', 'P4'}: matrix_column = 'P2-4'
+        if platform_id in {'P1', 'P3', 'P1A', 'P3A'}: matrix_column = 'P1-3'
+        if platform_id in {'P2', 'P4', 'P2A', 'P4A'}: matrix_column = 'P2-4'
 
         routes = line_data.get(matrix_column)
 

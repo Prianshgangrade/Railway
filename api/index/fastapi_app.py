@@ -329,6 +329,10 @@ SHORT_SINGLE_PLATFORM_IDS = {
 # Long trains can be suggested on these as single platforms.
 LONG_SINGLE_PLATFORM_IDS = {'P5', 'P6', 'P7', 'P8'}
 
+# Station-side rule for terminating trains: choose which A-platform group to show.
+DOWN_STATIONS = {'SRC', 'SHM', 'HWH', 'PKU', 'SDAH'}
+A_PLATFORM_IDS = {'P1A', 'P2A', 'P3A', 'P4A'}
+
 # --- Train metadata cache (cuts round trips to Mongo for every suggestion/assignment) ---
 TRAIN_CACHE: dict[str, dict] = {}
 train_cache_lock = threading.Lock()
@@ -498,6 +502,9 @@ def find_partner_platform_id(platform_name: str | None) -> str | None:
     if not m:
         return None
     base, num_str, suffix = m.group(1), m.group(2), m.group(3) or ''
+    # 1A/2A/3A/4A are separate platforms; do not pair them.
+    if suffix:
+        return None
     try:
         num = int(num_str)
     except ValueError:
@@ -1148,6 +1155,14 @@ async def platform_suggestions(body: SuggestRequest, background_tasks: Backgroun
     if not train_data:
         raise HTTPException(status_code=404, detail=f"Train {train_no} not found in master schedule.")
 
+    # For terminating trains, pick which A platforms should be suggested.
+    # If origin/destination/terminal contains a DOWN station code => prefer 1A/2A else prefer 3A/4A.
+    origin_code = str(train_data.get('ORIGIN FROM STATION') or '').strip().upper()
+    destination_code = str(train_data.get('DESTINATION') or '').strip().upper()
+    terminal_code = str(train_data.get('TERMINAL') or '').strip().upper()
+    station_codes = {c for c in (origin_code, destination_code, terminal_code) if c}
+    prefer_a_ids = {'P1A', 'P2A'} if (station_codes & DOWN_STATIONS) else {'P3A', 'P4A'}
+
     is_freight = 'Goods' in train_data.get('TRAIN NAME', '') or 'Freight' in train_data.get('TRAIN NAME', '')
 
     incoming_train = ScoringTrain(
@@ -1175,9 +1190,15 @@ async def platform_suggestions(body: SuggestRequest, background_tasks: Backgroun
             long_candidates.add('P1')
         if 'P2' in available_platforms and 'P4' in available_platforms:
             long_candidates.add('P2')
+        # Terminating trains: also include the preferred A-platform group (if free).
+        if incoming_train.is_terminating:
+            long_candidates |= (available_platforms & prefer_a_ids)
+            long_candidates -= (A_PLATFORM_IDS - prefer_a_ids)
         available_platforms = long_candidates
     else:
         available_platforms = {pid for pid in available_platforms if pid in SHORT_SINGLE_PLATFORM_IDS}
+        if incoming_train.is_terminating:
+            available_platforms -= (A_PLATFORM_IDS - prefer_a_ids)
 
     # HIJ Freight is a special incoming line that should not depend on blockage matrix.
     # If the matrix lacks a row for it, we still want to suggest available platforms.
@@ -1219,6 +1240,18 @@ async def platform_suggestions(body: SuggestRequest, background_tasks: Backgroun
             'historicalMatch': suggestion.get('historicalMatch', False),
             'historicalPlatform': suggestion.get('historicalPlatform')
         })
+
+    if incoming_train.is_terminating:
+        prefer_a_labels = {'1A', '2A'} if prefer_a_ids == {'P1A', 'P2A'} else {'3A', '4A'}
+
+        def _sort_key(item_with_index):
+            idx, item = item_with_index
+            hist = 0 if item.get('historicalMatch') else 1
+            label = normalize_platform_label(item.get('platformId'))
+            a_pri = 0 if (label in prefer_a_labels) else 1
+            return (hist, a_pri, idx)
+
+        final = [it for _, it in sorted(list(enumerate(final)), key=_sort_key)]
 
     all_suggestions = [s['platformId'] for s in final]
     normalized_suggestions = normalize_platform_labels(all_suggestions)
