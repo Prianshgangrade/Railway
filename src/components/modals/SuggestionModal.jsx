@@ -396,6 +396,9 @@ export default function SuggestionModal({
               <div className="space-y-3">
                 {suggestions.map((suggestion, index) => {
                   const { platformId, platformIds, score, blockages, historicalMatch, historicalPlatform } = suggestion;
+                  const isAPlatform = /^(?:P)?[1-4]A$/i.test(String(platformId || '').trim());
+                  const blockagesNotApplicable = typeof blockages === 'string' && String(blockages).toLowerCase().includes('not applicable');
+                  const showPotentialBlockages = !isShortTrain && !!blockages && !(isAPlatform && blockagesNotApplicable);
                   return (
                     <div key={index} className={`p-3 rounded-md border ${score >= 80 ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
                       <div className="flex justify-between items-center">
@@ -404,7 +407,7 @@ export default function SuggestionModal({
                       </div>
                       <div className="text-sm mt-2 text-gray-600 flex flex-col">
                         <span className="font-semibold">{historicalMatch ? <span className="text-xs text-gray-700">  Historical Platform</span> : null}</span>
-                        {!isShortTrain && blockages && (
+                        {showPotentialBlockages && (
                           <div className="text-xs text-gray-700">
                             <span className="font-semibold">Potential Blockages</span>{' '}
                             {typeof blockages === 'object' ? (

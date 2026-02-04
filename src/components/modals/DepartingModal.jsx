@@ -82,7 +82,7 @@ export default function DepartingModal({ isOpen, onClose, platforms, onDepartTra
             </div>
           ))
         ) : (
-          <p className="text-gray-500 text-center p-4">No trains are currently berthed on platforms.</p>
+          null
         )}
       </div>
       <button onClick={onClose} className="mt-6 w-full bg-gray-300 text-gray-800 py-2 rounded-md hover:bg-gray-400 transition">Close</button>
