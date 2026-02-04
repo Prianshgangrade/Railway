@@ -398,7 +398,9 @@ export default function SuggestionModal({
                   const { platformId, platformIds, score, blockages, historicalMatch, historicalPlatform } = suggestion;
                   const isAPlatform = /^(?:P)?[1-4]A$/i.test(String(platformId || '').trim());
                   const blockagesNotApplicable = typeof blockages === 'string' && String(blockages).toLowerCase().includes('not applicable');
-                  const showPotentialBlockages = !isShortTrain && !!blockages && !(isAPlatform && blockagesNotApplicable);
+                  // Keep A-platform (e.g. P1A/1A) suggestions simple: don't show Potential Blockages section.
+                  // Also suppress the section when backend says blockages are not applicable.
+                  const showPotentialBlockages = !isShortTrain && !isAPlatform && !!blockages && !blockagesNotApplicable;
                   return (
                     <div key={index} className={`p-3 rounded-md border ${score >= 80 ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
                       <div className="flex justify-between items-center">
@@ -406,7 +408,7 @@ export default function SuggestionModal({
                         <button onClick={() => handleAssign(platformIds || platformId)} className="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 font-semibold">Assign</button>
                       </div>
                       <div className="text-sm mt-2 text-gray-600 flex flex-col">
-                        <span className="font-semibold">{historicalMatch ? <span className="text-xs text-gray-700">  Historical Platform</span> : null}</span>
+                        <span className="font-semibold">{!isAPlatform && historicalMatch ? <span className="text-xs text-gray-700">  Historical Platform</span> : null}</span>
                         {showPotentialBlockages && (
                           <div className="text-xs text-gray-700">
                             <span className="font-semibold">Potential Blockages</span>{' '}

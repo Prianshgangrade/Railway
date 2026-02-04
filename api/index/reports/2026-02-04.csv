@@ -1,0 +1,5 @@
+date,trainNo,trainName,scheduled_arrival,scheduled_departure,actual_arrival,actual_departure,actual_platform_arrival,suggestions,actual_platform,incoming_line,outgoing_line,Remarks
+2026-02-04,12837,Howrah - Puri Superfast Express (PT),00:13,00:18,22:39,22:46,17:09,"5, 8, 6, 2, 1",5,HWH MD,TATA DN,
+2026-02-04,38727,Howrah - Kharagpur Local*,00:30,,05:07,05:07,05:07,"2A, 1A, 6, 2, 1",2A,HWH MID,HWH MID,
+2026-02-04,38727,Howrah - Kharagpur Local*,00:30,,10:42,05:13,05:13,"2A, 1A, 5, 6, 2, 1",2A,HWH MID,HWH DN,
+2026-02-04,38727,Howrah - Kharagpur Local*,00:30,,22:34,17:05,17:04,"2A, 1A, 8, 6, 2, 1",2A,HWH MID,HWH MID,

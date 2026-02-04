@@ -756,3 +756,4 @@
 2026-02-03 16:03:40 | ARRIVED & ASSIGNED: Train 38702 arrived at 16:03 and assigned to Platform 6. (platformArrival: 16:03)
 2026-02-03 16:03:46 | Train 38702 departed from Platform 7 at 16:03 via MDN DN Joint.
 2026-02-03 16:03:51 | Train 38702 departed from Platform 6 at 16:03 via East Coast DOWN Joint.
+2026-02-04 22:46:37 | Train 12837 departed from Platform 5 at 22:46 via TATA DN.

@@ -20,6 +20,7 @@ export default function DepartingModal({ isOpen, onClose, platforms, onDepartTra
       return false;
     });
   const [selectedLineByPlatform, setSelectedLineByPlatform] = useState({});
+  const [departingByPlatform, setDepartingByPlatform] = useState({});
   const [lineOptions, setLineOptions] = useState(DEFAULT_LINES);
 
   const loadLines = useCallback(async () => {
@@ -38,6 +39,7 @@ export default function DepartingModal({ isOpen, onClose, platforms, onDepartTra
     if (isOpen) {
       // Reset selection each time the modal is opened (and when opened for a different platform)
       setSelectedLineByPlatform({});
+      setDepartingByPlatform({});
       loadLines();
     }
   }, [isOpen, onlyPlatformId, loadLines]);
@@ -45,7 +47,28 @@ export default function DepartingModal({ isOpen, onClose, platforms, onDepartTra
   const handleLogAndDepart = async (platformId) => {
     const chosen = selectedLineByPlatform[platformId] || '';
     if (!chosen) return; // simple guard; could show a toast if needed
-    onDepartTrain(platformId, chosen);
+    if (departingByPlatform[platformId]) return;
+    setDepartingByPlatform(prev => ({ ...prev, [platformId]: true }));
+    try {
+      const ok = await onDepartTrain(platformId, chosen);
+      if (ok && onlyPlatformId) {
+        onClose();
+        return;
+      }
+      if (ok) {
+        setSelectedLineByPlatform(prev => {
+          const next = { ...prev };
+          delete next[platformId];
+          return next;
+        });
+      }
+    } finally {
+      setDepartingByPlatform(prev => {
+        const next = { ...prev };
+        delete next[platformId];
+        return next;
+      });
+    }
   };
 
   return (
@@ -73,10 +96,10 @@ export default function DepartingModal({ isOpen, onClose, platforms, onDepartTra
                 </select>
                 <button
                   onClick={() => handleLogAndDepart(p.id)}
-                  disabled={!selectedLineByPlatform[p.id]}
+                  disabled={!selectedLineByPlatform[p.id] || !!departingByPlatform[p.id]}
                   className="btn-depart bg-red-500 disabled:bg-gray-400 text-white px-4 py-1 rounded-md hover:bg-red-600 transition text-sm"
                 >
-                  Depart
+                  {departingByPlatform[p.id] ? 'Departing...' : 'Depart'}
                 </button>
               </div>
             </div>
